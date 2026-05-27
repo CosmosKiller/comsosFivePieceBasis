@@ -1,0 +1,15 @@
+menu "Binary Sensor Configuration"
+
+    config BINARY_SENSOR_TYPE
+	choice
+	  prompt "Binary Sensor Type"
+	  default BINARY_SENSOR_TYPE_CONTACT
+	  help
+	      Define the sensor type.
+
+	  config BINARY_SENSOR_TYPE_CONTACT
+	      bool "Binary Sensor Type Contact"
+	  config BINARY_SENSOR_TYPE_WATER_LEAK
+	      bool "Binary Sensor Type Water Leak"
+	endchoice
+endmenu

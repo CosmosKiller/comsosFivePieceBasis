@@ -1,0 +1,12 @@
+# Files 
+*.code-workspace
+To-Do.MD
+dependencies.lock
+*.old
+
+# Build directories
+.vscode
+mfg_tool_scripts
+out
+build
+managed_components

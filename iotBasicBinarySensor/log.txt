@@ -1,0 +1,26 @@
+I (14140) app_main: Current attr type: 1
+I (14140) app_main: Current attr val: 0
+I (14140) app_main: Current triggered val: 1
+I (14140) app_main: Updating attribute for endpoint 1 to 1
+I (14140) esp_matter_attribute: ********** W : Endpoint 0x0001's Cluster 0x00000045's Attribute 0x00000000 is 1 **********
+E (14150) esp_matter_attribute: Failed to set attribute value for path: 0x1/0x45/0x0 err: 262
+I (33160) app_main: Current attr type: 1
+I (33160) app_main: Current attr val: 0
+I (33160) app_main: Current triggered val: 0
+I (33160) app_main: Updating attribute for endpoint 1 to 0
+I (33170) esp_matter_attribute: ********** W : Endpoint 0x0001's Cluster 0x00000045's Attribute 0x00000000 is 0 **********
+E (33180) esp_matter_attribute: Failed to set attribute value for path: 0x1/0x45/0x0 err: 262
+
+
+I (12588) app_main: Current attr type: 1
+I (12588) app_main: Current attr val: 0
+I (12588) app_main: Current triggered val: 1
+I (12588) app_main: Updating attribute for endpoint 1 to 1
+I (12588) esp_matter_attribute: ********** W : Endpoint 0x0001's Cluster 0x00000045's Attribute 0x00000000 is 1 **********
+E (12598) esp_matter_attribute: Failed to set attribute value for path: 0x1/0x45/0x0 err: 262
+I (21608) app_main: Current attr type: 1
+I (21608) app_main: Current attr val: 0
+I (21608) app_main: Current triggered val: 0
+I (21608) app_main: Updating attribute for endpoint 1 to 0
+I (21618) esp_matter_attribute: ********** W : Endpoint 0x0001's Cluster 0x00000045's Attribute 0x00000000 is 0 **********
+E (21628) esp_matter_attribute: Failed to set attribute value for path: 0x1/0x45/0x0 err: 262
