@@ -5,14 +5,7 @@
 #include <esp_err.h>
 #include <esp_matter.h>
 
-#define SENSOR_PIN       GPIO_NUM_0
-#define STATE_LED_PIN    GPIO_NUM_21
-#define ALARM_LED_PIN    GPIO_NUM_1
-#define ALARM_BUZZER_PIN GPIO_NUM_2
-
-#define BINARY_SENSOR_TASK_STACK_SIZE 3072
-#define BINARY_SENSOR_TASK_PRIORITY   5
-#define BINARY_SENSOR_TASK_CORE_ID    0
+#define SENSOR_PIN GPIO_NUM_20
 
 using binary_sensor_cb_t = void (*)(uint16_t endpoint_id, bool occupied, void *user_data);
 

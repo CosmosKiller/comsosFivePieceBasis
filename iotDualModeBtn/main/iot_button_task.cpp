@@ -127,7 +127,7 @@ static void iot_button_task_multipress_complete(void *arg, void *data)
     is_multipress = 0;
 }
 
-static void iot_button_task_led_init()
+static void iot_button_task_led_init(void)
 {
     gpio_reset_pin(SINGLE_PRESS_LED_PIN);
     gpio_set_direction(SINGLE_PRESS_LED_PIN, GPIO_MODE_OUTPUT);
@@ -147,7 +147,7 @@ esp_err_t iot_button_attribute_update(iot_button_task_handle_t driver_handle, ui
 
 iot_button_task_handle_t iot_button_task_init(iot_button_config_t *button)
 {
-    /* Initialize button */
+    // Initialize button
     button_handle_t handle = NULL;
     const button_config_t btn_cfg = {0};
 

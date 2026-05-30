@@ -22,6 +22,8 @@
 
 // Include project libraries
 #include <binary_sensor_task.h>
+#include <evt_service_task.h>
+#include <factory_reset_task.h>
 #include <matter_task.h>
 
 static const char *TAG = "app_main";
@@ -115,12 +117,18 @@ extern "C" void app_main()
     alarm_led_endpoint_id = endpoint::get_id(alarm_ep);
     ESP_LOGI(TAG, "Alarm endpoint created with ID: %d", alarm_led_endpoint_id);
 
+    // Initialize event service
+    evt_service_init();
+
     // Start Matter stack (this starts transports, commissioning, etc.)
     err = esp_matter::start(app_event_cb);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "esp_matter::start failed: %d", err);
         return;
     }
+
+    // Start factory reset task
+    factory_reset_task();
 }
 
 static void binary_sensor_notification(uint16_t endpoint_id, bool triggered, void *user_data)

@@ -1,6 +1,7 @@
 # Files 
 *.code-workspace
 To-Do.MD
+references.md
 dependencies.lock
 *.old
 

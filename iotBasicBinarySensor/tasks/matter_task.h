@@ -17,6 +17,8 @@ using namespace esp_matter::attribute;
 using namespace esp_matter::endpoint;
 using namespace chip::app::Clusters;
 
+#define FACTORY_RESET_BUTTON_GPIO GPIO_NUM_9
+
 /**
  * @brief Matter event callback
  *
