@@ -11,7 +11,6 @@
 static const char *TAG = "evt_service";
 
 static DRAM_ATTR QueueHandle_t evt_queue = NULL;
-static bool is_panic = false; // Track panic state for buzzer control
 
 /**
  * @brief Handle all events centrally
@@ -33,49 +32,53 @@ static void evt_service_task_handler(void *pArg)
             // Handle based on source and type
             switch (evt.source) {
             case EVT_SOURCE_SENSOR:
-                if (!is_panic) {
-                    if (evt.type == EVT_TYPE_TRIGGERED) {
-                        ESP_LOGW(TAG, "Door/window opened!");
+                if (evt.type == EVT_TYPE_TRIGGERED) {
+                    ESP_LOGW(TAG, "Door/window opened!");
 
-                        for (size_t i = 0; i < 3; i++) {
-                            gpio_set_level(STATE_LED_PIN, 1);
-                            vTaskDelay(pdMS_TO_TICKS(500));
-                            gpio_set_level(STATE_LED_PIN, 0);
-                            vTaskDelay(pdMS_TO_TICKS(500));
-                        }
+                    for (size_t i = 0; i < 3; i++) {
+                        gpio_set_level(STATE_LED_PIN, 1);
+                        vTaskDelay(pdMS_TO_TICKS(500));
+                        gpio_set_level(STATE_LED_PIN, 0);
+                        vTaskDelay(pdMS_TO_TICKS(500));
+                    }
 
-                    } else if (evt.type == EVT_TYPE_CLEARED) {
-                        ESP_LOGI(TAG, "Door/window closed.");
+                } else if (evt.type == EVT_TYPE_CLEARED) {
+                    ESP_LOGW(TAG, "Door/window closed.");
 
-                        for (size_t i = 0; i < 2; i++) {
-                            gpio_set_level(STATE_LED_PIN, 1);
-                            vTaskDelay(pdMS_TO_TICKS(500));
-                            gpio_set_level(STATE_LED_PIN, 0);
-                            vTaskDelay(pdMS_TO_TICKS(500));
-                        }
+                    for (size_t i = 0; i < 2; i++) {
+                        gpio_set_level(STATE_LED_PIN, 1);
+                        vTaskDelay(pdMS_TO_TICKS(500));
+                        gpio_set_level(STATE_LED_PIN, 0);
+                        vTaskDelay(pdMS_TO_TICKS(500));
                     }
                 }
                 break;
 
             case EVT_SOURCE_ALARM:
                 if (evt.type == EVT_TYPE_TRIGGERED) {
-                    ESP_LOGW(TAG, "Alarm armed.");
-                    gpio_set_level(ALARM_LED_PIN, 1);
+                    ESP_LOGW(TAG, "Alarm is being armed.");
+                    panic_alarm_task_deinit();    // Ensure any existing panic alarm task is stopped before arming
+                    panic_alarm_task_init(false); // Run arming sequence if not already in panic state
                 } else if (evt.type == EVT_TYPE_CLEARED) {
                     ESP_LOGW(TAG, "Alarm disarmed.");
-                    gpio_set_level(ALARM_LED_PIN, 0);
-                    is_panic = false;          // Clear panic state
                     panic_alarm_task_deinit(); // Reset panic state when alarm is disarmed
+                    for (size_t i = 0; i < 4; i++) {
+                        gpio_set_level(ALARM_LED_PIN, 1);
+                        vTaskDelay(pdMS_TO_TICKS(250));
+                        gpio_set_level(ALARM_LED_PIN, 0);
+                        vTaskDelay(pdMS_TO_TICKS(250));
+                    }
                 }
                 break;
 
             case EVT_SOURCE_PANIC:
-                if (!is_panic) { // Only trigger panic actions if not already in panic state
-                    if (evt.type == EVT_TYPE_TRIGGERED) {
-                        ESP_LOGE(TAG, "Warning! Alarm secuence started.");
-                        is_panic = true;         // Set panic state to keep alarm buzzing
-                        panic_alarm_task_init(); // Ensure panic alarm task is running
-                    }
+                if (evt.type == EVT_TYPE_TRIGGERED) {
+                    ESP_LOGE(TAG, "Warning! Alarm secuence started.");
+                    panic_alarm_task_deinit();   // Ensure any existing panic alarm task is stopped before starting a new one
+                    panic_alarm_task_init(true); // Ensure panic alarm task is running
+                }
+                if (evt.type == EVT_TYPE_SUSTAINED) {
+                    ESP_LOGE(TAG, "Alarm is active. Disarm the system to stop the alarm.");
                 }
                 break;
 

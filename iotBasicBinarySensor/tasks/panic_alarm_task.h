@@ -13,12 +13,14 @@
 /**
  * @brief Initialize panic alarm task. This function should be called only once
  *
+ * @param alarm_armed - Set to true to start panic alarm immediately, false to run arming sequence first
+ *
  * @return esp_err_t - ESP_OK on success,
  *                     ESP_ERR_INVALID_ARG if pConfig is NULL
  *                     ESP_ERR_INVALID_STATE if task is already initialized
  *                     appropriate error code otherwise
  */
-esp_err_t panic_alarm_task_init(void);
+esp_err_t panic_alarm_task_init(bool alarm_armed);
 
 /**
  * @brief Deinitialize panic alarm task

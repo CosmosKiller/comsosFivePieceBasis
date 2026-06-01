@@ -20,6 +20,7 @@
 
 // Include project libraries
 #include <bme680_task.h>
+#include <factory_reset_task.h>
 #include <matter_task.h>
 
 static const char *TAG = "app_main";
@@ -29,16 +30,8 @@ using namespace esp_matter::attribute;
 using namespace esp_matter::endpoint;
 using namespace chip::app::Clusters;
 
-#if CONFIG_ENABLE_ENCRYPTED_OTA
-extern const char decryption_key_start[] asm("_binary_esp_image_encryption_key_pem_start");
-extern const char decryption_key_end[] asm("_binary_esp_image_encryption_key_pem_end");
-
-static const char *s_decryption_key = decryption_key_start;
-static const uint16_t s_decryption_key_len = decryption_key_end - decryption_key_start;
-#endif // CONFIG_ENABLE_ENCRYPTED_OTA
-
 // Function declarations
-static void temp_sensor_notification(uint16_t endpoint_id, float temp, void *user_data);
+static void temperature_sensor_notification(uint16_t endpoint_id, float temp, void *user_data);
 static void humidity_sensor_notification(uint16_t endpoint_id, float humidity, void *user_data);
 static void pressure_sensor_notification(uint16_t endpoint_id, float pressure, void *user_data);
 
@@ -80,7 +73,7 @@ extern "C" void app_main()
     humidity_sensor::config_t humidity_sensor_config;
     endpoint_t *humidity_sensor_ep = humidity_sensor::create(node, &humidity_sensor_config, ENDPOINT_FLAG_NONE, NULL);
     // Confirm that humidity_sensor endpoint was created successfully
-    if (!temp_sensor_ep) {
+    if (!humidity_sensor_ep) {
         ESP_LOGE(TAG, "Failed to create humidity_sensor endpoint");
         return;
     }
@@ -120,6 +113,12 @@ extern "C" void app_main()
         return;
     }
 
+    err = esp_matter::ota::requestor_init();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "OTA requestor initialization failed: %d", err);
+        return;
+    }
+
     // Start Matter stack (this starts transports, commissioning, etc.)
     err = esp_matter::start(app_event_cb);
     if (err != ESP_OK) {
@@ -127,22 +126,8 @@ extern "C" void app_main()
         return;
     }
 
-#if CONFIG_ENABLE_ENCRYPTED_OTA
-    err = esp_matter_ota_requestor_encrypted_init(s_decryption_key, s_decryption_key_len);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to initialized the encrypted OTA, err: %d", err);
-    }
-#endif // CONFIG_ENABLE_ENCRYPTED_OTA
-
-#if CONFIG_ENABLE_CHIP_SHELL
-    esp_matter::console::diagnostics_register_commands();
-    esp_matter::console::wifi_register_commands();
-    esp_matter::console::factoryreset_register_commands();
-#if CONFIG_OPENTHREAD_CLI
-    esp_matter::console::otcli_register_commands();
-#endif
-    esp_matter::console::init();
-#endif
+    // Start factory reset task
+    factory_reset_task();
 }
 
 /*
@@ -150,7 +135,7 @@ extern "C" void app_main()
  * represents a temperature on the Celsius scale with a resolution of 0.01°C.
  * temp = (temperature in °C) x 100
  */
-static void temp_sensor_notification(uint16_t endpoint_id, float temp, void *user_data)
+static void temperature_sensor_notification(uint16_t endpoint_id, float temp, void *user_data)
 {
     // schedule the attribute update so that we can report it from matter thread
     chip::DeviceLayer::SystemLayer().ScheduleLambda([endpoint_id, temp]() {

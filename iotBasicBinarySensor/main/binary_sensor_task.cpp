@@ -5,6 +5,7 @@
 
 #include <binary_sensor_task.h>
 #include <evt_service_task.h>
+#include <panic_alarm_task.h>
 
 using namespace chip::app::Clusters;
 using namespace esp_matter;
@@ -18,7 +19,8 @@ typedef struct {
 } binary_sensor_ctx_t;
 
 static binary_sensor_ctx_t s_ctx;
-static bool is_armed = false; // Track alarm state
+bool is_armed = false; // Track alarm state
+bool is_panic = false; // Track panic state for buzzer control
 
 /**
  * @brief ISR handler for binary sensor GPIO
@@ -27,9 +29,11 @@ static bool is_armed = false; // Track alarm state
  */
 static void IRAM_ATTR binary_sensor_isr_handler(void *pArg)
 {
+
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     static bool level = false;
     bool new_level = gpio_get_level(SENSOR_PIN);
+    evt_service_event_t evt;
 
     // we only need to notify application layer if level changed
     if (level != new_level) {
@@ -39,23 +43,28 @@ static void IRAM_ATTR binary_sensor_isr_handler(void *pArg)
             s_ctx.config->cb(s_ctx.config->endpoint_id, new_level, s_ctx.config->user_data);
         }
 
-        if (!new_level && is_armed) { // Only consider trigger on falling edge (Door opened)
-            evt_service_event_t evt = {
+        if (is_panic) {
+            evt = {
+                .source = EVT_SOURCE_PANIC,
+                .type = EVT_TYPE_SUSTAINED,
+                .value = 1,
+            };
+        } else if (!new_level && is_armed) { // Only consider trigger on falling edge (Door opened)
+            evt = {
                 .source = EVT_SOURCE_PANIC,
                 .type = EVT_TYPE_TRIGGERED,
                 .value = 1,
             };
-            evt_service_post(&evt);
-        } else {
 
+        } else {
             // Post event to service
-            evt_service_event_t evt = {
+            evt = {
                 .source = EVT_SOURCE_SENSOR,
                 .type = level ? EVT_TYPE_CLEARED : EVT_TYPE_TRIGGERED, // Cleared on rising edge (Door closed)
                 .value = level ? 1 : 0,
             };
-            evt_service_post(&evt);
         }
+        evt_service_post(&evt);
     }
 
     if (xHigherPriorityTaskWoken) {
@@ -87,13 +96,6 @@ esp_err_t binary_sensor_attribute_update(binary_sensor_task_handle_t driver_hand
     if (endpoint_id == alarm_led_endpoint_id) {
         if (cluster_id == OnOff::Id) {
             if (attribute_id == OnOff::Attributes::OnOff::Id) {
-
-                if (val->val.b) {
-                    is_armed = true;
-                } else {
-                    is_armed = false;
-                }
-
                 evt_service_event_t evt = {
                     .source = EVT_SOURCE_ALARM,
                     .type = (val->val.b) ? EVT_TYPE_TRIGGERED : EVT_TYPE_CLEARED,

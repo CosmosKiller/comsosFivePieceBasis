@@ -1,7 +1,7 @@
 # Component CMake for lilFlowerPal 'src' component
 # Collect all C/C++ sources in this directory and export needed include dirs
 
-idf_component_register(SRCS "main.cpp" "matter_task.cpp" "bme680_task.cpp"
+idf_component_register(SRCS "main.cpp" "matter_task.cpp" "bme680_task.cpp" "factory_reset_task.cpp"
                        INCLUDE_DIRS "." "../tasks"
                        REQUIRES esp_matter bme680)
 

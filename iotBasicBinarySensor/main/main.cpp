@@ -120,6 +120,12 @@ extern "C" void app_main()
     // Initialize event service
     evt_service_init();
 
+    err = esp_matter::ota::requestor_init();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "OTA requestor initialization failed: %d", err);
+        return;
+    }
+
     // Start Matter stack (this starts transports, commissioning, etc.)
     err = esp_matter::start(app_event_cb);
     if (err != ESP_OK) {

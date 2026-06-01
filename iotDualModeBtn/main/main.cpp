@@ -19,6 +19,7 @@
 #include <esp_matter_ota.h>
 
 // Include project libraries
+#include <factory_reset_task.h>
 #include <iot_button_task.h>
 #include <matter_task.h>
 
@@ -92,6 +93,12 @@ extern "C" void app_main()
         return;
     }
 
+    err = esp_matter::ota::requestor_init();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "OTA requestor initialization failed: %d", err);
+        return;
+    }
+
     // Start Matter stack (this starts transports, commissioning, etc.)
     err = esp_matter::start(app_event_cb);
     if (err != ESP_OK) {
@@ -103,6 +110,9 @@ extern "C" void app_main()
     endpoint::set_semantic_tags(ep1, gEp1TagList, 2);
     endpoint_t *ep2 = endpoint::get(2);
     endpoint::set_semantic_tags(ep2, gEp2TagList, 2);
+
+    // Start factory reset task
+    factory_reset_task();
 }
 
 static esp_err_t create_button(iot_button_config_t *button_config, node_t *node)
