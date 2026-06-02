@@ -1,7 +1,7 @@
 /**
  * @file main.c
  * @author Marcel Nahir Samur (mnsamur2014@gmail.com)
- * @brief
+ * @brief Matter environmental app: temp/humidity/pressure endpoints, BME680 driver, OTA, and stack start.
  * @version 0.1
  * @date 2024-06-09
  *

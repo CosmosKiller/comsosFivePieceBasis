@@ -1,7 +1,7 @@
 /**
  * @file main.c
  * @author Marcel Nahir Samur (mnsamur2014@gmail.com)
- * @brief
+ * @brief Matter generic-switch app: NVS init, switch endpoint, semantic tags, and stack start.
  * @version 0.1
  * @date 2024-06-09
  *

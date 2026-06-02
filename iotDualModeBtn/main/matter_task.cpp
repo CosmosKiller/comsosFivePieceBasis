@@ -1,7 +1,7 @@
 /**
  * @file matter_task.cpp
  * @author Marcel Nahir Samur (mnsamur2014@gmail.com)
- * @brief
+ * @brief Matter commissioning, fabric, and identify/attribute callbacks for the dual-mode button.
  * @version 0.1
  * @date 2025-09-15
  *

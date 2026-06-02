@@ -1,7 +1,7 @@
 /**
  * @file bme680_task.cpp
  * @author Marcel Nahir Samur (mnsamur2014@gmail.com)
- * @brief
+ * @brief BME680 I2C driver: timed measurements and Matter cluster updates via sensor callbacks.
  * @version 0.1
  * @date 2024-06-06
  *
