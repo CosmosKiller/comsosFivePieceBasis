@@ -9,7 +9,6 @@ extern "C" {
 #include <esp_err.h>
 
 #define STATE_LED_PIN GPIO_NUM_21
-#define ALARM_LED_PIN GPIO_NUM_22
 
 #define EVT_SERVICE_TASK_STACK_SIZE 3072
 #define EVT_SERVICE_TASK_PRIORITY   5

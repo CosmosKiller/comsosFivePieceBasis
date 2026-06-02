@@ -57,15 +57,15 @@ static void evt_service_task_handler(void *pArg)
             case EVT_SOURCE_ALARM:
                 if (evt.type == EVT_TYPE_TRIGGERED) {
                     ESP_LOGW(TAG, "Alarm is being armed.");
-                    panic_alarm_task_deinit();    // Ensure any existing panic alarm task is stopped before arming
-                    panic_alarm_task_init(false); // Run arming sequence if not already in panic state
+                    panic_alarm_task_deinit();    // Ensure any existing alarm is stopped before arming
+                    panic_alarm_task_init(false); // Run arming sequence
                 } else if (evt.type == EVT_TYPE_CLEARED) {
                     ESP_LOGW(TAG, "Alarm disarmed.");
                     panic_alarm_task_deinit(); // Reset panic state when alarm is disarmed
-                    for (size_t i = 0; i < 4; i++) {
-                        gpio_set_level(ALARM_LED_PIN, 1);
+                    for (int i = 0; i < 4; i++) {
+                        gpio_set_level(CONFIRM_LED_PIN, 1);
                         vTaskDelay(pdMS_TO_TICKS(250));
-                        gpio_set_level(ALARM_LED_PIN, 0);
+                        gpio_set_level(CONFIRM_LED_PIN, 0);
                         vTaskDelay(pdMS_TO_TICKS(250));
                     }
                 }
@@ -74,7 +74,7 @@ static void evt_service_task_handler(void *pArg)
             case EVT_SOURCE_PANIC:
                 if (evt.type == EVT_TYPE_TRIGGERED) {
                     ESP_LOGE(TAG, "Warning! Alarm secuence started.");
-                    panic_alarm_task_deinit();   // Ensure any existing panic alarm task is stopped before starting a new one
+                    panic_alarm_task_deinit();   // Ensure any existing alarm is stopped before starting a new one
                     panic_alarm_task_init(true); // Ensure panic alarm task is running
                 }
                 if (evt.type == EVT_TYPE_SUSTAINED) {
@@ -105,16 +105,6 @@ static void evt_service_led_init(void)
         .intr_type = GPIO_INTR_DISABLE};
     gpio_config(&state_led_conf);
     gpio_set_level(STATE_LED_PIN, 0);
-
-    // ALARM LED config
-    gpio_config_t alarm_led_conf = {
-        .pin_bit_mask = (1ULL << ALARM_LED_PIN),
-        .mode = GPIO_MODE_OUTPUT,
-        .pull_up_en = GPIO_PULLUP_DISABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_DISABLE};
-    gpio_config(&alarm_led_conf);
-    gpio_set_level(ALARM_LED_PIN, 0);
 }
 
 esp_err_t evt_service_init(void)

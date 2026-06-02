@@ -4,7 +4,8 @@
 #include <driver/gpio.h>
 #include <esp_err.h>
 
-#define ALARM_BUZZER_PIN GPIO_NUM_23
+#define CONFIRM_LED_PIN GPIO_NUM_22
+#define ALARM_LED_PIN   GPIO_NUM_23
 
 #define PANIC_ALARM_STACK_SIZE    3072
 #define PANIC_ALARM_TASK_PRIORITY 4
