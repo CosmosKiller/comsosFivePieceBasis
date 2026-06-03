@@ -1,0 +1,119 @@
+manifest_version: 1
+name: cosmos-five-piece-basis
+description: >
+  Monorepo of ESP-IDF firmware applications for a Matter device family.
+  Contains three independent firmware projects targeting ESP32-C6/C5 chips
+  with Matter/Thread connectivity: binary sensor, dual-mode button, and
+  environmental sensor.
+version: 1.0.0
+
+project:
+  kind: firmware
+  language: c-cpp
+
+source:
+  source_dirs:
+    - iotBasicBinarySensor/main
+    - iotBasicBinarySensor/tasks
+    - iotDualModeBtn/main
+    - iotDualModeBtn/tasks
+    - iotEnvironmentalSensor/main
+    - iotEnvironmentalSensor/tasks
+  include_dirs:
+    - iotBasicBinarySensor/tasks
+    - iotDualModeBtn/tasks
+    - iotEnvironmentalSensor/tasks
+  build_dir: build
+
+discovery:
+  detected_toolchain: esp-idf
+  provider: custom
+  confidence: 0.95
+  markers:
+    - iotBasicBinarySensor/CMakeLists.txt
+    - iotDualModeBtn/CMakeLists.txt
+    - iotEnvironmentalSensor/CMakeLists.txt
+    - iotDualModeBtn/sdkconfig.defaults
+    - docs/BUILD.md
+  last_detected_at: "2025-01-13T00:00:00Z"
+
+capabilities:
+  firmware:
+    enabled: true
+    provider: custom
+    target_id: iotDualModeBtn
+    environment: default
+    targets:
+      iotBasicBinarySensor:
+        description: Boolean state / alarm-style binary sensor for Seeed XIAO ESP32-C6
+        board: esp32c6
+        actions:
+          build:
+            command: idf.py build
+            cwd: iotBasicBinarySensor
+            timeout_ms: 600000
+          flash:
+            command: idf.py flash
+            cwd: iotBasicBinarySensor
+            timeout_ms: 300000
+          monitor:
+            command: idf.py monitor
+            cwd: iotBasicBinarySensor
+          clean:
+            command: idf.py fullclean
+            cwd: iotBasicBinarySensor
+      iotDualModeBtn:
+        description: Switch / button (press, multi-press, long-press) for Seeed XIAO ESP32-C6
+        board: esp32c6
+        actions:
+          build:
+            command: idf.py build
+            cwd: iotDualModeBtn
+            timeout_ms: 600000
+          flash:
+            command: idf.py flash
+            cwd: iotDualModeBtn
+            timeout_ms: 300000
+          monitor:
+            command: idf.py monitor
+            cwd: iotDualModeBtn
+          clean:
+            command: idf.py fullclean
+            cwd: iotDualModeBtn
+      iotEnvironmentalSensor:
+        description: Environmental sensing (BME680) for Seeed XIAO ESP32-C5 (planned)
+        board: esp32c5
+        actions:
+          build:
+            command: idf.py build
+            cwd: iotEnvironmentalSensor
+            timeout_ms: 600000
+          flash:
+            command: idf.py flash
+            cwd: iotEnvironmentalSensor
+            timeout_ms: 300000
+          monitor:
+            command: idf.py monitor
+            cwd: iotEnvironmentalSensor
+          clean:
+            command: idf.py fullclean
+            cwd: iotEnvironmentalSensor
+    active_target: iotDualModeBtn
+    actions:
+      build:
+        command: idf.py build
+        cwd: iotDualModeBtn
+        timeout_ms: 600000
+      flash:
+        command: idf.py flash
+        cwd: iotDualModeBtn
+        timeout_ms: 300000
+      monitor:
+        command: idf.py monitor
+        cwd: iotDualModeBtn
+      clean:
+        command: idf.py fullclean
+        cwd: iotDualModeBtn
+
+components: []
+connections: []
