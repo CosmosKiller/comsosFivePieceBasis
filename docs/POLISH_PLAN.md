@@ -36,9 +36,28 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 | Fix typo in `main/CMakeLists.txt` (`"main.cpp""matter_task.cpp"` missing space in binary sensor)               | S      | Done   |
 | Keep `To-Do.MD` gitignored (local reference only; shared status in `docs/HARDWARE.md`)                           | S      | Done   |
 | Add [CONTRIBUTING.md](CONTRIBUTING.md) stub (build, C++17, Matter callbacks on system layer)                   | S      | Done   |
+| Migrate Cosmos style from `oldReadme.md` → [CODE_STYLE.md](CODE_STYLE.md) + root `.clang-format`             | S      | Done   |
 
 
 **Exit criteria:** `git log` / `git diff` show only intentional source; no third-party project names in CMake.
+
+---
+
+## Phase 1½ — Cosmos style adoption (ongoing)
+
+**Goal:** Match legacy CosmosIoT formatting and documentation without blocking feature work.
+
+| Task | Effort | Status |
+|------|--------|--------|
+| [CODE_STYLE.md](CODE_STYLE.md) (naming, comments, Doxygen, editor setup) | S | Done |
+| Root [`.clang-format`](../.clang-format) | S | Done |
+| Link style guide from [CONTRIBUTING.md](CONTRIBUTING.md) and [README.md](../README.md) | S | Done |
+| Doxygen blocks on all public `tasks/*.h` APIs | M | TODO |
+| Run `clang-format` on `main/` + `tasks/` per app (one PR per app or single sweep) | M | TODO |
+| Optional: `.editorconfig` (`indent_size = 4`, `charset = utf-8`) | S | TODO |
+| Remove or gitignore `oldReadme.md` after you no longer need the full sample | S | TODO |
+
+**Note:** Existing Matter code may not match every naming rule yet; apply conventions to **new and touched** files first.
 
 ---
 
@@ -52,7 +71,7 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 | Adopt **Option B** from [REPO_LAYOUT.md](REPO_LAYOUT.md): every task = `tasks/*.h` + `main/*.{cpp,c}`               | M      |
 | Align `iotEnvironmentalSensor` `sdkconfig` with **esp32c5** when hardware is ready (`idf.py set-target esp32c5`)    | M      |
 | Add `sdkconfig.defaults` to apps that only have full `sdkconfig` today                                              | M      |
-| Document C vs C++ policy in `docs/CONTRIBUTING.md` (e.g. “new code C++17; C only for ISR-tight or existing modules”) | S      |
+| Document C vs C++ policy in `docs/CONTRIBUTING.md` (e.g. “new code C++17; C only for ISR-tight or existing modules”) | S      | Done   |
 
 
 **Exit criteria:** New task added the same way in all three projects.
@@ -116,8 +135,8 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 
 | Task                                                     | Effort |
 | -------------------------------------------------------- | ------ |
-| Doxygen or minimal API docs for `tasks/*.h`              | M      |
-| Pre-commit: `clang-format` on `main/` and `tasks/`       | S      |
+| Doxygen on all `tasks/*.h` (see [CODE_STYLE.md](CODE_STYLE.md); overlaps Phase 1½) | M      |
+| Pre-commit or CI check: `clang-format --dry-run` on `main/` and `tasks/` | S      |
 | Issue templates / release tags per app `PROJECT_VER`     | S      |
 | Schematic or link to hardware repo in `docs/HARDWARE.md` | S      |
 

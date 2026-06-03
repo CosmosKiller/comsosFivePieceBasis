@@ -2,11 +2,13 @@
 
 Monorepo of ESP-IDF firmware applications for a small Matter device family. Each subdirectory is an independent project (own `sdkconfig`, partition table, and flash image).
 
-| Project | Matter role | Target board (see [docs/HARDWARE.md](docs/HARDWARE.md)) |
-|---------|-------------|-----------------------------------------------------------|
-| [`iotBasicBinarySensor`](iotBasicBinarySensor/) | Boolean state / alarm-style binary sensor | Seeed XIAO ESP32-C6 |
-| [`iotDualModeBtn`](iotDualModeBtn/) | Switch / button (press, multi-press, long-press) | Seeed XIAO ESP32-C6 |
-| [`iotEnvironmentalSensor`](iotEnvironmentalSensor/) | Environmental sensing (BME680) | Seeed XIAO ESP32-C5 (planned) |
+
+| Project                                             | Matter role                                      | Target board (see [docs/HARDWARE.md](docs/HARDWARE.md)) |
+| --------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------- |
+| `[iotBasicBinarySensor](iotBasicBinarySensor/)`     | Boolean state / alarm-style binary sensor        | Seeed XIAO ESP32-C6                                     |
+| `[iotDualModeBtn](iotDualModeBtn/)`                 | Switch / button (press, multi-press, long-press) | Seeed XIAO ESP32-C6                                     |
+| `[iotEnvironmentalSensor](iotEnvironmentalSensor/)` | Environmental sensing (BME680)                   | Seeed XIAO ESP32-C5 (planned)                           |
+
 
 The repo name reflects a **five-device product line**; three firmware apps exist today. Additional SKUs are planned.
 
@@ -68,15 +70,16 @@ cosmosFivePieceBasis/
 
 Long-term target layout (shared Matter glue, CI): [docs/REPO_LAYOUT.md](docs/REPO_LAYOUT.md).
 
-Contributing (build, style, Matter threading): [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
+Contributing (build, PR expectations): [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).  
+Code style (clang-format, naming, Doxygen): [docs/CODE_STYLE.md](docs/CODE_STYLE.md).
 
 ## Code organization (per app)
 
 Each firmware app follows the same idea:
 
-- **`main/`** — `app_main`, Matter endpoint setup, and task implementations (`.cpp` / `.c`)
-- **`tasks/`** — Public headers for those tasks (`*.h`)
-- **`main/CMakeLists.txt`** — Registers sources and `INCLUDE_DIRS` for `main` + `../tasks`
+- `**main/**` — `app_main`, Matter endpoint setup, and task implementations (`.cpp` / `.c`)
+- `**tasks/**` — Public headers for those tasks (`*.h`)
+- `**main/CMakeLists.txt**` — Registers sources and `INCLUDE_DIRS` for `main` + `../tasks`
 
 Matter lifecycle and commissioning callbacks live in `matter_task.*`; factory reset in `factory_reset_task.*`; hardware logic in device-specific tasks (e.g. `iot_button_task`, `binary_sensor_task`, `bme680_task`).
 
