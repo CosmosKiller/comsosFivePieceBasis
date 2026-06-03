@@ -3,6 +3,8 @@
 To-Do.MD
 dependencies.lock
 *.old
+*.log
+log.txt
 
 # Build directories
 .vscode

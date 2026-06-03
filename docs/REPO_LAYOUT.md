@@ -24,7 +24,6 @@ cosmosFivePieceBasis/
 
 - Headers in `tasks/`, sources in `main/` (not uniform across all files, e.g. some `.c` only in `main/`)
 - Duplicated `matter_task` / `factory_reset_task` per app
-- Stale CMake comment (`lilFlowerPal`) in every `main/CMakeLists.txt`
 - `sdkconfig` committed per app (works solo; noisy for teams)
 
 ## Target (professional baseline)

@@ -68,6 +68,8 @@ cosmosFivePieceBasis/
 
 Long-term target layout (shared Matter glue, CI): [docs/REPO_LAYOUT.md](docs/REPO_LAYOUT.md).
 
+Contributing (build, style, Matter threading): [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
+
 ## Code organization (per app)
 
 Each firmware app follows the same idea:

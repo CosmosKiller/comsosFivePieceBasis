@@ -1,7 +1,6 @@
-# Component CMake for lilFlowerPal 'src' component
-# Collect all C/C++ sources in this directory and export needed include dirs
+# Main component: application sources and task headers (../tasks)
 
-idf_component_register(SRCS "main.cpp""matter_task.cpp" "binary_sensor_task.cpp" "factory_reset_task.cpp" "evt_service_task.c" "panic_alarm_task.c"
+idf_component_register(SRCS "main.cpp" "matter_task.cpp" "binary_sensor_task.cpp" "factory_reset_task.cpp" "evt_service_task.c" "panic_alarm_task.c"
                        INCLUDE_DIRS "." "../tasks"
                        REQUIRES esp_matter)
 
