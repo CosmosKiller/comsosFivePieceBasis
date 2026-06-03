@@ -1,36 +1,34 @@
+/**
+ * @file panic_alarm_task.h
+ * @brief Panic alarm buzzer/LED sequence after arming and trigger.
+ */
+
 #ifndef PANIC_ALARM_TASK_H_
 #define PANIC_ALARM_TASK_H_
 
 #include <driver/gpio.h>
 #include <esp_err.h>
 
-#define CONFIRM_LED_PIN GPIO_NUM_22
-#define ALARM_LED_PIN   GPIO_NUM_23
+#define CONFIRM_LED_PIN GPIO_NUM_22 /*!< LED shown during arming confirm */
+#define ALARM_LED_PIN   GPIO_NUM_23 /*!< LED driven during panic alarm */
 
-#define PANIC_ALARM_STACK_SIZE    3072
-#define PANIC_ALARM_TASK_PRIORITY 4
-#define PANIC_ALARM_TASK_CORE_ID  0
+#define PANIC_ALARM_STACK_SIZE    3072 /*!< FreeRTOS stack size */
+#define PANIC_ALARM_TASK_PRIORITY 4    /*!< Task priority */
+#define PANIC_ALARM_TASK_CORE_ID  0    /*!< CPU core */
 
 /**
- * @brief Initialize panic alarm task. This function should be called only once
+ * @brief Start the panic-alarm task and GPIO outputs.
  *
- * @param alarm_armed - Set to true to start panic alarm immediately, false to run arming sequence first
- *
- * @return esp_err_t - ESP_OK on success,
- *                     ESP_ERR_INVALID_ARG if pConfig is NULL
- *                     ESP_ERR_INVALID_STATE if task is already initialized
- *                     appropriate error code otherwise
+ * @param alarm_armed If true, enter alarm immediately; if false, run arming sequence first.
+ * @return ESP_OK on success, or an error code.
  */
 esp_err_t panic_alarm_task_init(bool alarm_armed);
 
 /**
- * @brief Deinitialize panic alarm task
- *        This function will delete the panic alarm task and free any resources allocated for it.
+ * @brief Stop the panic-alarm task and release resources.
  *
- * @return esp_err_t - ESP_OK on success,
- *                     ESP_ERR_INVALID_STATE if task is not initialized
- *                     appropriate error code otherwise
+ * @return ESP_OK on success, or ESP_ERR_INVALID_STATE if not running.
  */
 esp_err_t panic_alarm_task_deinit(void);
 
-#endif // PANIC_ALARM_TASK_H_
+#endif /* PANIC_ALARM_TASK_H_ */

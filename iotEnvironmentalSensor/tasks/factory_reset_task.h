@@ -1,15 +1,17 @@
+/**
+ * @file factory_reset_task.h
+ * @brief Long-press GPIO handler that triggers a Matter factory reset.
+ */
+
 #ifndef FACTORY_RESET_TASK_H_
 #define FACTORY_RESET_TASK_H_
 
 #include <hal/gpio_types.h>
 
-#define FACTORY_RESET_BUTTON_PIN GPIO_NUM_9
+#define FACTORY_RESET_BUTTON_PIN GPIO_NUM_9 /*!< Factory-reset button GPIO */
 
 /**
- * @brief Factory reset task.
- *        In the Matter protocol, a factory reset clears the device's fabric table,
- *        erases its operational credentials
- *        and automatically drops it from all ecosystems
+ * @brief Start monitoring the factory-reset button (long-press erases fabrics and reboots).
  */
 void factory_reset_task(void);
 

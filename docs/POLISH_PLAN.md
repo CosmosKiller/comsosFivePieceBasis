@@ -52,10 +52,10 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 | [CODE_STYLE.md](CODE_STYLE.md) (naming, comments, Doxygen, editor setup) | S | Done |
 | Root [`.clang-format`](../.clang-format) | S | Done |
 | Link style guide from [CONTRIBUTING.md](CONTRIBUTING.md) and [README.md](../README.md) | S | Done |
-| Doxygen blocks on all public `tasks/*.h` APIs | M | TODO |
-| Run `clang-format` on `main/` + `tasks/` per app (one PR per app or single sweep) | M | TODO |
-| Optional: `.editorconfig` (`indent_size = 4`, `charset = utf-8`) | S | TODO |
-| Remove or gitignore `oldReadme.md` after you no longer need the full sample | S | TODO |
+| Doxygen blocks on all public `tasks/*.h` APIs | M | Done |
+| Run `clang-format` on `main/` + `tasks/` via [format_sources.sh](../tools/scripts/format_sources.sh) | M | TODO (run locally; needs `clang-format` installed) |
+| `.editorconfig` + [`.vscode/settings.json`](../.vscode/settings.json) (`indent_size = 4`, `charset = utf-8`) | S | Done |
+| Remove `oldReadme.md` after migrating style notes | S | Done |
 
 **Note:** Existing Matter code may not match every naming rule yet; apply conventions to **new and touched** files first.
 

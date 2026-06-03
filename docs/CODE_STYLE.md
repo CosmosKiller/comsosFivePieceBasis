@@ -11,7 +11,8 @@ Style is **LLVM-based** with **Linux** brace breaks (opening brace on the same l
 A repo-root [`.clang-format`](../.clang-format) encodes this. Format before commit:
 
 ```bash
-clang-format -i path/to/file.cpp
+./tools/scripts/format_sources.sh
+# or: clang-format -i path/to/file.cpp
 ```
 
 ### VS Code / Cursor
@@ -24,6 +25,8 @@ clang-format -i path/to/file.cpp
 ```
 
 3. Enable **Format On Save**, **Format On Paste**, and **Format On Type** for C/C++.
+
+Repo defaults: [`.editorconfig`](../.editorconfig) (indent 4, UTF-8) and [`.vscode/settings.json`](../.vscode/settings.json) (`clang_format_style: file`).
 
 ## Naming
 
