@@ -91,7 +91,7 @@ extern "C" void app_main()
     static bme680_sensor_config_t bme680_sensor_config = {
         .temperature =
             {
-                .cb = temp_sensor_notification,
+                .cb = temperature_sensor_notification,
                 .endpoint_id = endpoint::get_id(temp_sensor_ep),
             },
         .humidity =
@@ -112,13 +112,13 @@ extern "C" void app_main()
         ESP_LOGE(TAG, "bme680_task_sensor_init failed: %d", err);
         return;
     }
-
-    err = esp_matter::ota::requestor_init();
+    
+/*     err = esp_matter::ota::requestor_init();
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "OTA requestor initialization failed: %d", err);
         return;
     }
-
+ */
     // Start Matter stack (this starts transports, commissioning, etc.)
     err = esp_matter::start(app_event_cb);
     if (err != ESP_OK) {

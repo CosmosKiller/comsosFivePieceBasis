@@ -20,11 +20,21 @@ cosmosFivePieceBasis/
     └── (same pattern)
 ```
 
-**Inconsistencies to fix over time**
+**Layout (Option B — consistent across all apps)**
 
-- Headers in `tasks/`, sources in `main/` (not uniform across all files, e.g. some `.c` only in `main/`)
-- Duplicated `matter_task` / `factory_reset_task` per app
-- `sdkconfig` committed per app (works solo; noisy for teams)
+- **`tasks/`** — public headers (`*.h`) only
+- **`main/`** — implementations (`*.cpp`, `*.c`), `main.cpp`, `CMakeLists.txt`, `Kconfig.projbuild` (ESP-IDF convention)
+- Register sources in `main/CMakeLists.txt` with `INCLUDE_DIRS "." "../tasks"`
+
+**Build defaults**
+
+- Each app: `sdkconfig.defaults` (+ dual-mode `sdkconfig.defaults.c6_*` variants)
+- Shared baseline: [docs/sdkconfig.defaults.matter-base](docs/sdkconfig.defaults.matter-base)
+
+**Still duplicated (Phase 3)**
+
+- `matter_task` / `factory_reset_task` per app
+- `sdkconfig` committed per app until Phase 4
 
 ## Target (professional baseline)
 

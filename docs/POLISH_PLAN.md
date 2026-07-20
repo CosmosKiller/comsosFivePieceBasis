@@ -53,7 +53,7 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 | Root [`.clang-format`](../.clang-format) | S | Done |
 | Link style guide from [CONTRIBUTING.md](CONTRIBUTING.md) and [README.md](../README.md) | S | Done |
 | Doxygen blocks on all public `tasks/*.h` APIs | M | Done |
-| Run `clang-format` on `main/` + `tasks/` via [format_sources.sh](../tools/scripts/format_sources.sh) | M | TODO (run locally; needs `clang-format` installed) |
+| Run `clang-format` on `main/` + `tasks/` via [format_sources.sh](../tools/scripts/format_sources.sh) | M | Done |
 | `.editorconfig` + [`.vscode/settings.json`](../.vscode/settings.json) (`indent_size = 4`, `charset = utf-8`) | S | Done |
 | Remove `oldReadme.md` after migrating style notes | S | Done |
 
@@ -61,20 +61,23 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 
 ---
 
-## Phase 2 — Layout consistency (half day)
+## Phase 2 — Layout consistency ✅ complete
 
 **Goal:** Same rules in every firmware app.
 
 
-| Task                                                                                                                | Effort |
-| ------------------------------------------------------------------------------------------------------------------- | ------ |
-| Adopt **Option B** from [REPO_LAYOUT.md](REPO_LAYOUT.md): every task = `tasks/*.h` + `main/*.{cpp,c}`               | M      |
-| Align `iotEnvironmentalSensor` `sdkconfig` with **esp32c5** when hardware is ready (`idf.py set-target esp32c5`)    | M      |
-| Add `sdkconfig.defaults` to apps that only have full `sdkconfig` today                                              | M      |
-| Document C vs C++ policy in `docs/CONTRIBUTING.md` (e.g. “new code C++17; C only for ISR-tight or existing modules”) | S      | Done   |
+| Task                                                                                                                | Effort | Status |
+| ------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| Adopt **Option B** from [REPO_LAYOUT.md](REPO_LAYOUT.md): every task = `tasks/*.h` + `main/*.{cpp,c}`               | M      | Done   |
+| Align `iotEnvironmentalSensor` for **esp32c5** (`sdkconfig.defaults`, CMake `esp32c5_devkit_c`; run `set-target`)    | M      | Done   |
+| Add `sdkconfig.defaults` to apps that only had full `sdkconfig` (binary + environmental; dual-mode already had it)  | M      | Done   |
+| Document C vs C++ policy in `docs/CONTRIBUTING.md`                                                                  | S      | Done   |
+| Shared baseline [sdkconfig.defaults.matter-base](sdkconfig.defaults.matter-base)                                    | S      | Done   |
 
 
-**Exit criteria:** New task added the same way in all three projects.
+**Exit criteria:** New task added the same way in all three projects (`tasks/foo.h` + `main/foo.cpp`, register in `main/CMakeLists.txt`).
+
+**Note:** Committed `sdkconfig` files may still show old targets until you reconfigure locally (Phase 4 stops tracking generated `sdkconfig`).
 
 ---
 
@@ -168,7 +171,7 @@ Copy into a GitHub issue or project board:
 
 - [x] Phase 0 complete
 - [x] Phase 1 complete
-- [ ] Phase 2 complete
+- [x] Phase 2 complete
 - [ ] Phase 3 complete
 - [ ] Phase 4 complete
 - [ ] Phase 5 — define fourth/fifth device or rename repo

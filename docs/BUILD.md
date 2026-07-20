@@ -9,10 +9,23 @@
 | `ESP_MATTER_DEVICE_PATH` | Device HAL under esp-matter (optional; set per target in project CMake) |
 | `SDKCONFIG_DEFAULTS` | Semicolon-separated defaults files before `idf.py reconfigure` |
 
+Each app ships **`sdkconfig.defaults`** in its project folder (loaded automatically on build). Shared baseline options live in [sdkconfig.defaults.matter-base](sdkconfig.defaults.matter-base) and are merged into those files.
+
+## Per-app targets
+
+| App | Board | `idf.py set-target` |
+|-----|-------|------------------------|
+| `iotBasicBinarySensor` | XIAO ESP32-C6 | `esp32c6` |
+| `iotDualModeBtn` | XIAO ESP32-C6 | `esp32c6` |
+| `iotEnvironmentalSensor` | XIAO ESP32-C5 | `esp32c5` |
+
 Standard workflow inside a project directory:
 
 ```bash
-idf.py set-target esp32c6    # or esp32c5 when environmental app is retargeted
+cd iotBasicBinarySensor   # or another app
+export ESP_MATTER_PATH=/path/to/esp-matter
+. $IDF_PATH/export.sh
+idf.py set-target esp32c6    # esp32c5 for iotEnvironmentalSensor
 idf.py build
 idf.py flash monitor
 ```
@@ -21,7 +34,7 @@ Artifacts land in `build/` (gitignored). Dependencies resolve to `managed_compon
 
 ## ESP32-C6: Thread vs Thread + Wi-Fi
 
-Applies to **`iotDualModeBtn`** (defaults files in that project).
+Applies to **`iotDualModeBtn`** (extra defaults files in that project).
 
 **Thread only**
 
@@ -40,9 +53,18 @@ idf.py reconfigure
 idf.py build
 ```
 
-## ESP32-C5
+## ESP32-C5 (environmental sensor)
 
-Environmental sensor hardware targets XIAO ESP32-C5; retarget and add `sdkconfig.defaults` variants when that app is brought in line (see [POLISH_PLAN.md](POLISH_PLAN.md)).
+Retarget from the legacy `esp32` config when setting up a fresh tree:
+
+```bash
+cd iotEnvironmentalSensor
+rm -f sdkconfig sdkconfig.old
+idf.py set-target esp32c5
+idf.py build
+```
+
+`sdkconfig.defaults` already sets `CONFIG_IDF_TARGET_ESP32C5=y` and Wi-Fi Matter options. CMake resolves `ESP_MATTER_DEVICE_PATH` to `esp32c5_devkit_c` under esp-matter.
 
 ## Matter certificates
 
@@ -61,7 +83,7 @@ If Kconfig defaults changed:
 
 ```bash
 rm -f sdkconfig sdkconfig.old
-export SDKCONFIG_DEFAULTS="sdkconfig.defaults;..."   # if used
-idf.py set-target esp32c6
+export SDKCONFIG_DEFAULTS="sdkconfig.defaults;..."   # if using dual-mode Thread variants
+idf.py set-target esp32c6   # or esp32c5
 idf.py build
 ```

@@ -25,6 +25,7 @@ idf.py build
 - **C** is fine for existing modules (e.g. GPIO ISR paths, event service) or when interfacing with C-only ESP-IDF APIs; prefer C++ for new tasks unless there is a strong reason not to.
 - **Naming / docs:** `snake_case` functions, `*_t` / `*_e` types, Doxygen on public `tasks/*.h` APIs — details in [CODE_STYLE.md](CODE_STYLE.md).
 - **Task layout:** public API in `tasks/*.h`, implementation in `main/*.{cpp,c}` (see [REPO_LAYOUT.md](REPO_LAYOUT.md)).
+- **Adding a task:** create `tasks/my_task.h`, implement `main/my_task.cpp`, add both to `main/CMakeLists.txt` `SRCS` and keep `INCLUDE_DIRS "." "../tasks"`.
 - **Matter thread safety:** do not call Matter attribute APIs directly from GPIO/button callbacks or ISRs. Schedule work on the CHIP system layer, for example:
 
 ```cpp

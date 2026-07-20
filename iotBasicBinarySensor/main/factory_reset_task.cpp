@@ -22,7 +22,7 @@ static const char *TAG = "factory_reset_task";
  */
 static void factory_reset_button_cb(void *arg, void *data)
 {
-    ESP_LOGW(TAG, "!! Factory Reset Triggered via Button !!");
+    ESP_LOGW(TAG, "Factory Reset Triggered via Button !!");
     ESP_LOGW(TAG, "Decommissioning device and erasing all Matter fabrics...");
 
     // This clears all Matter credentials and reboots the chip automatically
@@ -32,10 +32,10 @@ static void factory_reset_button_cb(void *arg, void *data)
 void factory_reset_task(void)
 {
     // Create a button instance for the factory reset button
-    // Initialize button
     button_handle_t handle = NULL;
     const button_config_t btn_cfg = {0};
 
+    // Initialize button
     const button_gpio_config_t btn_gpio_cfg = {
         .gpio_num = FACTORY_RESET_BUTTON_PIN,
         .active_level = 0,
