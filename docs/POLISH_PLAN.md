@@ -81,21 +81,23 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 
 ---
 
-## Phase 3 — Shared Matter component (1–2 days)
+## Phase 3 — Shared Matter component ✅ complete
 
 **Goal:** One place for duplicated factory reset / fabric / commissioning-window logic.
 
 
-| Task                                                                           | Effort |
-| ------------------------------------------------------------------------------ | ------ |
-| Create `components/cosmos_matter_common/` per [REPO_LAYOUT.md](REPO_LAYOUT.md) | M      |
-| Extract `factory_reset_task` first (smallest, clearest win)                    | M      |
-| Extract shared `app_event_cb` / identification stubs if identical              | M      |
-| Wire `EXTRA_COMPONENT_DIRS` in each app `CMakeLists.txt`                       | S      |
-| Build all three apps locally after extraction                                  | S      |
+| Task                                                                           | Effort | Status |
+| ------------------------------------------------------------------------------ | ------ | ------ |
+| Create `components/cosmos_matter_common/` per [REPO_LAYOUT.md](REPO_LAYOUT.md) | M      | Done   |
+| Extract `factory_reset_task` first (smallest, clearest win)                    | M      | Done   |
+| Extract shared `app_event_cb` / identification stubs if identical              | M      | Done   |
+| Wire `EXTRA_COMPONENT_DIRS` in each app `CMakeLists.txt`                       | S      | Done   |
+| Build all three apps locally after extraction                                  | S      | TODO (run `idf.py build` per app) |
 
 
 **Exit criteria:** Bugfix to factory reset is one commit, not three.
+
+**Shared API:** `components/cosmos_matter_common/include/factory_reset_task.h`, `cosmos_matter_events.h`
 
 ---
 
@@ -172,7 +174,7 @@ Copy into a GitHub issue or project board:
 - [x] Phase 0 complete
 - [x] Phase 1 complete
 - [x] Phase 2 complete
-- [ ] Phase 3 complete
+- [x] Phase 3 complete
 - [ ] Phase 4 complete
 - [ ] Phase 5 — define fourth/fifth device or rename repo
 

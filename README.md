@@ -81,7 +81,7 @@ Each firmware app follows the same idea:
 - `**tasks/**` — Public headers for those tasks (`*.h`)
 - `**main/CMakeLists.txt**` — Registers sources and `INCLUDE_DIRS` for `main` + `../tasks`
 
-Matter lifecycle and commissioning callbacks live in `matter_task.*`; factory reset in `factory_reset_task.*`; hardware logic in device-specific tasks (e.g. `iot_button_task`, `binary_sensor_task`, `bme680_task`).
+Matter lifecycle callbacks live in **`components/cosmos_matter_common`** (`cosmos_matter_handle_device_event`, `factory_reset_task`); each app’s `matter_task.cpp` forwards events and implements device-specific `app_attribute_update_cb`.
 
 ## Status
 

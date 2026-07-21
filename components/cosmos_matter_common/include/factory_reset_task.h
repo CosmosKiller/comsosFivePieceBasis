@@ -3,8 +3,8 @@
  * @brief Long-press GPIO handler that triggers a Matter factory reset.
  */
 
-#ifndef FACTORY_RESET_TASK_H_
-#define FACTORY_RESET_TASK_H_
+#ifndef COSMOS_FACTORY_RESET_TASK_H_
+#define COSMOS_FACTORY_RESET_TASK_H_
 
 #include <hal/gpio_types.h>
 
@@ -15,4 +15,4 @@
  */
 void factory_reset_task(void);
 
-#endif /* FACTORY_RESET_TASK_H_ */
+#endif /* COSMOS_FACTORY_RESET_TASK_H_ */

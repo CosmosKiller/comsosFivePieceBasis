@@ -31,9 +31,8 @@ cosmosFivePieceBasis/
 - Each app: `sdkconfig.defaults` (+ dual-mode `sdkconfig.defaults.c6_*` variants)
 - Shared baseline: [docs/sdkconfig.defaults.matter-base](docs/sdkconfig.defaults.matter-base)
 
-**Still duplicated (Phase 3)**
+**Still duplicated (Phase 4+)**
 
-- `matter_task` / `factory_reset_task` per app
 - `sdkconfig` committed per app until Phase 4
 
 ## Target (professional baseline)
@@ -54,14 +53,7 @@ cosmosFivePieceBasis/
 │   ├── POLISH_PLAN.md
 │   └── CONTRIBUTING.md            # optional, when collaborators appear
 ├── components/                    # ESP-IDF shared components
-│   └── cosmos_matter_common/
-│       ├── CMakeLists.txt
-│       ├── include/
-│       │   ├── matter_task.h
-│       │   └── factory_reset_task.h
-│       └── src/
-│           ├── matter_task.cpp      # shared commissioning / fabric callbacks
-│           └── factory_reset_task.cpp
+│   └── cosmos_matter_common/      # factory reset + Matter event helpers
 ├── iotBasicBinarySensor/          # thin apps: main + device-specific tasks only
 ├── iotDualModeBtn/
 ├── iotEnvironmentalSensor/
