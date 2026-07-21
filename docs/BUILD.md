@@ -1,5 +1,27 @@
 # Build and Matter setup
 
+## Pinned toolchains (tested)
+
+Record the combo you build with locally. CI uses the `espressif/esp-matter:latest` container (ESP-IDF + esp-matter preinstalled).
+
+| Component | Version |
+|-----------|---------|
+| ESP-IDF | [v5.4.1](https://github.com/espressif/esp-idf/releases/tag/v5.4.1) |
+| esp-matter | commit [`2cb668c`](https://github.com/espressif/esp-matter) (Jan 2026 local build) |
+
+Clone and align locally:
+
+```bash
+git clone -b v5.4.1 --recursive https://github.com/espressif/esp-idf.git ~/esp/esp-idf
+git clone https://github.com/espressif/esp-matter.git ~/esp/esp-matter
+cd ~/esp/esp-matter && git checkout 2cb668c && git submodule update --init --recursive
+cd ~/esp/esp-matter && ./install.sh
+. ~/esp/esp-idf/export.sh
+export ESP_MATTER_PATH=~/esp/esp-matter
+```
+
+Update this table when you bump toolchains.
+
 ## Environment
 
 | Variable | Purpose |
@@ -31,6 +53,24 @@ idf.py flash monitor
 ```
 
 Artifacts land in `build/` (gitignored). Dependencies resolve to `managed_components/` (gitignored).
+
+**Generated config:** `sdkconfig` / `sdkconfig.old` are **not** tracked — only `sdkconfig.defaults` (and `sdkconfig.defaults.*` variants). After clone: `idf.py set-target …` then `idf.py build`.
+
+**Component locks:** each app commits `dependencies.lock` (ESP-IDF Component Manager) for reproducible `managed_components/` resolution.
+
+## Build all apps
+
+From repo root (after sourcing ESP-IDF and setting `ESP_MATTER_PATH`):
+
+```bash
+./tools/scripts/build_all.sh
+```
+
+Fresh config from defaults only (matches CI):
+
+```bash
+FRESH_CONFIG=1 ./tools/scripts/build_all.sh
+```
 
 ## ESP32-C6: Thread vs Thread + Wi-Fi
 

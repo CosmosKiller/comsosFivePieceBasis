@@ -50,7 +50,15 @@ export SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.c6_wifi_thread"
 idf.py reconfigure && idf.py build
 ```
 
-More detail: [docs/BUILD.md](docs/BUILD.md).
+More detail: [docs/BUILD.md](docs/BUILD.md) (toolchain pins, build all apps, CI).
+
+Build all firmware apps locally:
+
+```bash
+export ESP_MATTER_PATH=/path/to/esp-matter
+. $IDF_PATH/export.sh
+./tools/scripts/build_all.sh
+```
 
 ## Repository layout
 

@@ -1,10 +1,11 @@
 # Files 
 *.code-workspace
 To-Do.MD
-dependencies.lock
 *.old
 *.log
 log.txt
+sdkconfig
+sdkconfig.old
 
 # Build directories
 .vscode/*

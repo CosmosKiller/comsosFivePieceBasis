@@ -115,21 +115,9 @@ set(EXTRA_COMPONENT_DIRS
 
 | Track in git | Do not track |
 |--------------|--------------|
-| `sdkconfig.defaults`, `sdkconfig.defaults.*` | `sdkconfig`, `sdkconfig.old` |
-| `partitions.csv`, source, `docs/` | `build/`, `managed_components/` |
-| `dependencies.lock` (optional; team policy) | `log.txt`, `out/` |
+| `sdkconfig.defaults`, `sdkconfig.defaults.*`, `dependencies.lock` | `sdkconfig`, `sdkconfig.old` |
+| `partitions.csv`, source, `docs/` | `build/`, `managed_components/`, `log.txt`, `out/` |
 
-### CI sketch
+### CI
 
-```yaml
-# .github/workflows/build.yml (future)
-strategy:
-  matrix:
-    app: [iotBasicBinarySensor, iotDualModeBtn, iotEnvironmentalSensor]
-    target: [esp32c6]   # add esp32c5 when environmental app is ready
-steps:
-  - uses: espressif/esp-idf-ci-action@v1
-  - run: cd ${{ matrix.app }} && idf.py set-target ${{ matrix.target }} && idf.py build
-```
-
-Requires esp-matter in the CI image or a composite setup script — see Phase 4 in [POLISH_PLAN.md](POLISH_PLAN.md).
+Implemented in [`.github/workflows/build.yml`](../.github/workflows/build.yml): matrix build of all three apps using the `espressif/esp-matter:latest` container (`idf.py set-target` + `idf.py build` from `sdkconfig.defaults` only).

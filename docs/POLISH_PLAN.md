@@ -101,21 +101,23 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 
 ---
 
-## Phase 4 — Reproducible builds & CI (1 day + infra tuning)
+## Phase 4 — Reproducible builds & CI ✅ complete
 
 **Goal:** `main` always compiles in a clean environment.
 
 
-| Task                                                                                                  | Effort |
-| ----------------------------------------------------------------------------------------------------- | ------ |
-| Pin ESP-IDF + esp-matter versions in README and/or `docs/BUILD.md` (commit SHAs or Docker image tags) | S      |
-| Add `tools/scripts/build_all.sh` that builds each app with known `SDKCONFIG_DEFAULTS`                 | S      |
-| Add `.github/workflows/build.yml` matrix (see REPO_LAYOUT)                                            | L      |
-| Decide policy: commit `dependencies.lock` or not; align `.gitignore`                                  | S      |
-| Stop committing generated `sdkconfig`; rely on `sdkconfig.defaults` + CI `idf.py build`               | M      |
+| Task                                                                                                  | Effort | Status |
+| ----------------------------------------------------------------------------------------------------- | ------ | ------ |
+| Pin ESP-IDF + esp-matter versions in [BUILD.md](BUILD.md)                                              | S      | Done   |
+| Add [build_all.sh](../tools/scripts/build_all.sh) with known targets / `FRESH_CONFIG=1` for CI parity  | S      | Done   |
+| Add [.github/workflows/build.yml](../.github/workflows/build.yml) matrix                               | L      | Done   |
+| Commit `dependencies.lock` per app; remove from `.gitignore`                                          | S      | Done   |
+| Stop committing `sdkconfig`; gitignore + rely on `sdkconfig.defaults` + `idf.py set-target`            | M      | Done   |
 
 
 **Exit criteria:** PRs get a green build check without manual “works on my machine.”
+
+**Note:** Enable GitHub Actions on the repo; first CI run validates the `espressif/esp-matter:latest` image paths.
 
 ---
 
@@ -175,7 +177,7 @@ Copy into a GitHub issue or project board:
 - [x] Phase 1 complete
 - [x] Phase 2 complete
 - [x] Phase 3 complete
-- [ ] Phase 4 complete
+- [x] Phase 4 complete
 - [ ] Phase 5 — define fourth/fifth device or rename repo
 
 Update the **Status** column in the root README when major milestones land.

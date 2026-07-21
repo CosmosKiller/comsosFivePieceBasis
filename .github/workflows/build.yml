@@ -1,0 +1,35 @@
+name: Build firmware
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: espressif/esp-matter:latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: iotBasicBinarySensor
+            target: esp32c6
+          - app: iotDualModeBtn
+            target: esp32c6
+          - app: iotEnvironmentalSensor
+            target: esp32c5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build ${{ matrix.app }} (${{ matrix.target }})
+        working-directory: ${{ matrix.app }}
+        env:
+          ESP_MATTER_PATH: /opt/espressif/esp-matter
+        run: |
+          rm -f sdkconfig sdkconfig.old
+          idf.py set-target ${{ matrix.target }}
+          idf.py build
