@@ -56,6 +56,8 @@ Artifacts land in `build/` (gitignored). Dependencies resolve to `managed_compon
 
 **Generated config:** `sdkconfig` / `sdkconfig.old` are **not** tracked — only `sdkconfig.defaults` (and `sdkconfig.defaults.*` variants). After clone: `idf.py set-target …` then `idf.py build`.
 
+**Battery monitor defaults:** each app’s `sdkconfig.defaults` sets `CONFIG_COSMOS_BATTERY_*` (GPIO and sample interval) for that board. Override there for CI/reproducible builds, or use **Component config → Cosmos battery monitor** in `idf.py menuconfig` for local tuning.
+
 **Component locks:** each app commits `dependencies.lock` (ESP-IDF Component Manager) for reproducible `managed_components/` resolution.
 
 ## Build all apps

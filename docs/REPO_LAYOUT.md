@@ -31,9 +31,9 @@ cosmosFivePieceBasis/
 - Each app: `sdkconfig.defaults` (+ dual-mode `sdkconfig.defaults.c6_*` variants)
 - Shared baseline: [docs/sdkconfig.defaults.matter-base](docs/sdkconfig.defaults.matter-base)
 
-**Still duplicated (Phase 4+)**
+**Generated locally (not in git)**
 
-- `sdkconfig` committed per app until Phase 4
+- `sdkconfig` / `sdkconfig.old` — created by `idf.py set-target` from `sdkconfig.defaults`
 
 ## Target (professional baseline)
 
@@ -53,7 +53,8 @@ cosmosFivePieceBasis/
 │   ├── POLISH_PLAN.md
 │   └── CONTRIBUTING.md            # optional, when collaborators appear
 ├── components/                    # ESP-IDF shared components
-│   └── cosmos_matter_common/      # factory reset + Matter event helpers
+│   ├── cosmos_matter_common/      # factory reset + Matter event helpers
+│   └── cosmos_battery/            # ADC sampling + Matter Power Source endpoint
 ├── iotBasicBinarySensor/          # thin apps: main + device-specific tasks only
 ├── iotDualModeBtn/
 ├── iotEnvironmentalSensor/

@@ -19,6 +19,8 @@
 #include <esp_matter_ota.h>
 
 // Include project libraries
+#include <cosmos_battery.h>
+#include <cosmos_battery_matter.h>
 #include <factory_reset_task.h>
 #include <iot_button_task.h>
 #include <matter_task.h>
@@ -93,11 +95,25 @@ extern "C" void app_main()
         return;
     }
 
+    cosmos_battery_config_t battery_config;
+    cosmos_battery_config_set_defaults(&battery_config);
+    battery_config.endpoint_id = cosmos_battery_matter_add_endpoint(node);
+    if (battery_config.endpoint_id == 0) {
+        ESP_LOGE(TAG, "Failed to create battery endpoint");
+        return;
+    }
+    err = cosmos_battery_init(&battery_config);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "cosmos_battery_init failed: %d", err);
+        return;
+    }
+
     /*     err = esp_matter::ota::requestor_init();
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "OTA requestor initialization failed: %d", err);
             return;
-        } */
+        }
+    */
 
     // Start Matter stack (this starts transports, commissioning, etc.)
     err = esp_matter::start(app_event_cb);
@@ -110,6 +126,12 @@ extern "C" void app_main()
     endpoint::set_semantic_tags(ep1, gEp1TagList, 2);
     endpoint_t *ep2 = endpoint::get(2);
     endpoint::set_semantic_tags(ep2, gEp2TagList, 2);
+
+    err = cosmos_battery_start();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "cosmos_battery_start failed: %d", err);
+        return;
+    }
 
     // Start factory reset task
     factory_reset_task();

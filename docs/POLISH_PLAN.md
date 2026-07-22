@@ -77,7 +77,7 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 
 **Exit criteria:** New task added the same way in all three projects (`tasks/foo.h` + `main/foo.cpp`, register in `main/CMakeLists.txt`).
 
-**Note:** Committed `sdkconfig` files may still show old targets until you reconfigure locally (Phase 4 stops tracking generated `sdkconfig`).
+**Note:** Generated `sdkconfig` is gitignored (Phase 4); local copies are created by `idf.py set-target` from `sdkconfig.defaults`.
 
 ---
 
@@ -92,7 +92,7 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 | Extract `factory_reset_task` first (smallest, clearest win)                    | M      | Done   |
 | Extract shared `app_event_cb` / identification stubs if identical              | M      | Done   |
 | Wire `EXTRA_COMPONENT_DIRS` in each app `CMakeLists.txt`                       | S      | Done   |
-| Build all three apps locally after extraction                                  | S      | TODO (run `idf.py build` per app) |
+| Build all three apps locally after extraction                                  | S      | Done   |
 
 
 **Exit criteria:** Bugfix to factory reset is one commit, not three.
@@ -117,22 +117,24 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 
 **Exit criteria:** PRs get a green build check without manual “works on my machine.”
 
-**Note:** Enable GitHub Actions on the repo; first CI run validates the `espressif/esp-matter:latest` image paths.
+**Note:** CI runs on push/PR to `main` via [build.yml](../.github/workflows/build.yml); confirm the first green matrix on the Actions tab after each workflow change.
 
 ---
 
-## Phase 5 — Product line completeness (ongoing)
+## Phase 5 — Product line completeness (in progress)
 
 **Goal:** Match the “five piece” name and production readiness.
 
+**Next up:** battery / power management (shared ADC + Matter Power Source cluster across all three apps — see [HARDWARE.md](HARDWARE.md) analog pins).
 
-| Task                                                                                          | Effort |
-| --------------------------------------------------------------------------------------------- | ------ |
-| Add firmware apps #4 and #5 (or rename repo to match three SKUs)                              | L      |
-| Battery / power management (open in all To-Do lists)                                          | L      |
-| OTA parity on `iotDualModeBtn` (binary sensor + environmental already track OTA)              | M      |
-| Manufacturing: document `mfg_tool_scripts/` flow or move under `tools/` with README           | M      |
-| Hardware test checklist in `docs/TESTING.md` (commission, attribute read, factory reset, OTA) | M      |
+
+| Task                                                                                          | Effort | Status |
+| --------------------------------------------------------------------------------------------- | ------ | ------ |
+| Battery / power management — ADC read, low-battery thresholds, Matter Power Source attributes | L      | In progress |
+| OTA parity on `iotDualModeBtn` (binary sensor + environmental already track OTA)              | M      | —      |
+| Manufacturing: document `mfg_tool_scripts/` flow or move under `tools/` with README           | M      | —      |
+| Hardware test checklist in `docs/TESTING.md` (commission, attribute read, factory reset, OTA) | M      | —      |
+| Add firmware apps #4 and #5 (or rename repo to match three SKUs)                              | L      | —      |
 
 
 ---
@@ -140,32 +142,28 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 ## Phase 6 — Optional “open source polish”
 
 
-| Task                                                     | Effort |
-| -------------------------------------------------------- | ------ |
-| Doxygen on all `tasks/*.h` (see [CODE_STYLE.md](CODE_STYLE.md); overlaps Phase 1½) | M      |
-| Pre-commit or CI check: `clang-format --dry-run` on `main/` and `tasks/` | S      |
-| Issue templates / release tags per app `PROJECT_VER`     | S      |
-| Schematic or link to hardware repo in `docs/HARDWARE.md` | S      |
+| Task                                                     | Effort | Status |
+| -------------------------------------------------------- | ------ | ------ |
+| Doxygen on all `tasks/*.h` (see [CODE_STYLE.md](CODE_STYLE.md); done in Phase 1½) | M      | Done   |
+| Pre-commit or CI check: `clang-format --dry-run` on `main/` and `tasks/` | S      | —      |
+| Issue templates / release tags per app `PROJECT_VER`     | S      | —      |
+| Schematic or link to hardware repo in `docs/HARDWARE.md` | S      | —      |
 
 
 ---
 
-## Suggested order (first two weeks)
+## Suggested order (Phases 0–4 done)
 
 ```mermaid
 flowchart LR
-  P0[Phase 0 Docs] --> P1[Phase 1 Hygiene]
-  P1 --> P2[Phase 2 Layout]
-  P2 --> P3[Phase 3 Shared component]
-  P3 --> P4[Phase 4 CI]
-  P4 --> P5[Phase 5 Product line]
+  P4[Phase 4 CI] --> P5a[Phase 5 Battery]
+  P5a --> P5b[OTA parity + TESTING.md]
+  P5b --> P5c[Apps 4 and 5]
 ```
 
-
-
-**Week 1:** Phase 0 (finish TODOs) + Phase 1 entirely.  
-**Week 2:** Phase 2 + start Phase 3 (factory reset only).  
-**When you need external eyes:** Phase 4 before inviting contributors.
+**Now:** Phase 5 — battery / power management firmware (all three apps share analog battery input per [HARDWARE.md](HARDWARE.md)).  
+**Then:** OTA on dual-mode button, manufacturing docs, `docs/TESTING.md`.  
+**Later:** fourth/fifth firmware apps or repo rename to match three SKUs.
 
 ---
 
@@ -178,6 +176,8 @@ Copy into a GitHub issue or project board:
 - [x] Phase 2 complete
 - [x] Phase 3 complete
 - [x] Phase 4 complete
-- [ ] Phase 5 — define fourth/fifth device or rename repo
+- [ ] Phase 5 — battery / power management (`components/cosmos_battery`, in progress)
+- [ ] Phase 5 — OTA parity, manufacturing docs, `TESTING.md`
+- [ ] Phase 5 — fourth/fifth device or rename repo
 
-Update the **Status** column in the root README when major milestones land.
+Update the **Status** section in the root README when major milestones land.

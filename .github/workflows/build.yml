@@ -28,8 +28,11 @@ jobs:
       - name: Build ${{ matrix.app }} (${{ matrix.target }})
         working-directory: ${{ matrix.app }}
         env:
+          IDF_PATH: /opt/espressif/esp-idf
           ESP_MATTER_PATH: /opt/espressif/esp-matter
         run: |
+          . $IDF_PATH/export.sh
+          . $ESP_MATTER_PATH/export.sh
           rm -f sdkconfig sdkconfig.old
           idf.py set-target ${{ matrix.target }}
           idf.py build

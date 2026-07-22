@@ -1,0 +1,25 @@
+menu "Cosmos battery monitor"
+
+config COSMOS_BATTERY_ENABLE
+    bool "Enable battery monitoring"
+    default y
+    help
+        Periodically sample the battery sense ADC and publish Matter Power Source attributes.
+
+config COSMOS_BATTERY_ADC_GPIO
+    int "Battery sense GPIO number"
+    default 0 if IDF_TARGET_ESP32C6
+    default 6 if IDF_TARGET_ESP32C5
+    default 0
+    help
+        GPIO connected to the battery voltage divider.
+        XIAO ESP32-C6: A0 (GPIO0). XIAO ESP32-C5: A6 (GPIO6).
+
+config COSMOS_BATTERY_SAMPLE_INTERVAL_MS
+    int "Sample interval (milliseconds)"
+    default 60000
+    range 1000 3600000
+    help
+        How often to read the battery ADC and update Matter attributes.
+
+endmenu

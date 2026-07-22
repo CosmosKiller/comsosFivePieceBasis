@@ -2,7 +2,7 @@
 
 idf_component_register(SRCS "main.cpp" "matter_task.cpp" "bme680_task.cpp"
                        INCLUDE_DIRS "." "../tasks"
-                       REQUIRES esp_matter bme680 cosmos_matter_common)
+                       REQUIRES esp_matter bme680 cosmos_matter_common cosmos_battery)
 
 
 # lvgl_port_create_c_image("qr_code/test_qr.png" "qr_code/" "ARGB8888" "NONE")
