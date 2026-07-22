@@ -102,9 +102,11 @@ Retarget from the legacy `esp32` config when setting up a fresh tree:
 ```bash
 cd iotEnvironmentalSensor
 rm -f sdkconfig sdkconfig.old
-idf.py set-target esp32c5
-idf.py build
+idf.py --preview set-target esp32c5
+idf.py --preview build
 ```
+
+ESP32-C5 is still a **preview** target in ESP-IDF 5.4 — append `--preview` to `idf.py` (CI does this automatically for the environmental sensor job).
 
 `sdkconfig.defaults` already sets `CONFIG_IDF_TARGET_ESP32C5=y` and Wi-Fi Matter options. CMake resolves `ESP_MATTER_DEVICE_PATH` to `esp32c5_devkit_c` under esp-matter.
 

@@ -1,6 +1,7 @@
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_timer.h>
+#include <inttypes.h>
 #include <sdkconfig.h>
 
 #include <cosmos_battery.h>
@@ -50,7 +51,7 @@ static void cosmos_battery_sample_once(void)
     const uint32_t cell_mv = static_cast<uint32_t>(std::lround(cell_v * 1000.0f));
     const uint8_t matter_percent = voltage_to_matter_percent(cell_v, s_ctx.config.voltage_empty_v, s_ctx.config.voltage_full_v);
 
-    ESP_LOGI(TAG, "Battery: %.2f V (%u mV), Matter percent=%u", cell_v, cell_mv, matter_percent);
+    ESP_LOGI(TAG, "Battery: %.2f V (%" PRIu32 " mV), Matter percent=%u", cell_v, cell_mv, matter_percent);
 
     if (s_ctx.config.endpoint_id != 0) {
         cosmos_battery_matter_update(s_ctx.config.endpoint_id, cell_mv, matter_percent);

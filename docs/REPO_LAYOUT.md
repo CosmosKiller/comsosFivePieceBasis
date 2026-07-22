@@ -88,7 +88,32 @@ iotDualModeBtn/
 └── CMakeLists.txt # INCLUDE_DIRS "." "../tasks"
 ```
 
-Recommendation: **Option B** — already used; finish moving any stray headers/sources so every task has `tasks/foo.h` + `main/foo.cpp`.
+Recommendation: **Option B** — already used; finish moving any stray headers/sources so every task has `tasks/foo.h` + `main/foo.cpp` (**1:1 basename** between header and implementation).
+
+### Shared components (`components/`)
+
+Firmware apps use **1:1** naming (`tasks/foo.h` + `main/foo.cpp`). Shared ESP-IDF components use a different rule: **role-based source files**, one public header per module area, multiple `.cpp` files as needed.
+
+```
+components/cosmos_battery/
+├── include/
+│   ├── cosmos_battery.h          # public C API (init, start, config)
+│   └── cosmos_battery_matter.h   # optional Matter helpers (C++)
+├── cosmos_battery_task.cpp       # implements cosmos_battery.h
+├── cosmos_battery_adc.cpp        # internal ADC layer (+ private .h if needed)
+├── cosmos_battery_matter.cpp     # implements cosmos_battery_matter.h
+├── CMakeLists.txt
+├── Kconfig
+└── idf_component.yml             # managed deps for this component only
+```
+
+Same pattern in `cosmos_matter_common`: `include/factory_reset_task.h` → `cosmos_factory_reset_task.cpp`, `include/cosmos_matter_events.h` → `cosmos_matter_events.cpp`.
+
+**Rules**
+
+- **`include/`** — headers consumed by apps or other components
+- **`.cpp` names** — describe the role (`*_task`, `*_adc`, `*_matter`), not a forced match to every header basename
+- **`idf_component.yml`** — lives on the shared component (e.g. `espressif/button` on `cosmos_matter_common`), not duplicated in each app’s `main/`
 
 ### `components/cosmos_matter_common`
 

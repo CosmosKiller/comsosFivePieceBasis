@@ -21,6 +21,7 @@ jobs:
             target: esp32c6
           - app: iotEnvironmentalSensor
             target: esp32c5
+            preview: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,5 +35,9 @@ jobs:
           . $IDF_PATH/export.sh
           . $ESP_MATTER_PATH/export.sh
           rm -f sdkconfig sdkconfig.old
-          idf.py set-target ${{ matrix.target }}
-          idf.py build
+          PREVIEW=""
+          if [ "${{ matrix.preview }}" = "true" ]; then
+            PREVIEW="--preview"
+          fi
+          idf.py $PREVIEW set-target ${{ matrix.target }}
+          idf.py $PREVIEW build

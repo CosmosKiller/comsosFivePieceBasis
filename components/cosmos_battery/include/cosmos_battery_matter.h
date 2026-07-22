@@ -10,9 +10,7 @@
 
 #ifdef __cplusplus
 
-namespace esp_matter {
-class node_t;
-}
+#include <esp_matter.h>
 
 /**
  * @brief Add a Matter Power Source endpoint with the battery feature.
