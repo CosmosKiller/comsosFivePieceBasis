@@ -7,9 +7,10 @@ log.txt
 sdkconfig
 sdkconfig.old
 
+# Editor / IDE (local per developer)
+.vscode/
+
 # Build directories
-.vscode/*
-!.vscode/settings.json
 mfg_tool_scripts
 out
 build
