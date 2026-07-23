@@ -70,6 +70,8 @@ cosmosFivePieceBasis/
 │   ├── BUILD.md
 │   ├── HARDWARE.md
 │   ├── REPO_LAYOUT.md        # Current vs target structure
+│   ├── TESTING.md            # OTA and hardware test procedures
+│   ├── HAOTA.md              # HA + DCL OTA (draft; merges into TESTING.md when validated)
 │   └── POLISH_PLAN.md        # Roadmap to tighten the repo
 ├── iotBasicBinarySensor/     # Firmware app (ESP-IDF project root)
 ├── iotDualModeBtn/
@@ -79,7 +81,8 @@ cosmosFivePieceBasis/
 Long-term target layout (shared Matter glue, CI): [docs/REPO_LAYOUT.md](docs/REPO_LAYOUT.md).
 
 Contributing (build, PR expectations): [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).  
-Code style (clang-format, naming, Doxygen): [docs/CODE_STYLE.md](docs/CODE_STYLE.md).
+Code style (clang-format, naming, Doxygen): [docs/CODE_STYLE.md](docs/CODE_STYLE.md).  
+OTA and hardware testing: [docs/TESTING.md](docs/TESTING.md).
 
 ## Code organization (per app)
 
@@ -89,7 +92,7 @@ Each firmware app follows the same idea:
 - `**tasks/**` — Public headers for those tasks (`*.h`)
 - `**main/CMakeLists.txt**` — Registers sources and `INCLUDE_DIRS` for `main` + `../tasks`
 
-Matter lifecycle callbacks live in **`components/cosmos_matter_common`** (`cosmos_matter_handle_device_event`, `factory_reset_task`); each app’s `matter_task.cpp` forwards events and implements device-specific `app_attribute_update_cb`.
+Matter lifecycle callbacks live in **`components/cosmos_matter_common`** (`cosmos_matter_handle_device_event`, `cosmos_matter_ota_configure`, `factory_reset_task`); each app’s `matter_task.cpp` forwards events and implements device-specific `app_attribute_update_cb`.
 
 ## Status
 

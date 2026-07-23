@@ -97,7 +97,7 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 
 **Exit criteria:** Bugfix to factory reset is one commit, not three.
 
-**Shared API:** `components/cosmos_matter_common/include/factory_reset_task.h`, `cosmos_matter_events.h`
+**Shared API:** `components/cosmos_matter_common/include/factory_reset_task.h`, `cosmos_matter_events.h`, `cosmos_matter_ota.h`
 
 ---
 
@@ -131,9 +131,9 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 | Task                                                                                          | Effort | Status |
 | --------------------------------------------------------------------------------------------- | ------ | ------ |
 | Battery / power management — ADC read, low-battery thresholds, Matter Power Source attributes | L      | In progress |
-| OTA parity on `iotDualModeBtn` (binary sensor + environmental already track OTA)              | M      | —      |
+| OTA parity — shared `cosmos_matter_ota` in all three apps                                    | M      | Done   |
 | Manufacturing: document `mfg_tool_scripts/` flow or move under `tools/` with README           | M      | —      |
-| Hardware test checklist in `docs/TESTING.md` (commission, attribute read, factory reset, OTA) | M      | —      |
+| Hardware test checklist in `docs/TESTING.md` (commission, attribute read, factory reset, OTA) | M      | In progress — local chip-tool OTA in TESTING.md; HA OTA draft in HAOTA.md |
 | Add firmware apps #4 and #5 (or rename repo to match three SKUs)                              | L      | —      |
 
 
@@ -177,7 +177,8 @@ Copy into a GitHub issue or project board:
 - [x] Phase 3 complete
 - [x] Phase 4 complete
 - [ ] Phase 5 — battery / power management (`components/cosmos_battery`, in progress)
-- [ ] Phase 5 — OTA parity, manufacturing docs, `TESTING.md`
+- [x] Phase 5 — OTA parity (`components/cosmos_matter_common/cosmos_matter_ota`)
+- [ ] Phase 5 — manufacturing docs, `docs/TESTING.md` (local OTA done; merge `HAOTA.md` after HA test; hardware checklist TBD)
 - [ ] Phase 5 — fourth/fifth device or rename repo
 
 Update the **Status** section in the root README when major milestones land.

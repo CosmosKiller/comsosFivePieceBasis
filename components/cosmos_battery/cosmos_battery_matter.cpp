@@ -5,6 +5,7 @@
 
 #include <app-common/zap-generated/ids/Clusters.h>
 
+#include <cosmos_battery.h>
 #include <cosmos_battery_matter.h>
 
 using namespace esp_matter;
@@ -45,25 +46,20 @@ uint16_t cosmos_battery_matter_add_endpoint(esp_matter::node_t *node)
 void cosmos_battery_matter_update(uint16_t endpoint_id, uint32_t voltage_mv, uint8_t percent_matter)
 {
     chip::DeviceLayer::SystemLayer().ScheduleLambda([endpoint_id, voltage_mv, percent_matter]() {
-        attribute_t *voltage_attr = attribute::get(endpoint_id, PowerSource::Id, PowerSource::Attributes::BatVoltage::Id);
-        if (voltage_attr) {
-            esp_matter_attr_val_t val = esp_matter_invalid(NULL);
-            attribute::get_val(voltage_attr, &val);
-            val.val.u32 = voltage_mv;
-            attribute::update(endpoint_id, PowerSource::Id, PowerSource::Attributes::BatVoltage::Id, &val);
+        esp_matter_attr_val_t voltage_val = esp_matter_nullable_uint32(voltage_mv);
+        esp_err_t err =
+            attribute::update(endpoint_id, PowerSource::Id, PowerSource::Attributes::BatVoltage::Id, &voltage_val);
+        if (err != ESP_OK && err != ESP_ERR_NOT_FINISHED) {
+            ESP_LOGW(TAG, "BatVoltage update failed: %d", err);
         }
 
-        attribute_t *percent_attr =
-            attribute::get(endpoint_id, PowerSource::Id, PowerSource::Attributes::BatPercentRemaining::Id);
-        if (percent_attr) {
-            esp_matter_attr_val_t val = esp_matter_invalid(NULL);
-            attribute::get_val(percent_attr, &val);
-            val.val.u8 = percent_matter;
-            attribute::update(endpoint_id, PowerSource::Id, PowerSource::Attributes::BatPercentRemaining::Id, &val);
+        esp_matter_attr_val_t percent_val = (percent_matter == COSMOS_BATTERY_PERCENT_UNKNOWN)
+                                                ? esp_matter_nullable_uint8(nullable<uint8_t>())
+                                                : esp_matter_nullable_uint8(percent_matter);
+        err = attribute::update(endpoint_id, PowerSource::Id, PowerSource::Attributes::BatPercentRemaining::Id,
+                                &percent_val);
+        if (err != ESP_OK && err != ESP_ERR_NOT_FINISHED) {
+            ESP_LOGW(TAG, "BatPercentRemaining update failed: %d", err);
         }
-
-        esp_matter_attr_val_t present_val = esp_matter_invalid(NULL);
-        present_val.val.b = true;
-        attribute::update(endpoint_id, PowerSource::Id, PowerSource::Attributes::BatPresent::Id, &present_val);
     });
 }

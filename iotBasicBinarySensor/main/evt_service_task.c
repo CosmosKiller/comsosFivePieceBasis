@@ -165,3 +165,18 @@ esp_err_t evt_service_post(evt_service_event_t *evt)
 
     return ESP_OK;
 }
+
+esp_err_t evt_service_post_from_isr(evt_service_event_t *evt, BaseType_t *woken)
+{
+    if (!evt_queue || evt == NULL) {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    evt->timestamp = esp_log_timestamp();
+
+    if (xQueueSendFromISR(evt_queue, evt, woken) != pdPASS) {
+        return ESP_ERR_NO_MEM;
+    }
+
+    return ESP_OK;
+}

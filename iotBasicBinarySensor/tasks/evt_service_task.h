@@ -12,6 +12,7 @@ extern "C" {
 
 #include <driver/gpio.h>
 #include <esp_err.h>
+#include <freertos/FreeRTOS.h>
 
 #define STATE_LED_PIN GPIO_NUM_21 /*!< Status LED for aggregated events */
 
@@ -62,6 +63,15 @@ esp_err_t evt_service_init(void);
  * @return ESP_OK on success, or an error code.
  */
 esp_err_t evt_service_post(evt_service_event_t *evt);
+
+/**
+ * @brief Enqueue an event from a GPIO ISR (uses xQueueSendFromISR).
+ *
+ * @param evt   Event to post.
+ * @param woken Set to pdTRUE if a higher-priority task was woken.
+ * @return ESP_OK on success, or an error code.
+ */
+esp_err_t evt_service_post_from_isr(evt_service_event_t *evt, BaseType_t *woken);
 
 #ifdef __cplusplus
 }

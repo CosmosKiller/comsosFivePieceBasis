@@ -86,6 +86,36 @@ void cosmos_matter_handle_device_event(const chip::DeviceLayer::ChipDeviceEvent 
         ESP_LOGI(TAG, "BLE deinitialized and memory reclaimed");
         break;
 
+    case chip::DeviceLayer::DeviceEventType::kOtaStateChanged: {
+        using chip::DeviceLayer::OtaState;
+        switch (event->OtaStateChanged.newState) {
+        case OtaState::kOtaDownloadInProgress:
+            ESP_LOGI(TAG, "OTA download in progress");
+            break;
+        case OtaState::kOtaDownloadComplete:
+            ESP_LOGI(TAG, "OTA download complete");
+            break;
+        case OtaState::kOtaDownloadFailed:
+            ESP_LOGE(TAG, "OTA download failed");
+            break;
+        case OtaState::kOtaDownloadAborted:
+            ESP_LOGW(TAG, "OTA download aborted");
+            break;
+        case OtaState::kOtaApplyInProgress:
+            ESP_LOGI(TAG, "OTA apply in progress");
+            break;
+        case OtaState::kOtaApplyComplete:
+            ESP_LOGI(TAG, "OTA apply complete — reboot pending");
+            break;
+        case OtaState::kOtaApplyFailed:
+            ESP_LOGE(TAG, "OTA apply failed");
+            break;
+        default:
+            break;
+        }
+        break;
+    }
+
     default:
         break;
     }

@@ -16,11 +16,11 @@
 
 // Include ESP-MATTER libraries
 #include <esp_matter.h>
-#include <esp_matter_ota.h>
 
 // Include project libraries
 #include <cosmos_battery.h>
 #include <cosmos_battery_matter.h>
+#include <cosmos_matter_ota.h>
 #include <bme680_task.h>
 #include <factory_reset_task.h>
 #include <matter_task.h>
@@ -128,17 +128,16 @@ extern "C" void app_main()
         return;
     }
 
-    /*     err = esp_matter::ota::requestor_init();
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG, "OTA requestor initialization failed: %d", err);
-            return;
-        }
-    */
-    
     // Start Matter stack (this starts transports, commissioning, etc.)
     err = esp_matter::start(app_event_cb);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "esp_matter::start failed: %d", err);
+        return;
+    }
+
+    err = cosmos_matter_ota_configure();
+    if (err != ESP_OK && err != ESP_ERR_NOT_SUPPORTED) {
+        ESP_LOGE(TAG, "cosmos_matter_ota_configure failed: %d", err);
         return;
     }
 

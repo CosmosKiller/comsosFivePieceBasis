@@ -116,6 +116,12 @@ ESP32-C5 is still a **preview** target in ESP-IDF 5.4 — append `--preview` to 
 
 Manufacturing scripts for the binary sensor live under `iotBasicBinarySensor/mfg_tool_scripts/` (gitignored; local factory tooling only).
 
+## OTA images and testing
+
+With `CONFIG_CHIP_OTA_IMAGE_BUILD=y` and `CONFIG_DEVICE_SOFTWARE_VERSION_NUMBER` set in the app’s `sdkconfig.defaults`, `idf.py build` emits `<app-name>-ota.bin` under `build/`. Version numbers must come from `PROJECT_VER` / `PROJECT_VER_NUMBER` in the app `CMakeLists.txt`.
+
+End-to-end local OTA testing (chip-tool + `chip-ota-provider-app`): [TESTING.md](TESTING.md).
+
 ## Clean rebuild
 
 ```bash

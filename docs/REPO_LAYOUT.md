@@ -107,7 +107,7 @@ components/cosmos_battery/
 └── idf_component.yml             # managed deps for this component only
 ```
 
-Same pattern in `cosmos_matter_common`: `include/factory_reset_task.h` → `cosmos_factory_reset_task.cpp`, `include/cosmos_matter_events.h` → `cosmos_matter_events.cpp`.
+Same pattern in `cosmos_matter_common`: `include/factory_reset_task.h` → `cosmos_factory_reset_task.cpp`, `include/cosmos_matter_events.h` → `cosmos_matter_events.cpp`, `include/cosmos_matter_ota.h` → `cosmos_matter_ota.cpp`.
 
 **Rules**
 
@@ -120,7 +120,8 @@ Same pattern in `cosmos_matter_common`: `include/factory_reset_task.h` → `cosm
 Extract only what is **identical** across apps first:
 
 - Factory reset button handling
-- Shared `app_event_cb` fabric / commissioning window logic
+- Matter OTA requestor configuration (`cosmos_matter_ota_configure`)
+- Shared `app_event_cb` fabric / commissioning window / OTA state logging
 - NVS init helper (if duplicated)
 
 Keep in each app:

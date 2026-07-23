@@ -26,8 +26,8 @@ if(NOT DEFINED ENV{ESP_MATTER_DEVICE_PATH})
     endif()
 endif(NOT DEFINED ENV{ESP_MATTER_DEVICE_PATH})
 
-set(PROJECT_VER "1.0")
-set(PROJECT_VER_NUMBER 1)
+set(PROJECT_VER "1.1")
+set(PROJECT_VER_NUMBER 2)
 
 set(ESP_MATTER_PATH $ENV{ESP_MATTER_PATH})
 set(MATTER_SDK_PATH ${ESP_MATTER_PATH}/connectedhomeip/connectedhomeip)
@@ -50,7 +50,7 @@ project(iotBasicBinarySensor)
 # WARNING: This is just an example for using key for decrypting the encrypted OTA image
 # Please do not use it as is.
 if(CONFIG_ENABLE_ENCRYPTED_OTA)
-    target_add_binary_data(light.elf "esp_image_encryption_key.pem" TEXT)
+    target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "esp_image_encryption_key.pem" TEXT)
 endif()
 
 if(CONFIG_IDF_TARGET_ESP32C2)

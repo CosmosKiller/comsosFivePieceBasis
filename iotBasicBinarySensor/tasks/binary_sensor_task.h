@@ -43,4 +43,13 @@ esp_err_t binary_sensor_attribute_update(binary_sensor_task_handle_t driver_hand
  */
 esp_err_t binary_sensor_task_init(binary_sensor_config_t *pConfig);
 
+/**
+ * @brief Enable GPIO interrupts and publish the initial sensor state.
+ *
+ * Call after esp_matter::start() so Matter callbacks run on the CHIP thread.
+ *
+ * @return ESP_OK on success, or an error code.
+ */
+esp_err_t binary_sensor_task_start(void);
+
 #endif /* BINARY_SENSOR_TASK_H_ */

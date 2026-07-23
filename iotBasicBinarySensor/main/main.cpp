@@ -18,13 +18,13 @@
 #include <app-common/zap-generated/attributes/Accessors.h>
 #include <app/clusters/boolean-state-server/CodegenIntegration.h>
 #include <esp_matter.h>
-#include <esp_matter_ota.h>
 
 // Include project libraries
 #include <binary_sensor_task.h>
 #include <evt_service_task.h>
 #include <cosmos_battery.h>
 #include <cosmos_battery_matter.h>
+#include <cosmos_matter_ota.h>
 #include <factory_reset_task.h>
 #include <matter_task.h>
 
@@ -135,17 +135,22 @@ extern "C" void app_main()
     // Initialize event service
     evt_service_init();
 
-    /*     err = esp_matter_ota_requestor_init();
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG, "OTA requestor initialization failed: %d", err);
-            return;
-        }
-        esp_matter_ota_requestor_start(); */
-
     // Start Matter stack (this starts transports, commissioning, etc.)
     err = esp_matter::start(app_event_cb);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "esp_matter::start failed: %d", err);
+        return;
+    }
+
+    err = cosmos_matter_ota_configure();
+    if (err != ESP_OK && err != ESP_ERR_NOT_SUPPORTED) {
+        ESP_LOGE(TAG, "cosmos_matter_ota_configure failed: %d", err);
+        return;
+    }
+
+    err = binary_sensor_task_start();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "binary_sensor_task_start failed: %d", err);
         return;
     }
 

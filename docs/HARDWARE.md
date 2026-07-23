@@ -12,7 +12,7 @@ Per-device GPIO and module status. Update this file when pinouts change; keep `T
 | Digital out ×3 | R/G/B LEDs (with buzzer on R/G channels per design) |
 | Analog in ×1 | Battery monitoring — **A0 / GPIO0** (ADC1_CH0) |
 
-**Modules:** Matter, sensor driver, OTA — battery via `cosmos_battery`.
+**Modules:** Matter, sensor driver, OTA via `cosmos_matter_ota` — battery via `cosmos_battery`.
 
 ## iotDualModeBtn
 
@@ -24,7 +24,7 @@ Per-device GPIO and module status. Update this file when pinouts change; keep `T
 | Digital out ×3 | RGB LED |
 | Analog in ×1 | Battery monitoring — **A0 / GPIO0** (ADC1_CH0) |
 
-**Modules:** Matter, button driver — battery via `cosmos_battery`; OTA open.
+**Modules:** Matter, button driver — battery via `cosmos_battery`; OTA via `cosmos_matter_ota`.
 
 ## iotEnvironmentalSensor
 
@@ -38,6 +38,6 @@ Per-device GPIO and module status. Update this file when pinouts change; keep `T
 | A6/GPIO6 | Battery monitoring (ADC1_CH6) |
 | Optional | RGB LED outputs |
 
-**Modules:** Matter, BME680, OTA done — battery via `cosmos_battery`; display, custom QR open.
+**Modules:** Matter, BME680, OTA via `cosmos_matter_ota` — battery via `cosmos_battery`; display, custom QR open.
 
 > **Note:** Target is **esp32c5** (`sdkconfig.defaults`, CMake); run `idf.py set-target esp32c5` locally to regenerate `sdkconfig`.
