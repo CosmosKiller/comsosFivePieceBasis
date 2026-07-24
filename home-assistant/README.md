@@ -1,25 +1,11 @@
-# Home Assistant config snippets
+# Home Assistant — SKU packages (firmware monorepo)
 
-Drop-in packages for Cosmos Matter devices. Not loaded automatically — copy into your HA instance.
-
-## Install
-
-```bash
-# On your HA host (adjust path)
-cp packages/cosmos_binary_sensor.yaml /config/packages/
-```
-
-In `/config/configuration.yaml`:
-
-```yaml
-homeassistant:
-  packages: !include_dir_named packages
-```
-
-Edit entity ids inside the package after commissioning each device. See [docs/HA.md](../docs/HA.md).
-
-## Contents
+This folder holds **device/SKU-specific** HA YAML that ships with firmware documentation.
 
 | File | Purpose |
 |------|---------|
-| `packages/cosmos_binary_sensor.yaml` | Low-battery notify + recovery latch helpers |
+| [packages/cosmos_binary_sensor.yaml](packages/cosmos_binary_sensor.yaml) | Low-battery notify + recovery latch for `iotBasicBinarySensor` |
+
+Copy into HA OS: `/config/packages/` and enable `packages: !include_dir_named packages` in `configuration.yaml`.
+
+**Commissioning, Pi field OTA, and fleet automation** live in the separate repo **[cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)** (install on Pi: [DEPLOY_TO_PI.md](https://github.com/CosmosKiller/cosmos-ha-field/blob/main/DEPLOY_TO_PI.md)).

@@ -125,17 +125,19 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 
 **Goal:** Match the “five piece” name and production readiness.
 
-**Next up:** manufacturing docs, remaining `docs/TESTING.md` hardware checklist, then apps #4/#5 or repo rename.
+**Next up:** manufacturing docs, hardware bring-up checklist, MVP soak, then apps #4/#5 or repo rename.
 
 
 | Task                                                                                          | Effort | Status |
 | --------------------------------------------------------------------------------------------- | ------ | ------ |
-| Battery / power management — `components/cosmos_battery`, Matter Power Source, HA low-battery package | L      | Done — MVP field data + OTA for SW tweaks; divider/BOM tuning in [HARDWARE.md](HARDWARE.md) |
+| Battery / power management — `components/cosmos_battery`, Matter Power Source, SKU HA YAML in `home-assistant/packages/` | L      | Done — MVP field tuning via OTA; divider/BOM in [HARDWARE.md](HARDWARE.md) |
 | Battery field tuning — sample interval, sleep/TX duty, divider accuracy, % curve thresholds   | M      | Deferred — learn from MVP runtime; ship SW changes via OTA |
 | OTA parity — shared `cosmos_matter_ota` in all three apps                                    | M      | Done   |
 | Manufacturing: document `mfg_tool_scripts/` flow or move under `tools/` with README           | M      | —      |
-| Hardware test checklist in `docs/TESTING.md` (commission, attribute read, factory reset, OTA) | M      | In progress — local chip-tool OTA in TESTING.md; HA OTA in HAOTA.md; HA battery packages in HA.md |
+| Hardware bring-up checklist (commission, attributes, factory reset, battery) in [HARDWARE.md](HARDWARE.md) | M      | In progress |
 | Add firmware apps #4 and #5 (or rename repo to match three SKUs)                              | L      | —      |
+
+**Moved to separate repo:** [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field) — HA commissioning, Pi field OTA, chip-tool OTA procedure, Tier 2/3 OTA planning.
 
 
 ---
@@ -158,13 +160,14 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 ```mermaid
 flowchart LR
   P4[Phase 4 CI] --> P5a[Phase 5 Battery]
-  P5a --> P5b[OTA parity + TESTING.md]
+  P5a --> P5b[Hardware checklist]
   P5b --> P5c[Apps 4 and 5]
 ```
 
-**Now:** Phase 5 — manufacturing docs, `docs/TESTING.md` hardware checklist, MVP soak on binary sensor (battery % + HA alerts).  
-**Then:** battery field tuning via OTA as needed; fourth/fifth firmware apps or repo rename.  
-**Done (Phase 5):** `cosmos_battery` + OTA parity + HA low-battery package ([HA.md](HA.md)).
+**Now:** Phase 5 — manufacturing docs, [HARDWARE.md](HARDWARE.md) bring-up checklist, MVP soak.  
+**Then:** battery field tuning via OTA; apps #4/#5 or repo rename.  
+**Done (Phase 5):** `cosmos_battery` + OTA parity + SKU HA YAML in `home-assistant/packages/`.  
+**Separate repo:** [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field) — HA + Pi OTA.
 
 ---
 
@@ -177,10 +180,11 @@ Copy into a GitHub issue or project board:
 - [x] Phase 2 complete
 - [x] Phase 3 complete
 - [x] Phase 4 complete
-- [x] Phase 5 — battery / power management (`components/cosmos_battery`, Power Source, HA package)
+- [x] Phase 5 — battery / power management (`components/cosmos_battery`, Power Source, SKU HA YAML)
 - [ ] Phase 5 — battery field tuning (divider/BOM, sample interval, sleep — MVP + OTA)
 - [x] Phase 5 — OTA parity (`components/cosmos_matter_common/cosmos_matter_ota`)
-- [ ] Phase 5 — manufacturing docs, `docs/TESTING.md` (local OTA done; HA commissioned; hardware checklist TBD)
+- [ ] Phase 5 — manufacturing docs, hardware bring-up checklist in [HARDWARE.md](HARDWARE.md)
 - [ ] Phase 5 — fourth/fifth device or rename repo
+- HA / Pi fleet — [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
 
 Update the **Status** section in the root README when major milestones land.

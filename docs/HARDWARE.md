@@ -144,7 +144,7 @@ Do not assign or reroute GPIOs differently from the table above. Target low-cost
 - [ ] Long-press factory reset clears fabric (GPIO9)
 - [ ] Battery percent updates in Matter Power Source cluster (endpoint 3)
 - [ ] LEDs match `evt_service` / panic tasks on GPIO21–23
-- [ ] HA low-battery automation installed — see [HA.md](HA.md) and [`home-assistant/`](../home-assistant/)
+- [ ] HA low-battery automation — copy [`home-assistant/packages/cosmos_binary_sensor.yaml`](../home-assistant/packages/cosmos_binary_sensor.yaml) to HA; fleet/OTA in [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
 
 ### Firmware modules
 

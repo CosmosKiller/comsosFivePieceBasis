@@ -70,11 +70,9 @@ cosmosFivePieceBasis/
 │   ├── BUILD.md
 │   ├── HARDWARE.md
 │   ├── REPO_LAYOUT.md        # Current vs target structure
-│   ├── TESTING.md            # OTA and hardware test procedures
-│   ├── HA.md                 # Home Assistant (battery alerts, commissioning)
-│   ├── HAOTA.md              # HA + DCL OTA (draft; merges into TESTING.md when validated)
-│   └── POLISH_PLAN.md        # Roadmap to tighten the repo
-├── home-assistant/           # Drop-in HA package YAML (copy to config/packages/)
+│   ├── POLISH_PLAN.md        # Roadmap to tighten the repo
+│   └── sdkconfig.defaults.matter-base
+├── home-assistant/           # SKU-only HA YAML (e.g. battery package per device)
 ├── iotBasicBinarySensor/     # Firmware app (ESP-IDF project root)
 ├── iotDualModeBtn/
 └── iotEnvironmentalSensor/
@@ -84,8 +82,8 @@ Long-term target layout (shared Matter glue, CI): [docs/REPO_LAYOUT.md](docs/REP
 
 Contributing (build, PR expectations): [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).  
 Code style (clang-format, naming, Doxygen): [docs/CODE_STYLE.md](docs/CODE_STYLE.md).  
-OTA and hardware testing: [docs/TESTING.md](docs/TESTING.md).  
-Home Assistant (battery alerts, packages): [docs/HA.md](docs/HA.md).
+SKU Home Assistant package: [home-assistant/packages/](home-assistant/packages/).  
+HA commissioning, Pi field OTA, chip-tool OTA: separate repo [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field).
 
 ## Code organization (per app)
 

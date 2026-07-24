@@ -6,7 +6,8 @@
 # After commissioning:
 #   - Replace sensor.cosmos_contact_battery with your battery entity id (Developer tools → States)
 #   - Replace notify.mobile_app_my_phone with your phone service (Developer tools → Services,
-#     filter "mobile_app", e.g. notify.mobile_app_pixel_8). See docs/HA.md.
+#     filter "mobile_app", e.g. notify.mobile_app_pixel_8).
+# HA commissioning / fleet OTA: https://github.com/CosmosKiller/cosmos-ha-field
 
 input_boolean:
   cosmos_contact_low_battery_notified:
