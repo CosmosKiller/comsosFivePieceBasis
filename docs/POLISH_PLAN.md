@@ -125,15 +125,16 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 
 **Goal:** Match the “five piece” name and production readiness.
 
-**Next up:** battery / power management (shared ADC + Matter Power Source cluster across all three apps — see [HARDWARE.md](HARDWARE.md) analog pins).
+**Next up:** manufacturing docs, remaining `docs/TESTING.md` hardware checklist, then apps #4/#5 or repo rename.
 
 
 | Task                                                                                          | Effort | Status |
 | --------------------------------------------------------------------------------------------- | ------ | ------ |
-| Battery / power management — ADC read, low-battery thresholds, Matter Power Source attributes | L      | In progress |
+| Battery / power management — `components/cosmos_battery`, Matter Power Source, HA low-battery package | L      | Done — MVP field data + OTA for SW tweaks; divider/BOM tuning in [HARDWARE.md](HARDWARE.md) |
+| Battery field tuning — sample interval, sleep/TX duty, divider accuracy, % curve thresholds   | M      | Deferred — learn from MVP runtime; ship SW changes via OTA |
 | OTA parity — shared `cosmos_matter_ota` in all three apps                                    | M      | Done   |
 | Manufacturing: document `mfg_tool_scripts/` flow or move under `tools/` with README           | M      | —      |
-| Hardware test checklist in `docs/TESTING.md` (commission, attribute read, factory reset, OTA) | M      | In progress — local chip-tool OTA in TESTING.md; HA OTA draft in HAOTA.md |
+| Hardware test checklist in `docs/TESTING.md` (commission, attribute read, factory reset, OTA) | M      | In progress — local chip-tool OTA in TESTING.md; HA OTA in HAOTA.md; HA battery packages in HA.md |
 | Add firmware apps #4 and #5 (or rename repo to match three SKUs)                              | L      | —      |
 
 
@@ -161,9 +162,9 @@ flowchart LR
   P5b --> P5c[Apps 4 and 5]
 ```
 
-**Now:** Phase 5 — battery / power management firmware (all three apps share analog battery input per [HARDWARE.md](HARDWARE.md)).  
-**Then:** OTA on dual-mode button, manufacturing docs, `docs/TESTING.md`.  
-**Later:** fourth/fifth firmware apps or repo rename to match three SKUs.
+**Now:** Phase 5 — manufacturing docs, `docs/TESTING.md` hardware checklist, MVP soak on binary sensor (battery % + HA alerts).  
+**Then:** battery field tuning via OTA as needed; fourth/fifth firmware apps or repo rename.  
+**Done (Phase 5):** `cosmos_battery` + OTA parity + HA low-battery package ([HA.md](HA.md)).
 
 ---
 
@@ -176,9 +177,10 @@ Copy into a GitHub issue or project board:
 - [x] Phase 2 complete
 - [x] Phase 3 complete
 - [x] Phase 4 complete
-- [ ] Phase 5 — battery / power management (`components/cosmos_battery`, in progress)
+- [x] Phase 5 — battery / power management (`components/cosmos_battery`, Power Source, HA package)
+- [ ] Phase 5 — battery field tuning (divider/BOM, sample interval, sleep — MVP + OTA)
 - [x] Phase 5 — OTA parity (`components/cosmos_matter_common/cosmos_matter_ota`)
-- [ ] Phase 5 — manufacturing docs, `docs/TESTING.md` (local OTA done; merge `HAOTA.md` after HA test; hardware checklist TBD)
+- [ ] Phase 5 — manufacturing docs, `docs/TESTING.md` (local OTA done; HA commissioned; hardware checklist TBD)
 - [ ] Phase 5 — fourth/fifth device or rename repo
 
 Update the **Status** section in the root README when major milestones land.

@@ -2,7 +2,8 @@
 
 Production-like Matter OTA via Home Assistant and DCL TestNet. **Work in progress** — merge into [TESTING.md](TESTING.md) after validation.
 
-Validate [local chip-tool OTA](TESTING.md#local-matter-ota-chip-tool--ota-provider) first.
+Validate [local chip-tool OTA](TESTING.md#local-matter-ota-chip-tool--ota-provider) first.  
+Battery alerts and other HA automations: [HA.md](HA.md).
 
 ## Prerequisites
 

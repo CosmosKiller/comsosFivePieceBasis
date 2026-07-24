@@ -71,8 +71,10 @@ cosmosFivePieceBasis/
 │   ├── HARDWARE.md
 │   ├── REPO_LAYOUT.md        # Current vs target structure
 │   ├── TESTING.md            # OTA and hardware test procedures
+│   ├── HA.md                 # Home Assistant (battery alerts, commissioning)
 │   ├── HAOTA.md              # HA + DCL OTA (draft; merges into TESTING.md when validated)
 │   └── POLISH_PLAN.md        # Roadmap to tighten the repo
+├── home-assistant/           # Drop-in HA package YAML (copy to config/packages/)
 ├── iotBasicBinarySensor/     # Firmware app (ESP-IDF project root)
 ├── iotDualModeBtn/
 └── iotEnvironmentalSensor/
@@ -82,7 +84,8 @@ Long-term target layout (shared Matter glue, CI): [docs/REPO_LAYOUT.md](docs/REP
 
 Contributing (build, PR expectations): [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).  
 Code style (clang-format, naming, Doxygen): [docs/CODE_STYLE.md](docs/CODE_STYLE.md).  
-OTA and hardware testing: [docs/TESTING.md](docs/TESTING.md).
+OTA and hardware testing: [docs/TESTING.md](docs/TESTING.md).  
+Home Assistant (battery alerts, packages): [docs/HA.md](docs/HA.md).
 
 ## Code organization (per app)
 
