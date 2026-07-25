@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 # app:target
 APPS=(
-    "iotBasicBinarySensor:esp32c6"
+    "iotDoorSensor:esp32c6"
     "iotDualModeBtn:esp32c6"
     "iotEnvironmentalSensor:esp32c5"
 )

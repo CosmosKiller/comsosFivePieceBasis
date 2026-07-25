@@ -19,7 +19,7 @@ if [[ -z "$CLANG_FORMAT" ]]; then
     exit 1
 fi
 
-APPS=(iotBasicBinarySensor iotDualModeBtn iotEnvironmentalSensor)
+APPS=(iotDoorSensor iotDualModeBtn iotEnvironmentalSensor)
 shopt -s nullglob
 
 for app in "${APPS[@]}"; do

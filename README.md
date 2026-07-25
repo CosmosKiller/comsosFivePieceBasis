@@ -5,7 +5,7 @@ Monorepo of ESP-IDF firmware applications for a small Matter device family. Each
 
 | Project                                             | Matter role                                      | Target board (see [docs/HARDWARE.md](docs/HARDWARE.md)) |
 | --------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------- |
-| [iotBasicBinarySensor](iotBasicBinarySensor/)     | Boolean state / alarm-style binary sensor        | Seeed XIAO ESP32-C6                                     |
+| [iotDoorSensor](iotDoorSensor/)     | Door / contact sensor        | Seeed XIAO ESP32-C6                                     |
 | [iotDualModeBtn](iotDualModeBtn/)                | Switch / button (press, multi-press, long-press) | Seeed XIAO ESP32-C6                                     |
 | [iotEnvironmentalSensor](iotEnvironmentalSensor/)| Environmental sensing (BME680)                   | Seeed XIAO ESP32-C5 (planned)                           |
 
@@ -32,7 +32,7 @@ export IDF_PATH=/path/to/esp-idf
 From any project directory:
 
 ```bash
-cd iotDualModeBtn   # or iotBasicBinarySensor / iotEnvironmentalSensor
+cd iotDualModeBtn   # or iotDoorSensor / iotEnvironmentalSensor
 idf.py set-target esp32c6   # if not already configured
 idf.py build flash monitor
 ```
@@ -74,7 +74,7 @@ cosmosFivePieceBasis/
 │   ├── POLISH_PLAN.md        # Roadmap to tighten the repo
 │   └── sdkconfig.defaults.matter-base
 ├── home-assistant/           # SKU-only HA YAML (e.g. battery package per device)
-├── iotBasicBinarySensor/     # Firmware app (ESP-IDF project root)
+├── iotDoorSensor/     # Firmware app (ESP-IDF project root)
 ├── iotDualModeBtn/
 └── iotEnvironmentalSensor/
 ```

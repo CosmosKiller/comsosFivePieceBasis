@@ -28,7 +28,7 @@ export IDF_PATH=/path/to/esp-idf
 
 | SKU                  | Firmware app             | Matter role                   | PID      | IDF target | Mfg script                    |
 | -------------------- | ------------------------ | ----------------------------- | -------- | ---------- | ----------------------------- |
-| Binary sensor        | `iotBasicBinarySensor`   | Contact / Boolean State       | `0x8001` | esp32c6    | `gen_binary_sensor.sh`        |
+| Door / contact sensor | `iotDoorSensor`          | Contact / Boolean State       | `0x8001` | esp32c6    | `gen_door_sensor.sh`          |
 | Dual-mode button     | `iotDualModeBtn`         | Switch (press / multi / long) | `0x8002` | esp32c6    | `gen_dual_mode_btn.sh`        |
 | Environmental sensor | `iotEnvironmentalSensor` | BME680 environmental          | `0x8003` | esp32c5    | `gen_environmental_sensor.sh` |
 
@@ -37,7 +37,7 @@ export IDF_PATH=/path/to/esp-idf
 
 Reserved for future SKUs: `0x8004`, `0x8005`.
 
-**Serial / label codes:** `BS`, `BTN`, `ENV` (e.g. `BETA007-BS-001`).
+**Serial / label codes:** `DOOR`, `BTN`, `ENV` (e.g. `BETA007-DOOR-001`).
 
 ---
 
@@ -70,7 +70,7 @@ The **RPi is not provisioned by `esp-matter-mfg-tool`**. It runs HA as the Matte
 For **N beta homes × 3 SKUs**, generate **3 batches of N** factory sets (not N×3 manual one-offs):
 
 ```bash
-./tools/mfg/gen_binary_sensor.sh 10
+./tools/mfg/gen_door_sensor.sh 10
 ./tools/mfg/gen_dual_mode_btn.sh 10
 ./tools/mfg/gen_environmental_sensor.sh 10
 ```
@@ -78,17 +78,17 @@ For **N beta homes × 3 SKUs**, generate **3 batches of N** factory sets (not N�
 Optional bundle prefix on a single unit:
 
 ```bash
-BUNDLE_ID=BETA007 ./tools/mfg/gen_binary_sensor.sh
+BUNDLE_ID=BETA007 ./tools/mfg/gen_door_sensor.sh
 ```
 
 ---
 
 ## Step 1 — Build firmware (once per release)
 
-### Binary sensor (C6)
+### Door / contact sensor (C6)
 
 ```bash
-cd iotBasicBinarySensor
+cd iotDoorSensor
 idf.py set-target esp32c6
 idf.py build
 ```
@@ -122,7 +122,7 @@ From repo root:
 
 ```bash
 # One unit (default)
-./tools/mfg/gen_binary_sensor.sh
+./tools/mfg/gen_door_sensor.sh
 
 # Ten unique units for ten beta homes
 ./tools/mfg/gen_dual_mode_btn.sh 10
@@ -157,7 +157,7 @@ export ESPPORT=/dev/ttyACM0
 
 # Custom batch outdir (all SKUs under one folder — your beta-batch-24-07-2026 layout):
 UNIT_BS=out/mfg/beta-batch-24-07-2026/fff2_8001/<uuid>
-./tools/mfg/flash_unit.sh iotBasicBinarySensor "${UNIT_BS}"
+./tools/mfg/flash_unit.sh iotDoorSensor "${UNIT_BS}"
 
 UNIT_BTN=out/mfg/beta-batch-24-07-2026/fff2_8002/<uuid>
 ./tools/mfg/flash_unit.sh iotDualModeBtn "${UNIT_BTN}"
@@ -166,7 +166,7 @@ UNIT_ENV=out/mfg/beta-batch-24-07-2026/fff2_8003/<uuid>
 ./tools/mfg/flash_unit.sh iotEnvironmentalSensor "${UNIT_ENV}"
 ```
 
-Default output (if you omit the custom outdir) uses `out/mfg/<sku>/fff2_<pid>/<uuid>/` — same **one** UUID level, e.g. `out/mfg/binary_sensor/fff2_8001/<uuid>/`.
+Default output (if you omit the custom outdir) uses `out/mfg/<sku>/fff2_<pid>/<uuid>/` — same **one** UUID level, e.g. `out/mfg/door_sensor/fff2_8001/<uuid>/`.
 
 The UUID appears twice in filenames (`<uuid>-partition.bin`) but there is **only one** UUID directory — not `<uuid>/<uuid>/`.
 
@@ -185,7 +185,7 @@ esptool.py --port $ESPPORT write_flash \
   0x3E0000 <unit>-partition.bin
 ```
 
-Partition table: `[partitions.csv](../iotBasicBinarySensor/partitions.csv)` (same layout in all three apps).
+Partition table: `[partitions.csv](../iotDoorSensor/partitions.csv)` (same layout in all three apps).
 
 ---
 

@@ -53,12 +53,12 @@ Shared defaults for **low-voltage, sensor-class, 2-layer** carriers across all S
 
 ---
 
-## iotBasicBinarySensor
+## iotDoorSensor
 
-**Firmware app:** `iotBasicBinarySensor/`  
+**Firmware app:** `iotDoorSensor/`  
 **Module:** [Seeed XIAO ESP32-C6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/)  
-**Matter (test):** VID **65521** (`0xFFF1`), PID **32768** (`0x8000`)  
-**Role:** Matter contact / leak-style binary sensor, status LEDs, optional panic/alarm outputs, battery reporting.
+**Matter (test):** VID **65522** (`0xFFF2`), PID **32769** (`0x8001`)  
+**Role:** Matter door/window contact sensor, status LEDs, optional panic/alarm outputs, battery reporting.
 
 ### GPIO map (must match firmware)
 
@@ -86,7 +86,7 @@ Copy into Flux when starting the carrier board (adjust board size, connector par
 > **Status:** Carrier PCB in progress in Flux.ai (Jul 2026) for user-test builds; prompt below matches validated bench prototype GPIO map.
 
 ```text
-Design a 2-layer carrier PCB for the "Cosmos iotBasicBinarySensor" — a compact Wi-Fi Matter door/window contact sensor.
+Design a 2-layer carrier PCB for the "Cosmos iotDoorSensor" — a compact Wi-Fi Matter door/window contact sensor.
 
 Core module:
 - Seeed XIAO ESP32-C6 (castellated module), mounted on the edge with USB accessible for flashing.
@@ -146,11 +146,11 @@ Do not assign or reroute GPIOs differently from the table above. Target low-cost
 - [x] Long-press factory reset clears fabric (GPIO9)
 - [x] Battery percent updates in Matter Power Source cluster (endpoint 3) and visible in Home Assistant
 - [x] LEDs match `evt_service` / panic tasks on GPIO21–23
-- [x] HA low-battery package — [`home-assistant/packages/cosmos_binary_sensor.yaml`](../home-assistant/packages/cosmos_binary_sensor.yaml) installed and notifying; fleet/OTA in [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
+- [x] HA low-battery package — [`home-assistant/packages/cosmos_door_sensor.yaml`](../home-assistant/packages/cosmos_door_sensor.yaml) installed and notifying; fleet/OTA in [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
 
 ### Firmware modules
 
-Matter, binary sensor driver, event service, panic/alarm outputs, OTA via `cosmos_matter_ota`, battery via `cosmos_battery`.
+Matter, contact sensor driver, event service, panic/alarm outputs, OTA via `cosmos_matter_ota`, battery via `cosmos_battery`.
 
 ---
 

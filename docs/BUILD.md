@@ -37,14 +37,14 @@ Each app ships **`sdkconfig.defaults`** in its project folder (loaded automatica
 
 | App | Board | `idf.py set-target` |
 |-----|-------|------------------------|
-| `iotBasicBinarySensor` | XIAO ESP32-C6 | `esp32c6` |
+| `iotDoorSensor` | XIAO ESP32-C6 | `esp32c6` |
 | `iotDualModeBtn` | XIAO ESP32-C6 | `esp32c6` |
 | `iotEnvironmentalSensor` | XIAO ESP32-C5 | `esp32c5` |
 
 Standard workflow inside a project directory:
 
 ```bash
-cd iotBasicBinarySensor   # or another app
+cd iotDoorSensor   # or another app
 export ESP_MATTER_PATH=/path/to/esp-matter
 . $IDF_PATH/export.sh
 idf.py set-target esp32c6    # esp32c5 for iotEnvironmentalSensor

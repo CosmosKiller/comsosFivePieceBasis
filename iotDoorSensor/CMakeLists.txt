@@ -45,7 +45,7 @@ set(EXTRA_COMPONENT_DIRS
     "${ESP_MATTER_PATH}/components"
 )
 
-project(iotBasicBinarySensor)
+project(iotDoorSensor)
 
 # WARNING: This is just an example for using key for decrypting the encrypted OTA image
 # Please do not use it as is.

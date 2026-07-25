@@ -3,7 +3,7 @@ name: cosmos-five-piece-basis
 description: >
   Monorepo of ESP-IDF firmware applications for a Matter device family.
   Contains three independent firmware projects targeting ESP32-C6/C5 chips
-  with Matter/Thread connectivity: binary sensor, dual-mode button, and
+  with Matter/Thread connectivity: door sensor, dual-mode button, and
   environmental sensor.
 version: 1.0.0
 
@@ -13,14 +13,14 @@ project:
 
 source:
   source_dirs:
-    - iotBasicBinarySensor/main
-    - iotBasicBinarySensor/tasks
+    - iotDoorSensor/main
+    - iotDoorSensor/tasks
     - iotDualModeBtn/main
     - iotDualModeBtn/tasks
     - iotEnvironmentalSensor/main
     - iotEnvironmentalSensor/tasks
   include_dirs:
-    - iotBasicBinarySensor/tasks
+    - iotDoorSensor/tasks
     - iotDualModeBtn/tasks
     - iotEnvironmentalSensor/tasks
   build_dir: build
@@ -30,7 +30,7 @@ discovery:
   provider: custom
   confidence: 0.95
   markers:
-    - iotBasicBinarySensor/CMakeLists.txt
+    - iotDoorSensor/CMakeLists.txt
     - iotDualModeBtn/CMakeLists.txt
     - iotEnvironmentalSensor/CMakeLists.txt
     - iotDualModeBtn/sdkconfig.defaults
@@ -44,24 +44,24 @@ capabilities:
     target_id: iotDualModeBtn
     environment: default
     targets:
-      iotBasicBinarySensor:
-        description: Boolean state / alarm-style binary sensor for Seeed XIAO ESP32-C6
+      iotDoorSensor:
+        description: Door/window contact sensor for Seeed XIAO ESP32-C6
         board: esp32c6
         actions:
           build:
             command: idf.py build
-            cwd: iotBasicBinarySensor
+            cwd: iotDoorSensor
             timeout_ms: 600000
           flash:
             command: idf.py flash
-            cwd: iotBasicBinarySensor
+            cwd: iotDoorSensor
             timeout_ms: 300000
           monitor:
             command: idf.py monitor
-            cwd: iotBasicBinarySensor
+            cwd: iotDoorSensor
           clean:
             command: idf.py fullclean
-            cwd: iotBasicBinarySensor
+            cwd: iotDoorSensor
       iotDualModeBtn:
         description: Switch / button (press, multi-press, long-press) for Seeed XIAO ESP32-C6
         board: esp32c6

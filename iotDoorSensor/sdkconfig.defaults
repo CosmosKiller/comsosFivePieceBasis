@@ -1,4 +1,4 @@
-# iotBasicBinarySensor — ESP32-C6, Wi-Fi Matter, contact sensor + alarm.
+# iotDoorSensor — ESP32-C6, Wi-Fi Matter, door/window contact sensor + alarm.
 # Fresh setup: idf.py set-target esp32c6 && idf.py build
 
 # Shared Matter build defaults (flash, BT, partition, OTA).
@@ -31,9 +31,8 @@ CONFIG_MBEDTLS_HKDF_C=y
 CONFIG_BUTTON_PERIOD_TIME_MS=20
 CONFIG_BUTTON_LONG_PRESS_TIME_MS=5000
 
-CONFIG_BINARY_SENSOR_TYPE_CONTACT=y
 
-# Binary sensor + alarm endpoints
+# Contact sensor + alarm endpoints
 CONFIG_SUPPORT_BOOLEAN_STATE_CLUSTER=y
 CONFIG_SUPPORT_ON_OFF_CLUSTER=y
 

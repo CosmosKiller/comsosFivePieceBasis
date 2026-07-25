@@ -1,6 +1,6 @@
-# Cosmos iotBasicBinarySensor — battery alerts (Matter Power Source)
+# Cosmos iotDoorSensor — battery alerts (Matter Power Source)
 #
-# Loaded as package "cosmos_binary_sensor" via !include_dir_named packages
+# Loaded as package "cosmos_door_sensor" via !include_dir_named packages
 # (filename = package name — do not add an extra top-level wrapper key).
 #
 # After commissioning:
@@ -11,12 +11,12 @@
 
 input_boolean:
   cosmos_contact_low_battery_notified:
-    name: Cosmos contact — low battery already notified
+    name: Cosmos door sensor — low battery already notified
     icon: mdi:battery-alert
 
 automation:
   - id: cosmos_contact_low_battery
-    alias: "Cosmos contact — low battery warning"
+    alias: "Cosmos door sensor — low battery warning"
     description: Notify when Matter battery % stays below threshold
     triggers:
       - trigger: numeric_state
@@ -47,7 +47,7 @@ automation:
             priority: high
 
   - id: cosmos_contact_battery_recovered
-    alias: "Cosmos contact — battery recovered (reset latch)"
+    alias: "Cosmos door sensor — battery recovered (reset latch)"
     description: Allow low-battery alert again after charge or recovery
     triggers:
       - trigger: numeric_state

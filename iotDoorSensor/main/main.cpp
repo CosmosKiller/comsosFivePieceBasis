@@ -1,7 +1,7 @@
 /**
- * @file main.c
+ * @file main.cpp
  * @author Marcel Nahir Samur (mnsamur2014@gmail.com)
- * @brief Matter binary-sensor app: contact/leak endpoint, alarm output, event service, and stack start.
+ * @brief Matter door/window contact sensor: contact endpoint, alarm output, event service, and stack start.
  * @version 0.1
  * @date 2024-06-09
  *
@@ -68,8 +68,6 @@ extern "C" void app_main()
         return;
     }
 
-#if CONFIG_BINARY_SENSOR_TYPE_CONTACT
-    // Add binary sensor endpoint
     contact_sensor::config_t contact_sensor_config;
     endpoint_t *contact_sensor_ep = contact_sensor::create(node, &contact_sensor_config, ENDPOINT_FLAG_NONE, NULL);
     if (!contact_sensor_ep) {
@@ -77,30 +75,12 @@ extern "C" void app_main()
         return;
     }
 
-    // Initialize binary sensor driver
     static binary_sensor_config_t binary_sensor_config = {
         .cb = binary_sensor_notification,
         .endpoint_id = endpoint::get_id(contact_sensor_ep),
     };
-#endif
 
-#if BINARY_SENSOR_TYPE_WATER_LEAK
-    // Add binary sensor endpoint
-    water_leak_detector::config_t water_leak_sensor_config;
-    endpoint_t *water_leak_sensor_ep = water_leak_detector::create(node, &water_leak_sensor_config, ENDPOINT_FLAG_NONE, NULL);
-    if (!water_leak_sensor_ep) {
-        ESP_LOGE(TAG, "Failed to create water leak sensor endpoint");
-        return;
-    }
-
-    // Initialize binary sensor driver
-    static binary_sensor_config_t binary_sensor_config = {
-        .cb = binary_sensor_notification,
-        .endpoint_id = endpoint::get_id(water_leak_sensor_ep),
-    };
-#endif
-
-    ESP_LOGI(TAG, "Binary sensor endpoint created with ID: %d", binary_sensor_config.endpoint_id);
+    ESP_LOGI(TAG, "Contact sensor endpoint created with ID: %d", binary_sensor_config.endpoint_id);
 
     err = binary_sensor_task_init(&binary_sensor_config);
     if (err != ESP_OK) {
@@ -168,7 +148,7 @@ static void binary_sensor_notification(uint16_t endpoint_id, bool triggered, voi
 {
     // schedule the attribute update so that we can report it from matter thread
     chip::DeviceLayer::SystemLayer().ScheduleLambda([endpoint_id, triggered]() {
-        ESP_LOGI(TAG, "Binary sensor state changed: endpoint_id=%d, triggered=%d", endpoint_id, triggered);
+        ESP_LOGI(TAG, "Contact sensor state changed: endpoint_id=%d, triggered=%d", endpoint_id, triggered);
 
         auto booleanState = BooleanState::FindClusterOnEndpoint(endpoint_id);
         VerifyOrReturn(booleanState != nullptr);

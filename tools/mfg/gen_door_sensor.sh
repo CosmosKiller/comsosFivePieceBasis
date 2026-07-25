@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
-# Generate factory partition + onboarding codes for iotBasicBinarySensor.
-# PID 0x8001 | ESP32-C6 | Matter contact / binary sensor
+# Generate factory partition + onboarding codes for iotDoorSensor.
+# PID 0x8001 | ESP32-C6 | Matter door/window contact sensor
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=common.sh
 source "${SCRIPT_DIR}/common.sh"
 
-SKU_KEY="binary_sensor"
-SKU_CODE="BS"
-SKU_NAME="iotBasicBinarySensor"
-CN_PREFIX="cosmos-bs"
+SKU_KEY="door_sensor"
+SKU_CODE="DOOR"
+SKU_NAME="iotDoorSensor"
+CN_PREFIX="cosmos-door"
 PID="0x8001"
-PRODUCT_NAME="iotBasicBinarySensor"
+PRODUCT_NAME="iotDoorSensor"
 HW_VER="0"
-HW_VER_STR="bs-1.0-beta.1"
+HW_VER_STR="door-1.0-beta.1"
 IDF_TARGET="esp32c6"
 
 PAI_KEY="${ATT}/Chip-Test-PAI-FFF2-8001-Key.pem"

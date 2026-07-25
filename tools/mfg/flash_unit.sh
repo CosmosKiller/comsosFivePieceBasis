@@ -5,11 +5,11 @@
 #   ./flash_unit.sh <app_dir> <mfg_unit_dir> [serial_port]
 #
 # Example:
-#   ./flash_unit.sh iotBasicBinarySensor \
+#   ./flash_unit.sh iotDoorSensor \
 #     out/mfg/beta-batch-24-07-2026/fff2_8001/<uuid> /dev/ttyACM0
 set -euo pipefail
 
-APP_DIR="${1:?app dir (e.g. iotBasicBinarySensor)}"
+APP_DIR="${1:?app dir (e.g. iotDoorSensor)}"
 MFG_UNIT_DIR="${2:?mfg output dir for this unit (contains *-partition.bin or *_fctry.bin)}"
 PORT="${3:-${ESPPORT:-}}"
 

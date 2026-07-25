@@ -4,7 +4,7 @@ This folder holds **device/SKU-specific** HA YAML that ships with firmware docum
 
 | File | Purpose |
 |------|---------|
-| [packages/cosmos_binary_sensor.yaml](packages/cosmos_binary_sensor.yaml) | Low-battery notify + recovery latch for `iotBasicBinarySensor` |
+| [packages/cosmos_door_sensor.yaml](packages/cosmos_door_sensor.yaml) | Low-battery notify + recovery latch for `iotDoorSensor` |
 
 Copy into HA OS: `/config/packages/` and enable `packages: !include_dir_named packages` in `configuration.yaml`.
 

@@ -7,7 +7,7 @@ cosmosFivePieceBasis/
 ├── README.md
 ├── LICENSE
 ├── docs/                          # shared docs (BUILD, HARDWARE, POLISH_PLAN, …)
-├── iotBasicBinarySensor/
+├── iotDoorSensor/
 │   ├── main/          (.cpp/.c sources + CMakeLists)
 │   ├── tasks/         (headers only)
 │   ├── build/         (generated, gitignored)
@@ -54,7 +54,7 @@ cosmosFivePieceBasis/
 ├── components/                    # ESP-IDF shared components
 │   ├── cosmos_matter_common/      # factory reset + Matter event helpers
 │   └── cosmos_battery/            # ADC sampling + Matter Power Source endpoint
-├── iotBasicBinarySensor/          # thin apps: main + device-specific tasks only
+├── iotDoorSensor/          # thin apps: main + device-specific tasks only
 ├── iotDualModeBtn/
 ├── iotEnvironmentalSensor/
 ├── tools/
