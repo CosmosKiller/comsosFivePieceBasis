@@ -22,6 +22,8 @@ jobs:
           - app: iotEnvironmentalSensor
             target: esp32c5
             preview: true
+          - app: iotBedsideLamp
+            target: esp32c6
     steps:
       - name: Checkout
         uses: actions/checkout@v4

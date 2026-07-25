@@ -1,0 +1,23 @@
+menu "Bedside Lamp"
+
+    config BEDSIDE_LAMP_LED_GPIO
+        int "WS2812 data GPIO"
+        default 8
+        help
+            GPIO for the addressable LED data line (DevKitC-1 MVP: GPIO8).
+
+    config BEDSIDE_LAMP_USER_BUTTON_GPIO
+        int "User button GPIO"
+        default 20
+        help
+            Dedicated user button (toggle / scene cycle). Not used for factory reset.
+
+    config BEDSIDE_LAMP_USER_LONG_PRESS_MS
+        int "User button long-press time (ms) for scene cycle"
+        default 1500
+        range 500 4000
+        help
+            Long press on the user button cycles presets. Factory reset uses the
+            global BUTTON_LONG_PRESS_TIME_MS on a separate GPIO.
+
+endmenu

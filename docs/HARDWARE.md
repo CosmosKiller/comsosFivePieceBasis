@@ -154,6 +154,52 @@ Matter, contact sensor driver, event service, panic/alarm outputs, OTA via `cosm
 
 ---
 
+## iotBedsideLamp (SKU 4)
+
+**MVP board:** [ESP32-C6-DevKitC-1](https://docs.espressif.com/projects/esp-idf/en/latest/esp32c6/hw-reference/esp32c6/user-guide-devkitm-1.html) (bench bring-up)  
+**Target board:** [Seeed XIAO ESP32-C6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/) on custom carrier (Flux PCB later)
+
+**Matter role:** Extended color light (On/Off, brightness, color).  
+**PID (test):** `0x8004` — see [MANUFACTURING.md](MANUFACTURING.md).
+
+### Power (target product)
+
+| Source | Role |
+|--------|------|
+| **5 V USB** (USB-C on carrier) | Primary supply while at bedside; charges battery |
+| **Li-ion pack (TBD capacity)** | Portable use — carry lamp outside without an outlet |
+
+Use shared **`cosmos_battery`** for Matter Power Source when battery sense is wired (divider + ADC pin TBD on carrier). USB-only bench tests on DevKit defer battery reporting until XIAO carrier.
+
+### Controls — two buttons (target + MVP habit)
+
+| Button | GPIO (MVP DevKit) | Function |
+|--------|-------------------|----------|
+| **User** | **GPIO20** (external tact) | Single click: toggle on/off; double-click or long press (~1.5 s): cycle preset |
+| **Factory reset** | **GPIO9** (BOOT button) | Long press ≥ 5 s → Matter factory reset |
+
+Do **not** reuse the user button for factory reset — avoids accidental decommissioning during normal use.
+
+### MVP — DevKitC-1 bench setup
+
+| Signal | DevKit (now) | Target carrier (later) |
+|--------|--------------|-------------------------|
+| Addressable LED data | **GPIO8** — **1× WS2812** (RMT) | TBD GPIO — ring/strip (8–24 LEDs) |
+| User button | **GPIO20** | Dedicated user tact |
+| Factory reset | **GPIO9** (BOOT) | Dedicated reset tact |
+| Power | USB from DevKit | 5 V USB + battery |
+
+Build with `ESP_MATTER_DEVICE_PATH=$ESP_MATTER_PATH/device_hal/device/esp32c6_devkit_c`.  
+Override GPIO via `idf.py menuconfig` → **Bedside Lamp**, or a future `sdkconfig.defaults.carrier` fragment for XIAO + PCB.
+
+### Firmware modules
+
+Matter extended color light, `lamp_task` (Matter → WS2812), `led_effects_task` (presets), `user_button_task`, OTA via `cosmos_matter_ota`, factory reset via `cosmos_matter_common`.
+
+*Flux prompt and BOM — TBD when DevKit MVP is validated.*
+
+---
+
 ## iotDualModeBtn
 
 **Board:** [Seeed XIAO ESP32-C6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/)

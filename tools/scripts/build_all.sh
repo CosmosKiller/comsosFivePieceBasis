@@ -9,6 +9,7 @@ APPS=(
     "iotDoorSensor:esp32c6"
     "iotDualModeBtn:esp32c6"
     "iotEnvironmentalSensor:esp32c5"
+    "iotBedsideLamp:esp32c6"
 )
 
 if [[ -z "${ESP_MATTER_PATH:-}" ]]; then

@@ -31,13 +31,14 @@ export IDF_PATH=/path/to/esp-idf
 | Door / contact sensor | `iotDoorSensor`          | Contact / Boolean State       | `0x8001` | esp32c6    | `gen_door_sensor.sh`          |
 | Dual-mode button     | `iotDualModeBtn`         | Switch (press / multi / long) | `0x8002` | esp32c6    | `gen_dual_mode_btn.sh`        |
 | Environmental sensor | `iotEnvironmentalSensor` | BME680 environmental          | `0x8003` | esp32c5    | `gen_environmental_sensor.sh` |
+| Bedside lamp         | `iotBedsideLamp`         | Extended color light          | `0x8004` | esp32c6    | `gen_bedside_lamp.sh`         |
 
 
 **Vendor ID:** `0xFFF2` (Espressif **Chip-Test-** credentials — closed beta / lab only).
 
-Reserved for future SKUs: `0x8004`, `0x8005`.
+Reserved for future SKUs: `0x8005`.
 
-**Serial / label codes:** `DOOR`, `BTN`, `ENV` (e.g. `BETA007-DOOR-001`).
+**Serial / label codes:** `DOOR`, `BTN`, `ENV`, `LAMP` (e.g. `BETA007-LAMP-001`).
 
 ---
 
