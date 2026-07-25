@@ -25,7 +25,7 @@ export IDF_PATH=/path/to/esp-idf
 . $IDF_PATH/export.sh
 ```
 
-- Matter development credentials / factory data as required by your commissioning flow ([docs/BUILD.md](docs/BUILD.md#matter-certificates))
+- Matter development credentials / factory data: [docs/MANUFACTURING.md](docs/MANUFACTURING.md)
 
 ## Quick build
 
@@ -69,6 +69,7 @@ cosmosFivePieceBasis/
 ├── docs/                     # Shared documentation
 │   ├── BUILD.md
 │   ├── HARDWARE.md
+│   ├── MANUFACTURING.md
 │   ├── REPO_LAYOUT.md        # Current vs target structure
 │   ├── POLISH_PLAN.md        # Roadmap to tighten the repo
 │   └── sdkconfig.defaults.matter-base

@@ -12,7 +12,6 @@ cosmosFivePieceBasis/
 │   ├── tasks/         (headers only)
 │   ├── build/         (generated, gitignored)
 │   ├── managed_components/
-│   ├── mfg_tool_scripts/  (local, gitignored)
 │   └── To-Do.MD       (local checklist, gitignored)
 ├── iotDualModeBtn/
 │   └── (same pattern; sdkconfig.defaults* for C6)
@@ -58,9 +57,10 @@ cosmosFivePieceBasis/
 ├── iotBasicBinarySensor/          # thin apps: main + device-specific tasks only
 ├── iotDualModeBtn/
 ├── iotEnvironmentalSensor/
-└── tools/                         # optional
-    └── scripts/
-        └── build_all.sh
+├── tools/
+│   ├── mfg/               # esp-matter-mfg-tool wrappers (see docs/MANUFACTURING.md)
+│   └── scripts/
+│       └── build_all.sh
 ```
 
 ### Per-app layout (target)

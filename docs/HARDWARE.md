@@ -83,6 +83,8 @@ Unused in current firmware (available for carrier features): D1, D2, D6–D8, D1
 
 Copy into Flux when starting the carrier board (adjust board size, connector part numbers, and cell holder to taste):
 
+> **Status:** Carrier PCB in progress in Flux.ai (Jul 2026) for user-test builds; prompt below matches validated bench prototype GPIO map.
+
 ```text
 Design a 2-layer carrier PCB for the "Cosmos iotBasicBinarySensor" — a compact Wi-Fi Matter door/window contact sensor.
 
@@ -137,14 +139,14 @@ Do not assign or reroute GPIOs differently from the table above. Target low-cost
 | — | — | M2 standoffs / screws | Enclosure-dependent |
 | — | — | Enclosure, magnet (for reed) | Mechanical; not on PCB BOM |
 
-**Bring-up checklist**
+**Bring-up checklist** — prototype validated 2026-07 (XIAO ESP32-C6 bench carrier; contact input exercised with a **latching toggle** in place of reed for Boolean State testing).
 
-- [ ] Divider ratio verified (100 kΩ / 100 kΩ → ~half cell voltage at A0)
-- [ ] Reed open/closed toggles Matter Boolean State (endpoint 1)
-- [ ] Long-press factory reset clears fabric (GPIO9)
-- [ ] Battery percent updates in Matter Power Source cluster (endpoint 3)
-- [ ] LEDs match `evt_service` / panic tasks on GPIO21–23
-- [ ] HA low-battery automation — copy [`home-assistant/packages/cosmos_binary_sensor.yaml`](../home-assistant/packages/cosmos_binary_sensor.yaml) to HA; fleet/OTA in [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
+- [x] Divider ratio verified (100 kΩ / 100 kΩ → plausible cell % in HA; fine-tune divider/thresholds after MVP soak if needed)
+- [x] Contact input toggles Matter Boolean State (endpoint 1) — latching switch stand-in for reed; replace with reed + magnet on production carrier
+- [x] Long-press factory reset clears fabric (GPIO9)
+- [x] Battery percent updates in Matter Power Source cluster (endpoint 3) and visible in Home Assistant
+- [x] LEDs match `evt_service` / panic tasks on GPIO21–23
+- [x] HA low-battery package — [`home-assistant/packages/cosmos_binary_sensor.yaml`](../home-assistant/packages/cosmos_binary_sensor.yaml) installed and notifying; fleet/OTA in [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
 
 ### Firmware modules
 

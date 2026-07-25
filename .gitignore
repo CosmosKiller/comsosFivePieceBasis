@@ -11,7 +11,6 @@ sdkconfig.old
 .vscode/
 
 # Build directories
-mfg_tool_scripts
 out
 build
 managed_components

@@ -113,8 +113,7 @@ ESP32-C5 is still a **preview** target in ESP-IDF 5.4 — append `--preview` to 
 ## Matter certificates
 
 - [How to Secure Matter Certs](https://mattercoder.com/codelabs/how-to-secure-matter-certs/?index=..%2F..index#5) (Matter Coder codelab)
-
-Manufacturing scripts for the binary sensor live under `iotBasicBinarySensor/mfg_tool_scripts/` (gitignored; local factory tooling only).
+- Factory partition, QR codes, beta bundle flashing: [MANUFACTURING.md](MANUFACTURING.md) and [`tools/mfg/`](../tools/mfg/)
 
 ## OTA images
 

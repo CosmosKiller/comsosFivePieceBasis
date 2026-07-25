@@ -125,16 +125,18 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 
 **Goal:** Match the “five piece” name and production readiness.
 
-**Next up:** manufacturing docs, hardware bring-up checklist, MVP soak, then apps #4/#5 or repo rename.
+**Next up:** Flux carrier PCB (Flux.ai) → user-test units → flash/ship (MANUFACTURING Steps 3–4); MVP soak (battery tuning only if field data warrants).
+
+**In flight (Jul 2026):** Binary sensor MVP deployed and **soaking** on battery; carrier PCB layout in **Flux.ai**; beta factory data generated (`out/mfg/beta-batch-24-07-2026`, 10× per SKU).
 
 
 | Task                                                                                          | Effort | Status |
 | --------------------------------------------------------------------------------------------- | ------ | ------ |
 | Battery / power management — `components/cosmos_battery`, Matter Power Source, SKU HA YAML in `home-assistant/packages/` | L      | Done — MVP field tuning via OTA; divider/BOM in [HARDWARE.md](HARDWARE.md) |
-| Battery field tuning — sample interval, sleep/TX duty, divider accuracy, % curve thresholds   | M      | Deferred — learn from MVP runtime; ship SW changes via OTA |
+| Battery field tuning — sample interval, sleep/TX duty, divider accuracy, % curve thresholds   | M      | Soaking — revisit via OTA only if MVP data shows need |
 | OTA parity — shared `cosmos_matter_ota` in all three apps                                    | M      | Done   |
-| Manufacturing: document `mfg_tool_scripts/` flow or move under `tools/` with README           | M      | —      |
-| Hardware bring-up checklist (commission, attributes, factory reset, battery) in [HARDWARE.md](HARDWARE.md) | M      | In progress |
+| Manufacturing: [MANUFACTURING.md](MANUFACTURING.md) + [`tools/mfg/`](../tools/mfg/) per-SKU scripts | M      | Done — Steps 1–2 validated (Jul 2026 beta batch); Steps 3–4 (flash/ship) after PCB manufacture |
+| Hardware bring-up checklist (commission, attributes, factory reset, battery) in [HARDWARE.md](HARDWARE.md) | M      | Done — binary sensor prototype validated Jul 2026 |
 | Add firmware apps #4 and #5 (or rename repo to match three SKUs)                              | L      | —      |
 
 **Moved to separate repo:** [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field) — HA commissioning, Pi field OTA, chip-tool OTA procedure, Tier 2/3 OTA planning.
@@ -164,9 +166,9 @@ flowchart LR
   P5b --> P5c[Apps 4 and 5]
 ```
 
-**Now:** Phase 5 — manufacturing docs, [HARDWARE.md](HARDWARE.md) bring-up checklist, MVP soak.  
-**Then:** battery field tuning via OTA; apps #4/#5 or repo rename.  
-**Done (Phase 5):** `cosmos_battery` + OTA parity + SKU HA YAML in `home-assistant/packages/`.  
+**Now:** Phase 5 — MVP soak; Flux PCB → flash/label/ship per [MANUFACTURING.md](MANUFACTURING.md) Steps 3–4.  
+**Then:** apps #4/#5 or repo rename.  
+**Done (Phase 5):** `cosmos_battery` + OTA parity + SKU HA YAML + manufacturing docs (`tools/mfg/`, beta batch factory data).  
 **Separate repo:** [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field) — HA + Pi OTA.
 
 ---
@@ -183,7 +185,8 @@ Copy into a GitHub issue or project board:
 - [x] Phase 5 — battery / power management (`components/cosmos_battery`, Power Source, SKU HA YAML)
 - [ ] Phase 5 — battery field tuning (divider/BOM, sample interval, sleep — MVP + OTA)
 - [x] Phase 5 — OTA parity (`components/cosmos_matter_common/cosmos_matter_ota`)
-- [ ] Phase 5 — manufacturing docs, hardware bring-up checklist in [HARDWARE.md](HARDWARE.md)
+- [x] Phase 5 — hardware bring-up checklist ([HARDWARE.md](HARDWARE.md) — binary sensor prototype)
+- [x] Phase 5 — manufacturing docs ([MANUFACTURING.md](MANUFACTURING.md), `tools/mfg/`; Steps 1–2 done, 3–4 after PCB)
 - [ ] Phase 5 — fourth/fifth device or rename repo
 - HA / Pi fleet — [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
 
