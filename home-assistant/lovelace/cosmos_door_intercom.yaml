@@ -59,6 +59,9 @@ cards:
       - entity: binary_sensor.cosmos_door_intercom_tamper # TODO: contact / Boolean State
         name: Tamper (mount open)
         icon: mdi:shield-alert
+      - entity: switch.cosmos_door_intercom_siren # TODO: Matter mounted OnOff (siren latch)
+        name: Siren / alarm (Off = silence)
+        icon: mdi:alarm-bell
       - entity: input_boolean.cosmos_door_intercom_auto_stream
         name: Auto-enable on ring / motion
       - entity: input_number.cosmos_door_intercom_stream_timeout_min
@@ -82,3 +85,11 @@ cards:
           service: switch.turn_off
           target:
             entity_id: switch.cosmos_door_intercom # TODO
+      - type: button
+        name: Silence siren
+        icon: mdi:bell-off-outline
+        tap_action:
+          action: call-service
+          service: switch.turn_off
+          target:
+            entity_id: switch.cosmos_door_intercom_siren # TODO

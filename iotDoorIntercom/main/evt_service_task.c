@@ -5,6 +5,7 @@
 
 #include <evt_service_task.h>
 #include <http_stream_task.h>
+#include <panic_alarm_task.h>
 
 #define EVT_QUEUE_SIZE 32
 
@@ -62,13 +63,24 @@ static void evt_service_task_handler(void *pArg)
 
             case EVT_SOURCE_PANIC:
                 if (evt.type == EVT_TYPE_TRIGGERED) {
-                    /* Tamper open: Matter contact_sensor reports via Boolean State; enable stream. */
+                    /* Tamper open: stream + status LED + latched siren (HA OnOff clears). */
                     ESP_LOGE(TAG, "TAMPER open — mount break / unit removed");
                     gpio_set_level(LED_PIN, 1);
                     http_stream_task_service_enabled(true);
-                    /* Later: local siren GPIO + optional Matter alarm. */
+                    panic_alarm_task_init();
                 } else if (evt.type == EVT_TYPE_CLEARED) {
-                    ESP_LOGW(TAG, "Tamper cleared — unit seated");
+                    /* Remount / charging unmount settle — do not silence siren. */
+                    ESP_LOGW(TAG, "Tamper cleared — unit seated (siren stays latched until HA clears)");
+                }
+                break;
+
+            case EVT_SOURCE_ALARM:
+                if (evt.type == EVT_TYPE_TRIGGERED) {
+                    ESP_LOGW(TAG, "Alarm OnOff ON — panic alarm start");
+                    panic_alarm_task_init();
+                } else if (evt.type == EVT_TYPE_CLEARED) {
+                    ESP_LOGI(TAG, "Alarm OnOff OFF — panic alarm clear");
+                    panic_alarm_task_deinit();
                 }
                 break;
 

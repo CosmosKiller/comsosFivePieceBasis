@@ -48,7 +48,7 @@ CONFIG_BUTTON_PERIOD_TIME_MS=20
 CONFIG_BUTTON_LONG_PRESS_TIME_MS=5000
 
 
-# Door intercom: OnOff gate, PIR occupancy, generic_switch doorbell, tamper contact
+# Door intercom: OnOff gate, PIR, doorbell, tamper contact, siren OnOff (GPIO4)
 CONFIG_SUPPORT_BOOLEAN_STATE_CLUSTER=y
 CONFIG_SUPPORT_ON_OFF_CLUSTER=y
 CONFIG_SUPPORT_OCCUPANCY_SENSING_CLUSTER=y

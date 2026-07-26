@@ -150,7 +150,7 @@ SKU 5 MVP (Matter + event-gated MJPEG + OTA) is **done**. This phase hardens the
 | Task | Effort | Status |
 |------|--------|--------|
 | Drop door/window `EVT_SOURCE_CONTACT` from intercom (not this SKU) | S | Done |
-| Tamper / anti-theft: `TAMPER_PIN` (GPIO3) → `EVT_SOURCE_PANIC` → stream + LED; siren GPIO + Matter alarm event | M | Done (contact_sensor Boolean State + ISR + stream/LED); siren / Matter alarm later |
+| Tamper / anti-theft: `TAMPER_PIN` (GPIO3) → `EVT_SOURCE_PANIC` → stream + LED; siren GPIO + Matter alarm event | M | Done — GPIO4 LED‖buzzer latched until HA mounted-OnOff clear; full Alarm cluster later |
 | Matter endpoints: replace OnOff light-switch doorbell with **`doorbell`** (momentary Switch + Chime client); keep stream gate as OnOff **or** migrate to Camera AV when WebRTC lands | M | Done (HA-first) — `generic_switch` `0x000F` for HA `event.*`; true `endpoint::doorbell` `0x0148` after esp-matter + HA bump |
 | HA “view camera” control: keep OnOff plug as stream enable for MJPEG era; long-term Matter **Camera** / **Intercom** (WebRTC) — do not use Matter Intercom device type until media stack exists | M | Done (HA-first) — `home-assistant/packages/cosmos_door_intercom.yaml` + Lovelace door view; WebRTC deferred |
 | HTTPS for `/stream` (self-signed or provisioned cert; `esp_https_server`) — browser trust + cert storage design | M | Done — `esp_https_server` port 443 + embedded Beta self-signed cert; HA `verify_ssl: false`; mfg/provisioned certs later |
@@ -191,9 +191,9 @@ flowchart LR
   P5b --> P5c[Apps 4 and 5]
 ```
 
-**Now:** Phase 5.a remaining — tamper ISR/siren/Matter alarm; then Beta branch + toolchain bump.  
+**Now:** Phase 5.a remaining — migrate to `endpoint::doorbell` after toolchain bump; then Beta branch.  
 **Later:** Matter Camera + WebRTC.  
-**Done (Phase 5 / 5.a so far):** SKU MVP + Matter doorbell endpoint + HTTPS `/stream`.  
+**Done (Phase 5 / 5.a so far):** SKU MVP + generic_switch doorbell + HTTPS `/stream` + latched tamper siren.  
 **Separate repo:** [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field) — HA + Pi OTA.
 
 ---
@@ -214,7 +214,8 @@ Copy into a GitHub issue or project board:
 - [x] Phase 5 — hardware bring-up checklist ([HARDWARE.md](HARDWARE.md) — binary sensor prototype)
 - [x] Phase 5 — manufacturing docs ([MANUFACTURING.md](MANUFACTURING.md), `tools/mfg/`; Steps 1–2 done, 3–4 after PCB)
 - [x] Phase 5.a — generic_switch doorbell + HTTPS `/stream` + tamper contact_sensor
-- [ ] Phase 5.a — tamper siren GPIO + Matter alarm (optional); migrate to `endpoint::doorbell` after toolchain bump
+- [x] Phase 5.a — tamper siren GPIO4 + Matter OnOff clear (latched); full Alarm cluster later
+- [ ] Phase 5.a — migrate to `endpoint::doorbell` after toolchain bump
 - [ ] Phase 5.a — Matter Camera + WebRTC (after HTTPS/doorbell model)
 - HA / Pi fleet — [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
 

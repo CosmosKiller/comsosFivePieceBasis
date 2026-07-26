@@ -1,6 +1,6 @@
 /**
  * @file main.cpp
- * @brief Matter door intercom: doorbell (generic switch), PIR, tamper contact, MJPEG, OTA.
+ * @brief Matter door intercom: doorbell, PIR, tamper, siren OnOff, MJPEG, OTA.
  */
 
 #include <esp_err.h>
@@ -34,6 +34,7 @@ using namespace chip::app::Clusters;
 uint16_t intercom_endpoint_id = 0;
 uint16_t doorbell_endpoint_id = 0;
 uint16_t tamper_endpoint_id = 0;
+uint16_t siren_endpoint_id = 0;
 uint16_t doorlock_endpoint_id = 0;
 httpd_handle_t cam_server;
 
@@ -131,6 +132,17 @@ extern "C" void app_main(void)
     }
     tamper_endpoint_id = endpoint::get_id(tamper_ep);
     ESP_LOGI(TAG, "Tamper contact endpoint ID: %d", tamper_endpoint_id);
+
+    /* Siren / alarm clear — HA turns Off to silence latched tamper siren (GPIO4). */
+    mounted_on_off_control::config_t siren_config;
+    siren_config.on_off.on_off = false;
+    endpoint_t *siren_ep = mounted_on_off_control::create(node, &siren_config, ENDPOINT_FLAG_NONE, NULL);
+    if (!siren_ep) {
+        ESP_LOGE(TAG, "Failed to create siren/alarm OnOff endpoint");
+        return;
+    }
+    siren_endpoint_id = endpoint::get_id(siren_ep);
+    ESP_LOGI(TAG, "Siren alarm OnOff endpoint ID: %d", siren_endpoint_id);
 
     static security_module_config_t sec_mod_config = {
         .pir_sensor =
@@ -230,5 +242,16 @@ static void tamper_notification(uint16_t endpoint_id, bool tampered, void *user_
         auto booleanState = BooleanState::FindClusterOnEndpoint(endpoint_id);
         VerifyOrReturn(booleanState != nullptr);
         booleanState->SetStateValue(tampered);
+
+        /* Latch: only force alarm OnOff ON when tampered. Remount leaves OnOff/siren alone. */
+        if (tampered && siren_endpoint_id != 0) {
+            attribute_t *attr = attribute::get(siren_endpoint_id, OnOff::Id, OnOff::Attributes::OnOff::Id);
+            if (attr) {
+                esp_matter_attr_val_t val = esp_matter_invalid(NULL);
+                attribute::get_val(attr, &val);
+                val.val.b = true;
+                attribute::update(siren_endpoint_id, OnOff::Id, OnOff::Attributes::OnOff::Id, &val);
+            }
+        }
     });
 }

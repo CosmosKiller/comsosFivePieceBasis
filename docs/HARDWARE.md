@@ -244,7 +244,7 @@ Follow [Cosmos carrier design rules](#cosmos-carrier-design-rules); battery sens
 
 **Board:** [Seeed XIAO ESP32-S3 Sense](https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/) (OV2640 camera)
 
-**Matter role:** Generic Switch doorbell + PIR occupancy + tamper contact + OnOff stream gate.  
+**Matter role:** Generic Switch doorbell + PIR occupancy + tamper contact + OnOff stream gate + OnOff siren clear.  
 **PID (test):** `0x8005` — see [MANUFACTURING.md](MANUFACTURING.md).  
 **Stream:** HTTPS MJPEG at `GET https://<device-ip>/stream` (port 443, embedded Beta self-signed cert). Not Matter Camera / WebRTC yet.
 
@@ -254,10 +254,13 @@ Follow [Cosmos carrier design rules](#cosmos-carrier-design-rules); battery sens
 |--------|-------------|----------|
 | Doorbell | **GPIO1** (D0) | Matter **generic_switch** (`0x000F`) — `InitialPress` / `ShortRelease` (HA `event.*`); enables MJPEG via event service |
 | PIR | **GPIO2** (D1) | Occupancy Sensing; sustained motion enables stream |
-| Tamper / anti-theft | **GPIO3** (D2) | Mount NC→GND when seated; Matter **contact_sensor** (Boolean State: open=tampered); stream + LED; siren later |
-| Status LED | **GPIO21** | XIAO user LED — on while stream enabled |
+| Tamper / anti-theft | **GPIO3** (D2) | Mount NC→GND when seated; Matter **contact_sensor** (Boolean State: open=tampered); stream + status LED + **latched siren** |
+| Siren LED‖buzzer | **GPIO4** (D3) | Active-high blink (same pattern as door-sensor alarm). Starts on tamper open; **stays on when remounted** (battery charge); clear via Matter **mounted OnOff** from HA |
+| Status LED | **GPIO21** | XIAO user LED — on while stream enabled (not the siren) |
 | Factory reset | **GPIO0** (BOOT) | Long press ≥ 5 s → Matter factory reset (XIAO S3 Sense BOOT; separate from doorbell) |
 | Camera DVP | Sense expansion pins | See `tasks/cam_task.h` (XCLK 10, SCCB 40/39, …) |
+
+**Wiring:** doorbell → **3.3 V** (pull-down); PIR OUT active-high; tamper NC → **GND**; siren LED/buzzer on GPIO4 active-high (NPN if current needs it).
 
 Do **not** reuse the doorbell for factory reset. Door/window contact is **not** part of this SKU (use `iotDoorSensor`).
 
@@ -265,7 +268,6 @@ Do **not** reuse the doorbell for factory reset. Door/window contact is **not** 
 
 | Signal | GPIO | Notes |
 |--------|------|-------|
-| Siren / buzzer | TBD | Driven on tamper open |
 | Door lock | GPIO5 (D4) | Optional — no Matter doorlock endpoint yet |
 
 ### Power
@@ -274,7 +276,7 @@ USB from XIAO for bench. Battery / `cosmos_battery` when carrier ADC is defined.
 
 ### Firmware modules
 
-Matter (OnOff plug, PIR occupancy, doorbell `generic_switch` `0x000F`, tamper `contact_sensor`), `cam_task`, `http_stream_task` (HTTPS MJPEG), `evt_service_task`, `door_intercom_task`, `security_module_task`, OTA via `cosmos_matter_ota`, factory reset via `cosmos_matter_common`.
+Matter (OnOff plug stream gate, PIR occupancy, doorbell `generic_switch` `0x000F`, tamper `contact_sensor`, mounted OnOff siren), `cam_task`, `http_stream_task` (HTTPS MJPEG), `evt_service_task`, `door_intercom_task`, `security_module_task`, `panic_alarm_task`, OTA via `cosmos_matter_ota`, factory reset via `cosmos_matter_common`.
 
 **HTTPS /stream (Beta):** certs in `iotDoorIntercom/main/certs/` (regen via `tools/certs/gen_door_intercom_https.sh`). Browsers need a trust exception; Home Assistant MJPEG can use `verify_ssl: false` on LAN. Lab-only plain HTTP: unset `CONFIG_IOT_DOOR_INTERCOM_HTTPS_STREAM`.
 

@@ -4,7 +4,7 @@
 # (filename = package name — do not add an extra top-level wrapper key).
 #
 # Prerequisites
-#   1. Commission Matter (OnOff gate + PIR + generic_switch doorbell + tamper contact).
+#   1. Commission Matter (stream OnOff + PIR + doorbell + tamper contact + siren OnOff).
 #   2. Add MJPEG camera via UI (YAML platform setup is not supported anymore):
 #        Settings → Devices & services → Add integration → MJPEG IP Camera
 #        MJPEG URL: https://<device-ip>/stream
@@ -13,7 +13,9 @@
 #   3. Replace TODO entity ids after commissioning (Developer tools → States).
 #   4. Add lovelace/cosmos_door_intercom.yaml as a dashboard view (see README).
 #
-# Firmware: stream is event-gated; HA OnOff switch also enables/disables /stream.
+# Firmware: stream is event-gated; HA stream OnOff enables/disables /stream.
+# Tamper siren latches until the Matter siren/alarm OnOff is turned Off in HA
+# (remount for charging does not silence it).
 # This package only creates helpers + automations — not the camera entity.
 
 input_number:
@@ -99,8 +101,9 @@ automation:
   - id: cosmos_door_intercom_tamper
     alias: "Cosmos door intercom — tamper / mount open"
     description: >-
-      Contact sensor StateValue=true when mount NC opens (unit removed).
-      Notify and keep stream on. Not a Matter alarm cluster yet.
+      Contact sensor open when mount NC opens. Notify and enable stream.
+      Device latches GPIO4 siren until HA turns Off the siren/alarm OnOff switch
+      (remount alone does not silence).
     mode: single
     triggers:
       - trigger: state
@@ -109,7 +112,7 @@ automation:
     actions:
       - action: switch.turn_on
         target:
-          entity_id: switch.cosmos_door_intercom # TODO
+          entity_id: switch.cosmos_door_intercom # TODO: stream gate
       - action: notify.mobile_app_my_phone # TODO
         data:
           title: "Puerta — MANIPULACIÓN"

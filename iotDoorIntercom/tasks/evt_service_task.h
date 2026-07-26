@@ -22,7 +22,8 @@ typedef enum {
     EVT_SOURCE_PIR,
     EVT_SOURCE_DOORBELL,
     EVT_SOURCE_INTERCOM,
-    EVT_SOURCE_PANIC, /*!< Tamper / anti-theft (mount break or panic) */
+    EVT_SOURCE_PANIC, /*!< Tamper / anti-theft (mount break) — starts siren; CLEARED does not stop it */
+    EVT_SOURCE_ALARM, /*!< Matter siren OnOff — TRIGGERED starts siren, CLEARED stops (HA clear) */
     EVT_SOURCE_MAX,
 } evt_source_t;
 

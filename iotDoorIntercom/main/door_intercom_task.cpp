@@ -11,6 +11,7 @@ using namespace esp_matter;
 
 static const char *TAG = "door_intercom_task";
 extern uint16_t intercom_endpoint_id;
+extern uint16_t siren_endpoint_id;
 extern uint16_t doorlock_endpoint_id;
 
 typedef struct {
@@ -60,6 +61,17 @@ esp_err_t door_intercom_attribute_update(door_intercom_task_handle_t driver_hand
             if (attribute_id == OnOff::Attributes::OnOff::Id) {
                 evt_service_event_t evt = {
                     .source = EVT_SOURCE_INTERCOM,
+                    .type = (val->val.b) ? EVT_TYPE_TRIGGERED : EVT_TYPE_CLEARED,
+                    .value = val->val.i,
+                };
+                evt_service_post(&evt);
+            }
+        }
+    } else if (endpoint_id == siren_endpoint_id) {
+        if (cluster_id == OnOff::Id) {
+            if (attribute_id == OnOff::Attributes::OnOff::Id) {
+                evt_service_event_t evt = {
+                    .source = EVT_SOURCE_ALARM,
                     .type = (val->val.b) ? EVT_TYPE_TRIGGERED : EVT_TYPE_CLEARED,
                     .value = val->val.i,
                 };

@@ -50,7 +50,8 @@ After commissioning, rename the Matter device to **Cosmos Door Intercom** (optio
 | Stream gate (OnOff plug) | `switch.*` | Enable / disable HTTPS `/stream` |
 | PIR occupancy | `binary_sensor.*` | Auto stream + dashboard status |
 | Doorbell (`generic_switch` 0x000F) | `event.*` | Ring notify + auto stream (HA-first; not Matter Doorbell 0x0148 yet) |
-| Tamper (contact / Boolean State) | `binary_sensor.*` | Mount open = on; notify + stream |
+| Tamper (contact / Boolean State) | `binary_sensor.*` | Mount open = on; notify + stream + latched siren |
+| Siren clear (mounted OnOff) | `switch.*` | On = sounding / test; **Off = silence** (remount does not clear) |
 | MJPEG camera | `camera.cosmos_door_intercom` | Created via UI (MJPEG IP Camera) |
 
 ## Audio (later)
