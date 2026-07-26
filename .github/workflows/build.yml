@@ -24,6 +24,8 @@ jobs:
             preview: true
           - app: iotBedsideLamp
             target: esp32c6
+          - app: iotDoorIntercom
+            target: esp32s3
     steps:
       - name: Checkout
         uses: actions/checkout@v4

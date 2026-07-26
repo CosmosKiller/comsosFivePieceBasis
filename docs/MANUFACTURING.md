@@ -32,13 +32,12 @@ export IDF_PATH=/path/to/esp-idf
 | Dual-mode button     | `iotDualModeBtn`         | Switch (press / multi / long) | `0x8002` | esp32c6    | `gen_dual_mode_btn.sh`        |
 | Environmental sensor | `iotEnvironmentalSensor` | BME680 environmental          | `0x8003` | esp32c5    | `gen_environmental_sensor.sh` |
 | Bedside lamp         | `iotBedsideLamp`         | Extended color light          | `0x8004` | esp32c6    | `gen_bedside_lamp.sh`         |
+| Door intercom        | `iotDoorIntercom`        | Doorbell + PIR + MJPEG        | `0x8005` | esp32s3    | `gen_door_intercom.sh`        |
 
 
 **Vendor ID:** `0xFFF2` (Espressif **Chip-Test-** credentials — closed beta / lab only).
 
-Reserved for future SKUs: `0x8005`.
-
-**Serial / label codes:** `DOOR`, `BTN`, `ENV`, `LAMP` (e.g. `BETA007-LAMP-001`).
+**Serial / label codes:** `DOOR`, `BTN`, `ENV`, `LAMP`, `INTR` (e.g. `BETA007-INTR-001`).
 
 ---
 
@@ -216,7 +215,7 @@ Keep a **shipment manifest**: bundle ID → serial → SKU → QR → (optional)
 | Commissioners | HA, chip-tool (test-mode tolerant) | Apple Home, Google Home, etc.    |
 
 
-**Note:** `iotEnvironmentalSensor` (`0x8003`) uses Chip-Test-CD-FFF2-**8002** until a CSA CD exists for 8003 — fine for closed beta; replace before retail.
+**Note:** SKUs `0x8003`–`0x8005` use Chip-Test-CD-FFF2-**8002** + NoPID PAI until CSA CDs exist — fine for closed beta; replace before retail.
 
 ---
 

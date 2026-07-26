@@ -31,5 +31,6 @@ void factory_reset_task(void)
     }
 
     iot_button_register_cb(handle, BUTTON_LONG_PRESS_START, NULL, factory_reset_button_cb, NULL);
-    ESP_LOGI(TAG, "Factory reset task initialized. Long press the button to trigger a factory reset.");
+    ESP_LOGI(TAG, "Factory reset on GPIO%d (long press ≥ CONFIG_BUTTON_LONG_PRESS_TIME_MS)",
+             (int)FACTORY_RESET_BUTTON_PIN);
 }

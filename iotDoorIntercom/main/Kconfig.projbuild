@@ -1,0 +1,11 @@
+menu "iotDoorIntercom"
+
+    config IOT_DOOR_INTERCOM_HTTPS_STREAM
+        bool "Serve MJPEG /stream over HTTPS (esp_https_server)"
+        default y
+        help
+            When enabled, GET /stream is served on port 443 with the embedded
+            self-signed certificate (main/certs/). Disable only for lab
+            bring-up over plain HTTP port 80.
+
+endmenu

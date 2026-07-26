@@ -1,0 +1,121 @@
+# Cosmos iotDoorIntercom — HTTPS MJPEG + Matter helpers (HA-first Beta)
+#
+# Loaded as package "cosmos_door_intercom" via !include_dir_named packages
+# (filename = package name — do not add an extra top-level wrapper key).
+#
+# Prerequisites
+#   1. Commission Matter (OnOff gate + PIR + generic_switch doorbell + tamper contact).
+#   2. Add MJPEG camera via UI (YAML platform setup is not supported anymore):
+#        Settings → Devices & services → Add integration → MJPEG IP Camera
+#        MJPEG URL: https://<device-ip>/stream
+#        Verify SSL: off (self-signed Beta cert)
+#        Name: Cosmos Door Intercom  → entity camera.cosmos_door_intercom
+#   3. Replace TODO entity ids after commissioning (Developer tools → States).
+#   4. Add lovelace/cosmos_door_intercom.yaml as a dashboard view (see README).
+#
+# Firmware: stream is event-gated; HA OnOff switch also enables/disables /stream.
+# This package only creates helpers + automations — not the camera entity.
+
+input_number:
+  cosmos_door_intercom_stream_timeout_min:
+    name: Cosmos door intercom — auto stream off (minutes)
+    min: 1
+    max: 30
+    step: 1
+    mode: box
+    unit_of_measurement: min
+    icon: mdi:timer-outline
+    initial: 3
+
+input_boolean:
+  cosmos_door_intercom_auto_stream:
+    name: Cosmos door intercom — auto-enable stream on doorbell/PIR
+    icon: mdi:cctv
+    initial: true
+
+automation:
+  - id: cosmos_door_intercom_doorbell
+    alias: "Cosmos door intercom — doorbell press"
+    description: >-
+      On Matter doorbell press: notify phone and enable MJPEG stream gate
+      (OnOff plug endpoint).
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: event.cosmos_door_intercom_doorbell # TODO: replace after commissioning
+    conditions:
+      - condition: state
+        entity_id: input_boolean.cosmos_door_intercom_auto_stream
+        state: "on"
+    actions:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.cosmos_door_intercom # TODO: Matter OnOff stream gate
+      - action: notify.mobile_app_my_phone # TODO: your Companion notify service
+        data:
+          title: "Door — doorbell"
+          message: Someone is at the door. Live stream is on.
+          data:
+            channel: alarm_stream
+            importance: high
+            ttl: 0
+            priority: high
+
+  - id: cosmos_door_intercom_occupancy_stream
+    alias: "Cosmos door intercom — occupancy enables stream"
+    description: When PIR reports occupied, enable the stream gate.
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.cosmos_door_intercom_occupancy # TODO
+        to: "on"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.cosmos_door_intercom_auto_stream
+        state: "on"
+    actions:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.cosmos_door_intercom # TODO
+
+  - id: cosmos_door_intercom_stream_auto_off
+    alias: "Cosmos door intercom — stream auto off"
+    description: Turn Off the Matter stream gate after N minutes (restartable).
+    mode: restart
+    triggers:
+      - trigger: state
+        entity_id: switch.cosmos_door_intercom # TODO
+        to: "on"
+    actions:
+      - delay:
+          minutes: "{{ states('input_number.cosmos_door_intercom_stream_timeout_min') | int(3) }}"
+      - condition: state
+        entity_id: switch.cosmos_door_intercom # TODO
+        state: "on"
+      - action: switch.turn_off
+        target:
+          entity_id: switch.cosmos_door_intercom # TODO
+
+  - id: cosmos_door_intercom_tamper
+    alias: "Cosmos door intercom — tamper / mount open"
+    description: >-
+      Contact sensor StateValue=true when mount NC opens (unit removed).
+      Notify and keep stream on. Not a Matter alarm cluster yet.
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.cosmos_door_intercom_tamper # TODO: contact / Boolean State
+        to: "on"
+    actions:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.cosmos_door_intercom # TODO
+      - action: notify.mobile_app_my_phone # TODO
+        data:
+          title: "Door — TAMPER"
+          message: Intercom mount contact opened. Check the device.
+          data:
+            channel: alarm_stream
+            importance: high
+            ttl: 0
+            priority: high

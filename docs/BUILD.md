@@ -115,9 +115,20 @@ ESP32-C5 is still a **preview** target in ESP-IDF 5.4 — append `--preview` to 
 - [How to Secure Matter Certs](https://mattercoder.com/codelabs/how-to-secure-matter-certs/?index=..%2F..index#5) (Matter Coder codelab)
 - Factory partition, QR codes, beta bundle flashing: [MANUFACTURING.md](MANUFACTURING.md) and [`tools/mfg/`](../tools/mfg/)
 
-## OTA images
+## OTA images (mandatory for all SKUs)
 
-With `CONFIG_CHIP_OTA_IMAGE_BUILD=y` and `CONFIG_DEVICE_SOFTWARE_VERSION_NUMBER` set in the app’s `sdkconfig.defaults`, `idf.py build` emits `<app-name>-ota.bin` under `build/`. Version numbers must come from `PROJECT_VER` / `PROJECT_VER_NUMBER` in the app `CMakeLists.txt`.
+Every firmware app in this monorepo must be Matter OTA-ready:
+
+| Requirement | Where |
+|-------------|--------|
+| Dual OTA slots (`ota_0` / `ota_1`) | App `partitions.csv` |
+| `CONFIG_ENABLE_OTA_REQUESTOR=y` | App `sdkconfig.defaults` (also in [matter-base](sdkconfig.defaults.matter-base)) |
+| `CONFIG_CHIP_OTA_IMAGE_BUILD=y` | App `sdkconfig.defaults` |
+| `CONFIG_DEVICE_SOFTWARE_VERSION_NUMBER` | App `sdkconfig.defaults` — must match `PROJECT_VER_NUMBER` |
+| `PROJECT_VER` / `PROJECT_VER_NUMBER` | App `CMakeLists.txt` |
+| `cosmos_matter_ota_configure()` | After `esp_matter::start()` in `main.cpp` |
+
+With those set, `idf.py build` emits `<app-name>-ota.bin` under `build/`.
 
 **Version strategy:** flash firmware at version *N*, build OTA artifact at version *N+1* (monotonic `PROJECT_VER_NUMBER`). Bench validation and field rollout: [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field).
 

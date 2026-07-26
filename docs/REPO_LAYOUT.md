@@ -15,8 +15,9 @@ cosmosFivePieceBasis/
 │   └── To-Do.MD       (local checklist, gitignored)
 ├── iotDualModeBtn/
 │   └── (same pattern; sdkconfig.defaults* for C6)
-└── iotEnvironmentalSensor/
-    └── (same pattern)
+├── iotEnvironmentalSensor/
+├── iotBedsideLamp/
+└── iotDoorIntercom/               # XIAO ESP32-S3 Sense, MJPEG + Matter
 ```
 
 **Layout (Option B — consistent across all apps)**
@@ -57,6 +58,8 @@ cosmosFivePieceBasis/
 ├── iotDoorSensor/          # thin apps: main + device-specific tasks only
 ├── iotDualModeBtn/
 ├── iotEnvironmentalSensor/
+├── iotBedsideLamp/
+├── iotDoorIntercom/
 ├── tools/
 │   ├── mfg/               # esp-matter-mfg-tool wrappers (see docs/MANUFACTURING.md)
 │   └── scripts/

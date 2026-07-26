@@ -134,12 +134,37 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 | --------------------------------------------------------------------------------------------- | ------ | ------ |
 | Battery / power management — `components/cosmos_battery`, Matter Power Source, SKU HA YAML in `home-assistant/packages/` | L      | Done — MVP field tuning via OTA; divider/BOM in [HARDWARE.md](HARDWARE.md) |
 | Battery field tuning — sample interval, sleep/TX duty, divider accuracy, % curve thresholds   | M      | Soaking — revisit via OTA only if MVP data shows need |
-| OTA parity — shared `cosmos_matter_ota` in all three apps                                    | M      | Done   |
+| OTA mandatory — requestor + `CHIP_OTA_IMAGE_BUILD` on every SKU (shared `cosmos_matter_ota`) | M      | Done for SKUs 1–5 |
 | Manufacturing: [MANUFACTURING.md](MANUFACTURING.md) + [`tools/mfg/`](../tools/mfg/) per-SKU scripts | M      | Done — Steps 1–2 validated (Jul 2026 beta batch); Steps 3–4 (flash/ship) after PCB manufacture |
 | Hardware bring-up checklist (commission, attributes, factory reset, battery) in [HARDWARE.md](HARDWARE.md) | M      | Done — binary sensor prototype validated Jul 2026 |
-| Add firmware apps #4 and #5 (or rename repo to match three SKUs)                              | L      | —      |
+| Add firmware app #5 (`iotDoorIntercom`) — Matter + MJPEG MVP, OTA-ready                      | L      | Done (MVP); WebRTC / Matter Camera later |
 
 **Moved to separate repo:** [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field) — HA commissioning, Pi field OTA, chip-tool OTA procedure, Tier 2/3 OTA planning.
+
+---
+
+## Phase 5.a — `iotDoorIntercom` crown jewel (post-MVP)
+
+SKU 5 MVP (Matter + event-gated MJPEG + OTA) is **done**. This phase hardens the product model before WebRTC.
+
+| Task | Effort | Status |
+|------|--------|--------|
+| Drop door/window `EVT_SOURCE_CONTACT` from intercom (not this SKU) | S | Done |
+| Tamper / anti-theft: `TAMPER_PIN` (GPIO3) → `EVT_SOURCE_PANIC` → stream + LED; siren GPIO + Matter alarm event | M | Done (contact_sensor Boolean State + ISR + stream/LED); siren / Matter alarm later |
+| Matter endpoints: replace OnOff light-switch doorbell with **`doorbell`** (momentary Switch + Chime client); keep stream gate as OnOff **or** migrate to Camera AV when WebRTC lands | M | Done (HA-first) — `generic_switch` `0x000F` for HA `event.*`; true `endpoint::doorbell` `0x0148` after esp-matter + HA bump |
+| HA “view camera” control: keep OnOff plug as stream enable for MJPEG era; long-term Matter **Camera** / **Intercom** (WebRTC) — do not use Matter Intercom device type until media stack exists | M | Done (HA-first) — `home-assistant/packages/cosmos_door_intercom.yaml` + Lovelace door view; WebRTC deferred |
+| HTTPS for `/stream` (self-signed or provisioned cert; `esp_https_server`) — browser trust + cert storage design | M | Done — `esp_https_server` port 443 + embedded Beta self-signed cert; HA `verify_ssl: false`; mfg/provisioned certs later |
+| Matter Camera + WebRTC (esp-matter camera / esp-webrtc) on S3 or P4 path | XL | Deferred |
+
+**Endpoint guidance (current SDK):**
+
+| Role | Today (MVP) | Better fit |
+|------|-------------|------------|
+| Physical doorbell button | `generic_switch` `0x000F` (HA `event.*`) | Later `endpoint::doorbell` `0x0148` when esp-matter + HA support it |
+| Stream enable from HA | `on_off_plug_in_unit` | Keep for MJPEG; later Camera AV Stream Management / WebRTC |
+| Full A/V intercom | — | `endpoint::intercom` / video doorbell — requires WebRTC |
+
+**Docs:** keep the completed SKU 5 MVP plan as historical; track crown-jewel work **here**, not by rewriting that plan.
 
 
 ---
@@ -166,9 +191,9 @@ flowchart LR
   P5b --> P5c[Apps 4 and 5]
 ```
 
-**Now:** Phase 5 — MVP soak; Flux PCB → flash/label/ship per [MANUFACTURING.md](MANUFACTURING.md) Steps 3–4.  
-**Then:** apps #4/#5 or repo rename.  
-**Done (Phase 5):** `cosmos_battery` + OTA parity + SKU HA YAML + manufacturing docs (`tools/mfg/`, beta batch factory data).  
+**Now:** Phase 5.a remaining — tamper ISR/siren/Matter alarm; then Beta branch + toolchain bump.  
+**Later:** Matter Camera + WebRTC.  
+**Done (Phase 5 / 5.a so far):** SKU MVP + Matter doorbell endpoint + HTTPS `/stream`.  
 **Separate repo:** [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field) — HA + Pi OTA.
 
 ---
@@ -184,10 +209,13 @@ Copy into a GitHub issue or project board:
 - [x] Phase 4 complete
 - [x] Phase 5 — battery / power management (`components/cosmos_battery`, Power Source, SKU HA YAML)
 - [ ] Phase 5 — battery field tuning (divider/BOM, sample interval, sleep — MVP + OTA)
-- [x] Phase 5 — OTA parity (`components/cosmos_matter_common/cosmos_matter_ota`)
+- [x] Phase 5 — OTA mandatory for all apps (`cosmos_matter_ota` + `CHIP_OTA_IMAGE_BUILD` on SKUs 1–5)
+- [x] Phase 5 — `iotDoorIntercom` MVP (Matter + MJPEG on XIAO S3 Sense)
 - [x] Phase 5 — hardware bring-up checklist ([HARDWARE.md](HARDWARE.md) — binary sensor prototype)
 - [x] Phase 5 — manufacturing docs ([MANUFACTURING.md](MANUFACTURING.md), `tools/mfg/`; Steps 1–2 done, 3–4 after PCB)
-- [ ] Phase 5 — fourth/fifth device or rename repo
+- [x] Phase 5.a — generic_switch doorbell + HTTPS `/stream` + tamper contact_sensor
+- [ ] Phase 5.a — tamper siren GPIO + Matter alarm (optional); migrate to `endpoint::doorbell` after toolchain bump
+- [ ] Phase 5.a — Matter Camera + WebRTC (after HTTPS/doorbell model)
 - HA / Pi fleet — [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
 
 Update the **Status** section in the root README when major milestones land.
