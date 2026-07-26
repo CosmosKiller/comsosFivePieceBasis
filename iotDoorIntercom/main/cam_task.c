@@ -25,15 +25,15 @@ esp_err_t cam_task_init()
         .pin_href = HREF_GPIO_NUM,
         .pin_pclk = PCLK_GPIO_NUM,
 
-        /* 20 MHz XCLK + VGA JPEG: better doorbell preview FPS than SVGA @ 10 MHz. */
+        /* 20 MHz XCLK + HVGA JPEG: lighter frames for HTTPS MJPEG over Wi‑Fi. */
         .xclk_freq_hz = 20000000,
         .ledc_timer = LEDC_TIMER_0,
         .ledc_channel = LEDC_CHANNEL_0,
 
         .pixel_format = PIXFORMAT_JPEG,
-        .frame_size = FRAMESIZE_VGA,
-        .jpeg_quality = 22,
-        .fb_count = 2,
+        .frame_size = FRAMESIZE_HVGA, /* 480x320 — better than VGA under TLS send load */
+        .jpeg_quality = 28,           /* higher = smaller/faster JPEG (esp_camera scale) */
+        .fb_count = 3,
         .fb_location = CAMERA_FB_IN_PSRAM,
         .grab_mode = CAMERA_GRAB_LATEST,
     };

@@ -53,8 +53,8 @@ automation:
           entity_id: switch.cosmos_door_intercom # TODO: Matter OnOff stream gate
       - action: notify.mobile_app_my_phone # TODO: your Companion notify service
         data:
-          title: "Door — doorbell"
-          message: Someone is at the door. Live stream is on.
+          title: "Puerta — timbre"
+          message: Hay alguien en la puerta. La cámara en vivo está encendida.
           data:
             channel: alarm_stream
             importance: high
@@ -112,8 +112,8 @@ automation:
           entity_id: switch.cosmos_door_intercom # TODO
       - action: notify.mobile_app_my_phone # TODO
         data:
-          title: "Door — TAMPER"
-          message: Intercom mount contact opened. Check the device.
+          title: "Puerta — MANIPULACIÓN"
+          message: Se abrió el contacto de montaje del intercomunicador. Revisa el dispositivo.
           data:
             channel: alarm_stream
             importance: high

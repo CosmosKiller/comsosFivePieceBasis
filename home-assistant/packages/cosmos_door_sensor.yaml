@@ -36,10 +36,10 @@ automation:
           entity_id: input_boolean.cosmos_contact_low_battery_notified
       - action: notify.mobile_app_my_phone
         data:
-          title: "Cosmos door sensor — low battery"
+          title: "Sensor de puerta Cosmos — batería baja"
           message: >-
-            Battery at {{ states('sensor.cosmos_contact_battery') }}%.
-            Replace or charge the cell soon.
+            Batería al {{ states('sensor.cosmos_contact_battery') }}%.
+            Cambia o carga la pila pronto.
           data:
             channel: alarm_stream
             importance: high
