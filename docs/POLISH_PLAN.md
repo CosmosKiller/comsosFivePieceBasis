@@ -63,6 +63,8 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 
 **When:** after carrier fab, gift Beta soak, and firmware under test are stable — not before / during Flux layout.
 
+**Bundle with:** [Post-Beta cleanup combo](#post-beta-cleanup-combo--plan-b--toolchain--5a) (toolchain bump + `endpoint::doorbell`). Same PR train / milestone — one painful rebuild window, not two.
+
 **Why revisit:** older app code still mixes Matter-adjacent naming with Cosmos conventions. New tasks should already be Cosmos-style; Plan B is a dedicated cleanup pass, not day-to-day hygiene.
 
 | Task | Effort | Notes |
@@ -169,7 +171,7 @@ SKU 5 MVP (Matter + event-gated MJPEG + OTA) is **done**. This phase hardens the
 |------|--------|--------|
 | Drop door/window `EVT_SOURCE_CONTACT` from intercom (not this SKU) | S | Done |
 | Tamper / anti-theft: `TAMPER_PIN` (GPIO3) → `EVT_SOURCE_PANIC` → stream + LED; siren GPIO + Matter alarm event | M | Done — GPIO4 LED‖buzzer latched until HA mounted-OnOff clear; full Alarm cluster later |
-| Matter endpoints: replace OnOff light-switch doorbell with **`doorbell`** (momentary Switch + Chime client); keep stream gate as OnOff **or** migrate to Camera AV when WebRTC lands | M | Done (HA-first) — `generic_switch` `0x000F` for HA `event.*`; true `endpoint::doorbell` `0x0148` after esp-matter + HA bump |
+| Matter endpoints: replace OnOff light-switch doorbell with **`doorbell`** (momentary Switch + Chime client); keep stream gate as OnOff **or** migrate to Camera AV when WebRTC lands | M | Done (HA-first) — `generic_switch` `0x000F` for HA `event.*`; true `endpoint::doorbell` `0x0148` in [Post-Beta cleanup combo](#post-beta-cleanup-combo--plan-b--toolchain--5a) |
 | HA “view camera” control: keep OnOff plug as stream enable for MJPEG era; long-term Matter **Camera** / **Intercom** (WebRTC) — do not use Matter Intercom device type until media stack exists | M | Done (HA-first) — `home-assistant/packages/cosmos_door_intercom.yaml` + Lovelace door view; WebRTC deferred |
 | HTTPS for `/stream` (self-signed or provisioned cert; `esp_https_server`) — browser trust + cert storage design | M | Done — `esp_https_server` port 443 + embedded Beta self-signed cert; HA `verify_ssl: false`; mfg/provisioned certs later |
 | Matter Camera + WebRTC (esp-matter camera / esp-webrtc) on S3 or P4 path | XL | Deferred |
@@ -184,6 +186,26 @@ SKU 5 MVP (Matter + event-gated MJPEG + OTA) is **done**. This phase hardens the
 
 **Docs:** keep the completed SKU 5 MVP plan as historical; track crown-jewel work **here**, not by rewriting that plan.
 
+### Post-Beta cleanup combo — Plan B + toolchain + 5.a
+
+**Intent:** one coordinated cleanup after gift Beta soak / carriers are proven — not piecemeal while Flux and field firmware are moving.
+
+| Lane | Work | Why together |
+|------|------|----------------|
+| **Toolchain** | Bump pinned **ESP-IDF** + **esp-matter** (today: IDF **v5.4.1** / esp-matter **`2cb668c`** — see [BUILD.md](BUILD.md)); refresh CI image / `dependencies.lock`; full SKU matrix green | New Matter endpoints and API churn land once |
+| **5.a doorbell** | Migrate SKU 5 physical button from `generic_switch` `0x000F` → **`endpoint::doorbell` `0x0148`** when esp-matter + HA support it; keep MJPEG stream OnOff until WebRTC | Touches the same Matter graph the bump unlocks |
+| **Plan B** | Full Cosmos naming / Doxygen on **owned** `main/` / `tasks/` / `components/cosmos_*` | Same PR train already rebuilds everything; avoid a second repo-wide churn |
+
+**Order inside the combo:**
+
+1. Toolchain bump + fix build breaks (all SKUs).
+2. SKU 5 `endpoint::doorbell` (+ HA package / docs).
+3. Plan B renames on owned code (clang-format + CI).
+4. Tag / release notes; OTA soak on field units.
+
+**Out of scope for this combo:** Matter Camera / WebRTC (still deferred XL); carrier fab; battery curve tuning unless soak data forces it.
+
+**Do not start** until Phase 5 Flux → fab → flash/ship and MVP soak are far enough that a dual IDF/esp-matter bump is acceptable risk.
 
 ---
 
@@ -226,11 +248,11 @@ flowchart LR
   P6 -.-> P5fab
 ```
 
-**Track A (Phase 5):** Flux carriers for SKU 1–2 / 4–5; lamp LED×10; fab → mfg Steps 3–4; battery soak; later toolchain bump + `endpoint::doorbell`.  
+**Track A (Phase 5):** Flux carriers for SKU 1–2 / 4–5; lamp LED×10; fab → mfg Steps 3–4; battery soak.  
 **Track B (Phase 6):** clang-format CI, issue templates, release tagging docs, ECAD link table — **done** (paste Flux URLs when projects exist).  
-**Plan B (style, later):** full Cosmos naming compliance on owned code — see [Phase 1½ Plan B](#plan-b--full-cosmos-style-compliance-revisit-later); after Beta soak.  
+**Post-Beta cleanup combo:** Plan B (Cosmos naming) + IDF/esp-matter bump + `endpoint::doorbell` — see [combo](#post-beta-cleanup-combo--plan-b--toolchain--5a).  
 **Done (battery):** `cosmos_battery` on SKU 2/4 (GPIO0) and SKU 5 (GPIO5).  
-**Later:** Matter Camera + WebRTC.  
+**Later:** Matter Camera + WebRTC (after the cleanup combo).  
 **Done (Phase 5 / 5.a so far):** SKU MVP + generic_switch doorbell + HTTPS `/stream` + latched tamper siren + HA-first packages.  
 **Separate repo:** [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field) — HA + Pi OTA.
 
@@ -243,7 +265,8 @@ Copy into a GitHub issue or project board:
 - [x] Phase 0 complete
 - [x] Phase 1 complete
 - [x] Phase 1½ complete (Plan A — tooling + adopt-on-touch)
-- [ ] Plan B — full Cosmos style compliance on owned code (after Beta soak; see Phase 1½)
+- [ ] **Post-Beta cleanup combo** — toolchain bump + `endpoint::doorbell` + Plan B (see Phase 5.a)
+- [ ] Plan B — full Cosmos style compliance on owned code (part of cleanup combo)
 - [x] Phase 2 complete
 - [x] Phase 3 complete
 - [x] Phase 4 complete
@@ -256,8 +279,8 @@ Copy into a GitHub issue or project board:
 - [ ] Phase 5 — Flux carriers SKU 1/2/4/5 → fab → flash/ship (power architecture locked in HARDWARE.md)
 - [x] Phase 5.a — generic_switch doorbell + HTTPS `/stream` + tamper contact_sensor
 - [x] Phase 5.a — tamper siren GPIO4 + Matter OnOff clear (latched); full Alarm cluster later
-- [ ] Phase 5.a — migrate to `endpoint::doorbell` after toolchain bump
-- [ ] Phase 5.a — Matter Camera + WebRTC (after HTTPS/doorbell model)
+- [ ] Phase 5.a — migrate to `endpoint::doorbell` (part of Post-Beta cleanup combo)
+- [ ] Phase 5.a — Matter Camera + WebRTC (after cleanup combo / HTTPS/doorbell model)
 - [x] Phase 6 — clang-format CI + format script covers all SKUs
 - [x] Phase 6 — issue templates + [RELEASING.md](RELEASING.md)
 - [x] Phase 6 — HARDWARE ECAD link table (URLs TBD)
