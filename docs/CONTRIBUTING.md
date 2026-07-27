@@ -24,7 +24,7 @@ idf.py build
 - **Formatting:** run clang-format using the repo [`.clang-format`](../.clang-format) (see [CODE_STYLE.md](CODE_STYLE.md)).
 - **C++17** for new application code in `main/` (see each `main/CMakeLists.txt`).
 - **C** is fine for existing modules (e.g. GPIO ISR paths, event service) or when interfacing with C-only ESP-IDF APIs; prefer C++ for new tasks unless there is a strong reason not to.
-- **Naming / docs:** `snake_case` functions, `*_t` / `*_e` types, Doxygen on public `tasks/*.h` APIs — details in [CODE_STYLE.md](CODE_STYLE.md).
+- **Naming / docs:** `snake_case` functions, `*_t` / `*_e` types, Doxygen on public `tasks/*.h` APIs — details in [CODE_STYLE.md](CODE_STYLE.md). Apply Cosmos style to **new and touched** files; keep upstream Matter/CHIP names at API boundaries. A later full rename of older owned code is **Plan B** in [POLISH_PLAN.md](POLISH_PLAN.md#plan-b--full-cosmos-style-compliance-revisit-later) (after Beta soak).
 - **Task layout:** public API in `tasks/*.h`, implementation in `main/*.{cpp,c}` — **1:1 basename** per task (see [REPO_LAYOUT.md](REPO_LAYOUT.md)).
 - **Adding a task:** create `tasks/my_task.h`, implement `main/my_task.cpp`, add both to `main/CMakeLists.txt` `SRCS` and keep `INCLUDE_DIRS "." "../tasks"`.
 - **Shared Matter glue:** factory reset, OTA configuration, and standard device-layer events live in `components/cosmos_matter_common` (`factory_reset_task`, `cosmos_matter_ota_configure`, `cosmos_matter_handle_device_event`). That component’s `idf_component.yml` pulls `espressif/button` for the reset button — apps do not need their own `main/idf_component.yml` for it. App `matter_task.cpp` files only forward events and implement `app_attribute_update_cb`.

@@ -43,7 +43,7 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 
 ---
 
-## Phase 1½ — Cosmos style adoption (ongoing)
+## Phase 1½ — Cosmos style adoption ✅ complete
 
 **Goal:** Match legacy CosmosIoT formatting and documentation without blocking feature work.
 
@@ -57,7 +57,25 @@ Phased roadmap from “working firmware monorepo” to something you can hand to
 | `.editorconfig` + [`.vscode/settings.json`](../.vscode/settings.json) (`indent_size = 4`, `charset = utf-8`) | S | Done |
 | Remove `oldReadme.md` after migrating style notes | S | Done |
 
-**Note:** Existing Matter code may not match every naming rule yet; apply conventions to **new and touched** files first.
+**Closed as Plan A:** tooling + policy are done. **New and touched** project files follow [CODE_STYLE.md](CODE_STYLE.md); keep **upstream** esp-matter / CHIP names at API boundaries. Historical Matter-shaped / pre-style app code is **not** fully renamed — that is deferred to **Plan B** below (do not block Phase 5 carriers).
+
+### Plan B — full Cosmos style compliance (revisit later)
+
+**When:** after carrier fab, gift Beta soak, and firmware under test are stable — not before / during Flux layout.
+
+**Why revisit:** older app code still mixes Matter-adjacent naming with Cosmos conventions. New tasks should already be Cosmos-style; Plan B is a dedicated cleanup pass, not day-to-day hygiene.
+
+| Task | Effort | Notes |
+|------|--------|--------|
+| Audit `main/`, `tasks/`, `components/cosmos_*` for naming / Doxygen gaps | M | Skip IDF / esp-matter trees |
+| Rename **owned** symbols to Cosmos rules (`snake_case`, `*_t`, pointer `pFoo`, etc.) | L | Do **not** rename CHIP / esp-matter types or callbacks |
+| Fill any missing public-header Doxygen | M | Per [CODE_STYLE.md](CODE_STYLE.md) |
+| `./tools/scripts/format_sources.sh` + clang-format CI green | S | Already enforced on PRs |
+| Build all SKUs (`build_all.sh` / CI matrix) | M | Gate merge on green |
+
+**Exit criteria:** owned project code matches Cosmos style; upstream boundaries unchanged; all apps build.
+
+**Tracking:** unchecked item under [Tracking progress](#tracking-progress) — reopen as a GitHub issue when ready.
 
 ---
 
@@ -208,8 +226,9 @@ flowchart LR
   P6 -.-> P5fab
 ```
 
-**Track A (Phase 5):** Flux carriers for SKU 2 + 4 + 5; lamp LED×10; fab → mfg Steps 3–4; battery soak; later toolchain bump + `endpoint::doorbell`.  
-**Track B (Phase 6):** clang-format CI, issue templates, release tagging docs, ECAD link table — **started**.  
+**Track A (Phase 5):** Flux carriers for SKU 1–2 / 4–5; lamp LED×10; fab → mfg Steps 3–4; battery soak; later toolchain bump + `endpoint::doorbell`.  
+**Track B (Phase 6):** clang-format CI, issue templates, release tagging docs, ECAD link table — **done** (paste Flux URLs when projects exist).  
+**Plan B (style, later):** full Cosmos naming compliance on owned code — see [Phase 1½ Plan B](#plan-b--full-cosmos-style-compliance-revisit-later); after Beta soak.  
 **Done (battery):** `cosmos_battery` on SKU 2/4 (GPIO0) and SKU 5 (GPIO5).  
 **Later:** Matter Camera + WebRTC.  
 **Done (Phase 5 / 5.a so far):** SKU MVP + generic_switch doorbell + HTTPS `/stream` + latched tamper siren + HA-first packages.  
@@ -223,6 +242,8 @@ Copy into a GitHub issue or project board:
 
 - [x] Phase 0 complete
 - [x] Phase 1 complete
+- [x] Phase 1½ complete (Plan A — tooling + adopt-on-touch)
+- [ ] Plan B — full Cosmos style compliance on owned code (after Beta soak; see Phase 1½)
 - [x] Phase 2 complete
 - [x] Phase 3 complete
 - [x] Phase 4 complete
@@ -232,7 +253,7 @@ Copy into a GitHub issue or project board:
 - [x] Phase 5 — `iotDoorIntercom` MVP (Matter + MJPEG on XIAO S3 Sense)
 - [x] Phase 5 — hardware bring-up checklist ([HARDWARE.md](HARDWARE.md) — binary sensor prototype)
 - [x] Phase 5 — manufacturing docs ([MANUFACTURING.md](MANUFACTURING.md), `tools/mfg/`; Steps 1–2 done, 3–4 after PCB)
-- [ ] Phase 5 — Flux carriers SKU 2/4/5 → fab → flash/ship
+- [ ] Phase 5 — Flux carriers SKU 1/2/4/5 → fab → flash/ship (power architecture locked in HARDWARE.md)
 - [x] Phase 5.a — generic_switch doorbell + HTTPS `/stream` + tamper contact_sensor
 - [x] Phase 5.a — tamper siren GPIO4 + Matter OnOff clear (latched); full Alarm cluster later
 - [ ] Phase 5.a — migrate to `endpoint::doorbell` after toolchain bump

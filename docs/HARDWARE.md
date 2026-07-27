@@ -23,6 +23,149 @@ Shared defaults for **low-voltage, sensor-class, 2-layer** carriers across all S
 | Factory reset | **GPIO9** (`BOOT` on XIAO): long-press ≥ 5 s (`CONFIG_BUTTON_LONG_PRESS_TIME_MS=5000`); expose accessible tact switch |
 | Decoupling | **100 nF** on each LED branch / noisy output near load; module relies on XIAO on-board decoupling |
 
+### Power architecture (1S family)
+
+Battery SKUs use a **single-cell (1S) Li-ion** pack (3.0–4.2 V). Do **not** put **2S** on XIAO battery pads. `cosmos_battery` thresholds assume 1S.
+
+#### Product power roles (locked)
+
+| SKU | Role | USB-C | Battery |
+|-----|------|-------|---------|
+| **1** Door sensor | Fully portable | **Charge (+ flash) only** | Always runs from 1S |
+| **2** Dual-mode btn | Fully portable | **Charge (+ flash) only** | Always runs from 1S |
+| **3** Env sensor | Mains / desk | **Only power source** | **None** (v1) |
+| **4** Bedside lamp | USB primary; portable when needed | Power + charge; normal use plugged | 1S for cordless use |
+| **5** Door intercom | Fully portable | **Charge (+ flash) only**; may run while charging | Always runs from 1S |
+
+#### USB-C port strategy (locked)
+
+| SKU | Product USB-C | Which connector | Module USB-C |
+|-----|---------------|-----------------|--------------|
+| **1 / 2** | Yes — charge + flash | **XIAO on-module** only | **Is** the product port (edge access in enclosure) |
+| **3** | Yes — power only (no cell) | **XIAO on-module** only | **Is** the product port |
+| **4** | Yes — power + charge + LED 5 V | **Carrier receptacle (J1)** | Flash / bring-up only; do **not** dual-feed charge with J1 |
+| **5** | Yes — charge (+ run while charging) | **Carrier receptacle (J1)** | Flash / bring-up only; do **not** dual-feed charge with J1 |
+
+**Why carrier USB on 4 / 5?** Higher current (LEDs / camera), sealed or awkward module orientation, and a single controlled VBUS → charger → BAT / LED-OR path. Product charging must go through **J1**, not a second live cable into the module jack.
+
+#### Hard anti-leakage rules (all SKUs)
+
+Never create a path that lets one rail back-feed another:
+
+| Forbidden | Why |
+|-----------|-----|
+| Tie **USB VBUS / XIAO `5V`** directly to **BAT+** | Back-feeds the cell / charger; can fight USB host |
+| Tie **boost VOUT (5 V)** to **USB VBUS** or **XIAO `5V`** without OR / load-switch | Boost pushes into USB or USB fights boost |
+| Tie **boost VOUT** to **XIAO `3V3`** or GPIO rails | Overvoltage / latch-up |
+| Power peripherals from **XIAO `5V`** and expect them on battery | `5V` is dead on battery — only VBUS |
+| Carrier USB-C **and** module USB-C both wired to VBUS without a single controlled path | Dual feed / charge confusion |
+
+**Allowed OR points only:**
+
+1. **Charge path:** USB VBUS → **charger VIN only** → protect → **BAT+ / cell**.
+2. **System load (battery SKUs):** Always from **BAT+ (after protect)** or a PMIC **SYS** pin — never from raw VBUS in parallel with BAT.
+3. **SKU 4 LED 5 V only:** `USB_5V` **OR** `Boost_5V` → `LED_VDD` via **ideal diode / Schottky pair / load switch**; never a hard short between those sources.
+4. **XIAO MCU:** Always **BAT pads** (battery SKUs) or **USB / `5V`→LDO** (SKU 3). Do not also hard-wire carrier 5 V into XIAO `5V` while using module USB for charge unless that net is the same controlled VBUS→charger input.
+
+Prefer a **power-path charger** (USB → SYS for load, separate BAT charge) on SKU **4** and **5** if budget allows; classic TP4056 with load on BAT works for Beta but shares charge current with the load.
+
+#### Recommended topology by SKU
+
+**SKU 1 / 2 — portable, USB = charge only**
+
+```text
+USB-C (module edge OK) ──► XIAO onboard charger ──► BAT pads ──► 1S cell
+                                                              │
+                                                         XIAO 3V3 LDO
+                                                              │
+                                                    sensors / LEDs / piezo (3V3 or BAT+)
+```
+
+- No carrier boost. No use of XIAO `5V` for loads.
+- Optional carrier USB-C only if it is **VBUS → same charger input** (not a second path to BAT).
+- ADC divider: ≥100 k / 100 k (or MOSFET-gated) so sense is not a constant drain.
+
+**SKU 3 — no battery, USB-C only**
+
+```text
+USB-C ──► XIAO VBUS / 5V ──► onboard LDO ──► 3V3 ──► MCU + BME680 (+ display later)
+```
+
+- **No** charger IC, **no** BAT pads populated, **no** `cosmos_battery` divider on the carrier for v1.
+- Do not leave BAT pads floating into a connector that could short; omit JST / leave DNP.
+
+**SKU 4 — USB primary + portable boost**
+
+```text
+USB-C 5V ──► power-path / 1S charger + protect ──► BAT+ / cell
+         │                                         │
+         │                    ┌────────────────────┼──────────────┐
+         │                    ▼                    ▼              ▼
+         │               XIAO BAT            Boost VIN        sense divider
+         │            (MCU → 3.3 V)               │
+         │                                   Boost VOUT 5V
+         │                                        │
+         └──── ideal-diode / load-switch OR ──────┴──► WS2812 VDD only
+```
+
+| Rule | Detail |
+|------|--------|
+| Boost IC | e.g. **MT3608** @ **5.00 V**, **≥ 1.5 A** |
+| Boost VIN | BAT+ after protect only |
+| Boost VOUT | **LED rail only** |
+| USB plugged | LEDs from **carrier** USB 5 V via OR; **boost EN = off** (cell does not feed LEDs) |
+| Battery / lamp Off | **boost EN = off** (GPIO or USB-detect) |
+| MCU vs LEDs | XIAO (or carrier SYS) switches MCU USB↔BAT; **carrier** switches LED rail — see [Who switches what](#who-switches-what-mcu-vs-loads) |
+| Cell | ≥3000 mAh, ~1–2 A peaks |
+
+**Why not 2S + buck?** Shared 1S line + firmware; revisit only if soak shows brownouts.
+
+**SKU 5 — portable camera, USB = charge (run-while-charge OK)**
+
+```text
+USB-C ──► 1S charger + protect ──► BAT+ / cell ──► XIAO BAT (Sense 3V3 + camera)
+                                      │
+                                 sense divider (GPIO5)
+                                 piezo/siren from 3V3 or BAT+ via NPN
+```
+
+- No 5 V boost required for v1 (camera / MCU on Sense 3.3 V rail).
+- Do **not** hang camera or siren on XIAO `5V` (dead on battery).
+- Prefer power-path charger so USB can run the system while charging without back-feeding the host.
+- Size traces / cell for ≥1 A Wi‑Fi + camera peaks.
+
+#### XIAO `5V` pin vs USB-C
+
+On XIAO ESP32-C6 / S3 / C5, header **`5V`** = **USB VBUS**:
+
+| Power source | `5V` pin | `3V3` pin |
+|--------------|----------|-----------|
+| USB-C plugged in | ≈ **5 V** | Regulated 3.3 V |
+| **Battery only** | **No usable 5 V** | Regulated 3.3 V from BAT |
+
+Not a boost from the cell. Battery-only 5 V loads need a **carrier boost** (SKU 4). Feeding *into* `5V` needs a diode and a single charge path — prefer carrier USB-C → charger for products.
+
+#### Who switches what (MCU vs loads)
+
+The cell stays **electrically attached** whenever it is installed (and charges when USB is present). That is not the same as “battery is always the load supply.”
+
+| Path | Who switches USB ↔ battery | Notes |
+|------|----------------------------|--------|
+| **XIAO MCU → 3V3** | **On-module** (e.g. C6: SGM40567 charger + diode/FET → LDO) | USB plugged: VBUS feeds LDO + charges cell. USB unplugged: BAT feeds LDO. Do not also hard-feed XIAO `5V` from a second uncontrolled source. |
+| **SKU 4 LED 5 V** | **Carrier only** (ideal diode / load-switch OR + **boost EN**) | USB plugged: LEDs from **carrier USB VBUS**; **boost EN = off** → cell does **not** feed LEDs. Battery / lamp Off: boost EN off. XIAO does **not** switch the LED rail. |
+| **SKU 1 / 2 / 5 loads** | Run from **3V3 or BAT+** after XIAO / carrier protect | No 5 V boost. Use module USB (or carrier USB → charger only) for charge; do not hang loads on XIAO `5V`. |
+| **SKU 4 / 5 with carrier power-path PMIC** | **Carrier SYS** feeds system; XIAO may see only BAT+/SYS | Prefer this when camera / LED current is high. Avoid stacking a second charger into XIAO BAT while a carrier charger already owns the cell. |
+
+**SKU 4 mental model when USB-C is plugged:** battery is charging (and still connected); **MCU** may be on USB via XIAO or via carrier SYS; **LEDs** must be on **USB VBUS via OR**, not on the boost/cell path.
+
+#### Piezo buzzers (SKU 1 / 5)
+
+| Prefer | Avoid |
+|--------|--------|
+| **Active** piezo rated **3–5 V** (or explicit 3.3 V) | “5 V only” parts if the board has no 5 V rail |
+
+Drive with **NPN** (e.g. S8050) + ~1 kΩ base from GPIO: collector to buzzer ← **3V3** or **BAT+** (both sit in 3–5 V). Do not source buzzer current from the GPIO pin. Optional flyback diode if the part is inductive.
+
 ### RF / layout (Wi‑Fi SKUs: C6, C5)
 
 | Rule | Value / note |
@@ -46,7 +189,7 @@ Shared defaults for **low-voltage, sensor-class, 2-layer** carriers across all S
 ### Design workflow (Flux / KiCad)
 
 1. Place **XIAO footprint** first; lock antenna keep-out.
-2. Route **power** (cell → holder → optional protection → `VIN` or `3V3`).
+2. Route **power** (JST-PH → optional protection → XIAO `BAT`).
 3. Route **battery divider + ADC** and **sensor input** before auto-router.
 4. Place **LEDs / buzzer drivers** on designated GPIOs (do not reassign without firmware change).
 5. Run DRC; export **Gerber + BOM + pick-and-place** for prototype order.
@@ -91,11 +234,11 @@ Unused in current firmware (available for carrier features): D1, D2, D6–D8, D1
 
 **Battery sense:** Tap divider at **D0/A0**; firmware scales by **2.0×** to infer cell voltage.
 
-**Indicators:** Active-high LED drive from GPIO21–23. Hardware may wire **piezo buzzer** in parallel with red/green LED channels (see BOM) — same GPIO drives both; use series resistor + transistor if current exceeds GPIO limit.
+**Indicators:** Active-high LED drive from GPIO21–23. Optional **3–5 V active piezo** via NPN (collector from **3V3** or **BAT+**) — see [Piezo buzzers](#piezo-buzzers-sku-1--5).
 
 ### Flux.ai project prompt
 
-Copy into Flux when starting the carrier board (adjust board size, connector part numbers, and cell holder to taste):
+Copy into Flux when starting the carrier board (adjust board size and JST part numbers to taste):
 
 > **Status:** Carrier PCB in progress in Flux.ai (Jul 2026) for user-test builds; prompt below matches validated bench prototype GPIO map.
 
@@ -107,9 +250,9 @@ Core module:
 - Keep the antenna area at the module end clear: no copper or components under the on-module PCB antenna.
 
 Power:
-- Single-cell Li-ion (1S, 3.7 V nominal, 4.2 V max) with a through-hole or SMD battery holder (e.g. AA/14500 or 102050 pouch with JST-PH 2.0).
+- **J1:** JST-PH 2.0, 2-pin for 1S Li-ion pouch (3.7 V nominal, 4.2 V max). No on-board cell holder.
 - Optional: reverse-polarity protection (Schottky or P-FET) and 100 nF on VBAT.
-- Connect battery positive to XIAO VIN (or 3V3 path per Seeed recommendations for battery-powered use).
+- Connect J1 to XIAO **BAT+ / BAT− pads** (not 3V3). USB-C on the module = charge + flash only; on-module charger/LDO switches USB↔BAT for MCU 3V3. Do not hang loads on XIAO `5V`.
 - Battery monitor: 100 kΩ + 100 kΩ divider from BAT+ to GND; mid tap to XIAO D0 (A0 / GPIO0). 100 nF from tap to GND at the module pin.
 
 Digital inputs:
@@ -120,7 +263,7 @@ Digital outputs (3.3 V, active high):
 - D3 GPIO21 → green LED + 330 Ω series resistor to GND.
 - D4 GPIO22 → yellow or blue "confirm" LED + 330 Ω.
 - D5 GPIO23 → red "alarm" LED + 330 Ω.
-- Optional: 3–5 V piezo buzzer on red and/or green channel via NPN transistor (e.g. S8050), base resistor ~1 kΩ, flyback diode across buzzer if inductive load.
+- Optional: **3–5 V active piezo** (not 5 V-only) on alarm and/or status channel via NPN (S8050), base ~1 kΩ from GPIO; collector supplies buzzer from **3V3 or BAT+**. Flyback diode if inductive.
 
 Layout:
 - 2 layers, 1.6 mm FR4, 1 oz copper.
@@ -139,7 +282,8 @@ Do not assign or reroute GPIOs differently from the table above. Target low-cost
 | U1 | 1 | [Seeed XIAO ESP32-C6](https://www.seeedstudio.com/XIAO-ESP32C6-p-5914.html) | Matter + Wi-Fi MCU module |
 | SW1 | 1 | Reed switch, normally open (magnetic contact) | Door/window sense; e.g. GPS-14 or similar |
 | SW2 | 1 | Tact switch, through-hole or SMD | Factory reset on **GPIO9** / BOOT |
-| BAT1 | 1 | 1S Li-ion cell + holder or JST-PH 2-pin pouch | Match product enclosure; 3.7 V nominal |
+| J1 | 1 | JST-PH 2.0, 2-pin | 1S pouch |
+| BAT1 | 1 | 1S Li-ion pouch | Off-board, JST; match enclosure; 3.7 V nominal |
 | R1, R2 | 2 | 100 kΩ, 0603, 1% | Battery voltage divider |
 | R3–R5 | 3 | 330 Ω, 0603 | LED current limit (~3 mA at 3.3 V) |
 | C1 | 1 | 100 nF, 0603, X7R | ADC filter at D0 |
@@ -208,7 +352,7 @@ Do **not** reuse the user button for factory reset.
 | Total | ~0.7–0.8 A |
 | **3 h runtime** | **≥ 2.4 Ah** usable → specify **1S 3000–3500 mAh** pouch |
 
-**Rails:** USB-C 5 V → charge IC → 1S cell (JST). Cell → XIAO `BAT`/`3V3` path per Seeed. **5 V boost** (or USB 5 V) for WS2812 VDD; data from GPIO19 (3.3 V levels usually OK into WS2812 at 5 V VDD). Shared **`cosmos_battery`** divider **2:1** on GPIO0.
+**Rails:** USB-C 5 V → charge IC → **1S** cell (JST). Cell → XIAO `BAT` (MCU 3.3 V; on-module charger/LDO also switches USB↔BAT for the MCU when module USB is used). **Separate 5 V boost from BAT+** (MT3608-class, ≥1.5 A, set to 5.00 V) → WS2812 VDD only. When USB is present: LEDs from **carrier USB VBUS** via ideal-diode/OR; **boost EN = off** so the cell does not feed LEDs. MCU path ≠ LED path — see [Who switches what](#who-switches-what-mcu-vs-loads). Data from GPIO19 (3.3 V) via series resistor. Shared **`cosmos_battery`** divider **2:1** on GPIO0. See [Power architecture](#power-architecture-1s-family). **Not 2S.**
 
 ### MVP — DevKitC-1 bench setup
 
@@ -241,10 +385,15 @@ LEDs:
 - Leave a silk ring / keep-out for a diffuser dome above the LEDs.
 
 Power:
-- USB-C receptacle on the carrier (5 V). Charge a 1S Li-ion pouch (JST-PH 2.0, 2-pin) with a protected charger (e.g. TP4056 + DW01/FS8205 or integrated module). Target cell ≥ 3000 mAh for ≥ 3 h full-brightness runtime.
-- Battery sense: 100 kΩ + 100 kΩ divider from BAT+ to GND; mid tap to XIAO D0/A0 (GPIO0); 100 nF at the ADC pin.
-- Provide a 5 V boost from BAT for the LED ring when USB is unplugged (e.g. MT3608 or similar, ≥ 1.5 A capability). When USB is present, LEDs may run from USB 5 V.
-- Do not put 5 V on XIAO GPIO pins.
+- Architecture: **1S only** (not 2S). Prefer power-path charger if available; else TP4056 + DW01/FS8205 class. USB-C 5 V → charger + protection → JST-PH 2.0 pouch ≥ 3000 mAh (cell must support ~1–2 A peaks).
+- XIAO BAT from the same BAT+ (or SYS) net. MCU 3.3 V is on-module. Cell stays attached while charging; that does **not** mean LEDs draw from the cell when USB is present.
+- Battery sense: 100 kΩ + 100 kΩ divider BAT+ to GND; mid tap to XIAO D0/A0 (GPIO0); 100 nF at the ADC pin.
+- **5 V LED rail (carrier-switched, not XIAO):** boost from BAT+ to 5.00 V (e.g. MT3608), **≥ 1.5 A**. Boost VIN = BAT+ after protect only; VOUT = WS2812 VDD only. Bulk cap on VOUT; local 100 nF at LEDs.
+- **USB plugged:** LED_VDD from **carrier USB VBUS** via ideal diode / Schottky OR / load switch; **boost EN = forced off** so battery cannot feed LEDs. Do not hard-short USB 5 V to boost VOUT.
+- **USB unplugged / portable:** boost EN on (or gated by lamp On); LEDs from boost only.
+- Optional: same boost EN also off when lamp is Off (GPIO or USB-detect).
+- Single charge path: do not stack carrier charger + XIAO onboard charger fighting the same cell (pick carrier charger for this SKU; use module USB for flash only, or isolate).
+- Do **not** put 5 V on XIAO GPIO or 3V3. Do **not** power WS2812 from 3V3, raw BAT, or XIAO `5V` alone for battery mode.
 
 Buttons (exactly two):
 - User tact: XIAO D9 (GPIO20) to GND (firmware pull-up / button library). Accessible on top or side of enclosure.
@@ -272,7 +421,9 @@ Do not reassign GPIOs from: LED=GPIO19, user=GPIO20, reset=GPIO9, battery ADC=GP
 | J1 | 1 | USB-C receptacle (power) | Charge + 5 V |
 | J2 | 1 | JST-PH 2.0, 2-pin | 1S pouch ≥ 3000 mAh |
 | U2 | 1 | 1S Li-ion charger + protection | e.g. TP4056 + DW01 path |
-| U3 | 1 | 5 V boost ≥ 1.5 A | LED rail from battery |
+| U3 | 1 | 5 V boost ≥ 1.5 A (e.g. MT3608 set to 5.00 V) | VIN=BAT+, VOUT=LED 5 V only |
+| D_OR | 1–2 | Schottky / ideal-diode / load-switch | **Required:** USB 5 V OR boost → LED_VDD; never hard-short |
+| C_BST | 1–2 | 10–47 µF | Boost input/output bulk |
 | R1, R2 | 2 | 100 kΩ, 0603, 1% | Battery divider |
 | C1 | 1 | 100 nF, 0603 | ADC filter |
 | C_LED | 10 | 100 nF, 0603 | Local LED decoupling (optional but recommended) |
@@ -284,7 +435,8 @@ Do not reassign GPIOs from: LED=GPIO19, user=GPIO20, reset=GPIO9, battery ADC=GP
 - [ ] 10 LEDs light as one Matter extended-color light (firmware LED count = 10)
 - [ ] User button: click / double / long preset; reset button does **not** toggle lamp
 - [ ] Factory reset long-press clears fabric
-- [ ] USB charges cell; boost supplies LEDs on battery; ≥ 3 h full white soak
+- [ ] USB charges cell; with USB plugged, LEDs run from VBUS and boost EN is off (no cell→LED path)
+- [ ] On battery only, boost supplies LEDs; ≥ 3 h full white soak
 - [ ] Battery % in Matter / HA via `cosmos_battery`
 
 ### Firmware modules
@@ -309,7 +461,7 @@ Follow [Cosmos carrier design rules](#cosmos-carrier-design-rules).
 | Form | Compact handheld / wall puck (similar class to door sensor) |
 | Buttons | **2** — large action tact + recessed factory-reset tact |
 | Indicators | **2× discrete LEDs** (firmware today — not a single RGB package) |
-| Power | **1S** Li-ion via holder or **JST-PH 2.0**; battery sense on carrier |
+| Power | **1S** Li-ion pouch via **JST-PH 2.0** (`J1`); battery sense on carrier |
 | Environment | Indoor (default); conformal coat optional |
 
 > Early notes mentioned “RGB LED”; shipping firmware drives **two** GPIOs (`SINGLE_PRESS` / `MULTI_PRESS`). PCB matches firmware.
@@ -336,9 +488,9 @@ Core module:
 - Keep the on-module PCB antenna clear: no copper or components under the antenna end.
 
 Power:
-- Single-cell Li-ion (1S, 3.7 V nominal) with through-hole/SMD holder or JST-PH 2.0 pouch connector.
+- **J1:** JST-PH 2.0, 2-pin for 1S Li-ion pouch (3.7 V nominal). No on-board cell holder.
 - Optional reverse-polarity protection and 100 nF on VBAT.
-- Connect battery to XIAO VIN / BAT path per Seeed battery guidance (sleepy device — minimize quiescent load).
+- Connect J1 to XIAO **BAT pads** (sleepy device — minimize quiescent load). Module USB-C = charge + flash only; on-module path switches USB↔BAT for MCU. No loads on XIAO `5V`.
 - Battery monitor: 100 kΩ + 100 kΩ divider from BAT+ to GND; mid tap to XIAO D0 (A0 / GPIO0). 100 nF from tap to GND at the module pin.
 
 Buttons (exactly two — do not combine):
@@ -372,7 +524,8 @@ GPIO lock (do not reassign):
 | D1 | 1 | Green LED, 0603 | Single-press (`GPIO21`) |
 | D2 | 1 | Blue or yellow LED, 0603 | Multi-press (`GPIO19`) |
 | R3, R4 | 2 | 330 Ω, 0603 | LED current limit |
-| BAT1 | 1 | 1S Li-ion + holder or JST-PH 2-pin pouch | Match enclosure |
+| J1 | 1 | JST-PH 2.0, 2-pin | 1S pouch |
+| BAT1 | 1 | 1S Li-ion pouch | Off-board, JST; match enclosure |
 | R1, R2 | 2 | 100 kΩ, 0603, 1% | Battery divider → GPIO0 |
 | C1 | 1 | 100 nF, 0603, X7R | ADC filter |
 | C2 | 1 | 100 nF, 0603 | Optional VBAT decoupling |
@@ -479,10 +632,11 @@ Core module:
 - Keep Wi-Fi / antenna clearances per Seeed (no copper under antenna region). Prefer external u.FL antenna option only if enclosure blocks the PCB antenna — default: module antenna with plastic RF window.
 
 Power (USB-C + pouch):
-- USB-C 5 V input on the carrier.
-- 1S Li-ion pouch on JST-PH 2.0 (2-pin). Include charger + protection (TP4056 + DW01/FS8205 class or better outdoor-rated module).
-- Feed XIAO battery / 5 V / 3V3 per Seeed battery + USB guidance. Camera + Wi-Fi are power-hungry — size traces and charger for ≥ 1 A peaks.
+- USB-C 5 V input on the carrier → 1S charger + protection (prefer power-path / SYS; else TP4056 + DW01/FS8205 class or better outdoor-rated).
+- 1S Li-ion pouch on JST-PH 2.0 (2-pin). Feed XIAO **BAT pads** from BAT+ (or SYS). Cell stays attached while charging; MCU 3V3 is on-module (Sense). Do **not** power camera/siren from XIAO `5V`.
+- Single charge path — do not stack carrier charger and Sense onboard charger on the same cell without isolation.
 - Battery monitor: 100 kΩ + 100 kΩ divider BAT+ to GND; mid tap to XIAO D4 (GPIO5). 100 nF at ADC pin.
+- Camera + Wi-Fi are power-hungry — size traces and charger for ≥ 1 A peaks.
 - Conformal-coating friendly: no flux traps; prefer taller connectors only where needed.
 
 Front / user I/O:
@@ -496,7 +650,7 @@ Tamper (anti-theft / case open):
 - Net TAMPER to XIAO D2 (GPIO3). Firmware internal pull-up: seated = LOW, open = HIGH.
 
 Siren (panic alarm):
-- XIAO D3 (GPIO4) → 1 kΩ → NPN base (S8050) → drive in parallel: (a) red LED + 330 Ω to 3.3 V or from collector topology active-high as convenient; (b) 3–5 V active piezo with diode. Match door-sensor style: GPIO high turns siren/LED on (blinked in firmware).
+- XIAO D3 (GPIO4) → 1 kΩ → NPN base (S8050) → drive in parallel: (a) red LED + 330 Ω; (b) **3–5 V active piezo** (prefer not “5 V only”) with collector feed from **3V3 or BAT+**, flyback diode as needed. GPIO high = siren/LED on (firmware blinks).
 - Place piezo so it vents through a grille; keep water away (IP membrane or rear chamber).
 
 Status:
@@ -528,7 +682,7 @@ GPIO lock (do not reassign):
 | R_B | 1 | 1 kΩ, 0603 | NPN base |
 | D_ALM | 1 | Red LED, 0603 | Alarm visual |
 | R_LED | 1 | 330 Ω, 0603 | LED limit |
-| BZ1 | 1 | 3–5 V active piezo | Siren; flyback diode if needed |
+| BZ1 | 1 | 3–5 V active piezo (not 5 V-only) | Siren; NPN from 3V3/BAT+ |
 | J1 | 1 | USB-C receptacle | Power + charge |
 | J2 | 1 | JST-PH 2.0, 2-pin | 1S pouch |
 | U3 | 1 | 1S charger + protection | TP4056-class or better |
