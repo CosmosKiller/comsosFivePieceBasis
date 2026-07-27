@@ -9,8 +9,8 @@ static const char *TAG = "cosmos_matter_events";
 
 namespace
 {
-constexpr auto kCommissioningWindowTimeoutSeconds = 300;
-cosmos_matter_commissioning_complete_cb_t s_commissioning_complete_hook = nullptr;
+    constexpr auto kCommissioningWindowTimeoutSeconds = 300;
+    cosmos_matter_commissioning_complete_cb_t s_commissioning_complete_hook = nullptr;
 } // namespace
 
 void cosmos_matter_set_commissioning_complete_hook(cosmos_matter_commissioning_complete_cb_t cb)

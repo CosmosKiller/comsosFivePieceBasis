@@ -5,8 +5,8 @@
 
 #include <esp_log.h>
 
-#include <driver/gpio.h>
 #include <device.h>
+#include <driver/gpio.h>
 #include <led_driver.h>
 
 #include <lamp_task.h>
@@ -22,7 +22,7 @@ static const char *TAG = "lamp_task";
 static uint16_t s_current_x = 0;
 static uint16_t s_current_y = 0;
 
-#define REMAP_TO_RANGE(value, from, to) ((value * to) / from)
+#define REMAP_TO_RANGE(value, from, to)       ((value * to) / from)
 #define REMAP_TO_RANGE_INVERSE(value, factor) (factor / ((value) ? (value) : 1))
 
 static esp_err_t lamp_set_power(led_driver_handle_t handle, esp_matter_attr_val_t *val)

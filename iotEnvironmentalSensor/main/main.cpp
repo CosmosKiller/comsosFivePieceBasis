@@ -18,10 +18,10 @@
 #include <esp_matter.h>
 
 // Include project libraries
+#include <bme680_task.h>
 #include <cosmos_battery.h>
 #include <cosmos_battery_matter.h>
 #include <cosmos_matter_ota.h>
-#include <bme680_task.h>
 #include <factory_reset_task.h>
 #include <matter_task.h>
 

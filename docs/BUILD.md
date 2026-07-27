@@ -125,12 +125,12 @@ Every firmware app in this monorepo must be Matter OTA-ready:
 | `CONFIG_ENABLE_OTA_REQUESTOR=y` | App `sdkconfig.defaults` (also in [matter-base](sdkconfig.defaults.matter-base)) |
 | `CONFIG_CHIP_OTA_IMAGE_BUILD=y` | App `sdkconfig.defaults` |
 | `CONFIG_DEVICE_SOFTWARE_VERSION_NUMBER` | App `sdkconfig.defaults` — must match `PROJECT_VER_NUMBER` |
-| `PROJECT_VER` / `PROJECT_VER_NUMBER` | App `CMakeLists.txt` |
+| `PROJECT_VER` / `PROJECT_VER_NUMBER` | App `CMakeLists.txt` — `PROJECT_VER` is **`MAJOR.MINOR.PATCH`** |
 | `cosmos_matter_ota_configure()` | After `esp_matter::start()` in `main.cpp` |
 
 With those set, `idf.py build` emits `<app-name>-ota.bin` under `build/`.
 
-**Version strategy:** flash firmware at version *N*, build OTA artifact at version *N+1* (monotonic `PROJECT_VER_NUMBER`). Bench validation and field rollout: [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field).
+**Version strategy:** flash at software version number *N*, OTA at *N+1* (monotonic `PROJECT_VER_NUMBER`). Human string bumps (`0.1.0` → `0.1.1` / `0.2.0` / `1.0.0`): [RELEASING.md](RELEASING.md). Field: [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field).
 
 ## Clean rebuild
 

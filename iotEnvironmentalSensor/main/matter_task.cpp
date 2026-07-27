@@ -16,19 +16,19 @@ using namespace esp_matter::attribute;
 #if CONFIG_ENABLE_LVGL_UI
 namespace
 {
-void commissioning_complete_hook(void)
-{
-    lvgl_task_device_commissioned();
-}
-
-struct LvglCommissioningHook {
-    LvglCommissioningHook()
+    void commissioning_complete_hook(void)
     {
-        cosmos_matter_set_commissioning_complete_hook(commissioning_complete_hook);
+        lvgl_task_device_commissioned();
     }
-};
 
-static LvglCommissioningHook s_lvgl_commissioning_hook;
+    struct LvglCommissioningHook {
+        LvglCommissioningHook()
+        {
+            cosmos_matter_set_commissioning_complete_hook(commissioning_complete_hook);
+        }
+    };
+
+    static LvglCommissioningHook s_lvgl_commissioning_hook;
 } // namespace
 #endif
 

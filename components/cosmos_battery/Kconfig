@@ -10,10 +10,12 @@ config COSMOS_BATTERY_ADC_GPIO
     int "Battery sense GPIO number"
     default 0 if IDF_TARGET_ESP32C6
     default 6 if IDF_TARGET_ESP32C5
+    default 5 if IDF_TARGET_ESP32S3
     default 0
     help
         GPIO connected to the battery voltage divider.
         XIAO ESP32-C6: A0 (GPIO0). XIAO ESP32-C5: A6 (GPIO6).
+        XIAO ESP32-S3 Sense (iotDoorIntercom): D4 (GPIO5).
 
 config COSMOS_BATTERY_SAMPLE_INTERVAL_MS
     int "Sample interval (milliseconds)"

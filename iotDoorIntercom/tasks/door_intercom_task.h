@@ -5,8 +5,8 @@
 #include <esp_err.h>
 #include <esp_matter.h>
 
-#define DOORBELL_PIN GPIO_NUM_1  /*!< XIAO D0 — dedicated doorbell tact */
-#define DOORLOCK_PIN GPIO_NUM_5  /*!< Reserved (Phase 2) — XIAO D4 */
+#define DOORBELL_PIN GPIO_NUM_1 /*!< XIAO D0 — dedicated doorbell tact */
+#define DOORLOCK_PIN GPIO_NUM_5 /*!< Reserved (Phase 2) — XIAO D4 */
 
 using door_intercom_cb_t = void (*)(uint16_t endpoint_id, bool pressed, void *user_data);
 

@@ -1,9 +1,9 @@
+#include <cosmos_battery.h>
 #include <esp_adc/adc_cali.h>
 #include <esp_adc/adc_cali_scheme.h>
 #include <esp_adc/adc_oneshot.h>
 #include <esp_err.h>
 #include <esp_log.h>
-#include <cosmos_battery.h>
 
 static const char *TAG = "cosmos_battery_adc";
 

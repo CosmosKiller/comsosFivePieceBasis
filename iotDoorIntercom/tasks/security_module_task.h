@@ -5,8 +5,8 @@
 #include <esp_err.h>
 #include <esp_matter.h>
 
-#define PIR_PIN         GPIO_NUM_2  /*!< XIAO D1 — PIR input */
-#define TAMPER_PIN      GPIO_NUM_3  /*!< XIAO D2 — mount/tamper contact (NC to GND when seated) */
+#define PIR_PIN         GPIO_NUM_2 /*!< XIAO D1 — PIR input */
+#define TAMPER_PIN      GPIO_NUM_3 /*!< XIAO D2 — mount/tamper contact (NC to GND when seated) */
 #define TRIGGER_TIME_MS 5000
 
 using security_module_cb_t = void (*)(uint16_t endpoint_id, bool active, void *user_data);

@@ -1,0 +1,40 @@
+name: clang-format
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+
+      - name: Check formatting (apps + shared components)
+        run: |
+          set -euo pipefail
+          fail=0
+          paths=(
+            iotDoorSensor/main iotDoorSensor/tasks
+            iotDualModeBtn/main iotDualModeBtn/tasks
+            iotEnvironmentalSensor/main iotEnvironmentalSensor/tasks
+            iotBedsideLamp/main iotBedsideLamp/tasks
+            iotDoorIntercom/main iotDoorIntercom/tasks
+            components/cosmos_battery components/cosmos_matter_common
+          )
+          while IFS= read -r -d '' f; do
+            if ! clang-format --dry-run --Werror "$f"; then
+              echo "::error file=$f::Needs clang-format (./tools/scripts/format_sources.sh)"
+              fail=1
+            fi
+          done < <(find "${paths[@]}" -type f \( -name '*.c' -o -name '*.cpp' -o -name '*.h' \) -print0)
+          if [[ "$fail" -ne 0 ]]; then
+            exit 1
+          fi
+          echo "All sources match .clang-format"

@@ -5,8 +5,8 @@
 
 #include <esp_log.h>
 
-#include <driver/gpio.h>
 #include <button_gpio.h>
+#include <driver/gpio.h>
 #include <iot_button.h>
 
 #include <esp_matter.h>

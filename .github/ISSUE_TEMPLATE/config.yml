@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Field / HA fleet (cosmos-ha-field)
+    url: https://github.com/CosmosKiller/cosmos-ha-field
+    about: Commissioning, Pi OTA, and Home Assistant deploy issues belong in the field repo.

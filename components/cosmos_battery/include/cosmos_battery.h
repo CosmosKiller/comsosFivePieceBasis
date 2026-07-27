@@ -17,12 +17,12 @@ extern "C" {
 #define COSMOS_BATTERY_PERCENT_UNKNOWN 0
 
 typedef struct {
-    int adc_gpio;         /*!< GPIO on the battery sense divider */
-    float divider_ratio;  /*!< Multiply ADC volts to obtain cell voltage */
-    float voltage_full_v; /*!< Full-charge cell voltage */
-    float voltage_empty_v;/*!< Cutoff / empty cell voltage */
-    uint32_t interval_ms; /*!< Sample period */
-    uint16_t endpoint_id; /*!< Matter Power Source endpoint id (0 to skip Matter updates) */
+    int adc_gpio;          /*!< GPIO on the battery sense divider */
+    float divider_ratio;   /*!< Multiply ADC volts to obtain cell voltage */
+    float voltage_full_v;  /*!< Full-charge cell voltage */
+    float voltage_empty_v; /*!< Cutoff / empty cell voltage */
+    uint32_t interval_ms;  /*!< Sample period */
+    uint16_t endpoint_id;  /*!< Matter Power Source endpoint id (0 to skip Matter updates) */
 } cosmos_battery_config_t;
 
 /**

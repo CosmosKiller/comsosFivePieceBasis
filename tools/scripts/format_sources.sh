@@ -19,19 +19,29 @@ if [[ -z "$CLANG_FORMAT" ]]; then
     exit 1
 fi
 
-APPS=(iotDoorSensor iotDualModeBtn iotEnvironmentalSensor)
+APPS=(iotDoorSensor iotDualModeBtn iotEnvironmentalSensor iotBedsideLamp iotDoorIntercom)
+COMPONENTS=(cosmos_battery cosmos_matter_common)
 shopt -s nullglob
 
-for app in "${APPS[@]}"; do
-    for dir in main tasks; do
-        path="$ROOT/$app/$dir"
-        [[ -d "$path" ]] || continue
-        for file in "$path"/*.{c,cpp,h}; do
-            [[ -f "$file" ]] || continue
-            echo "format: $file"
-            "$CLANG_FORMAT" -i "$file"
-        done
+format_tree() {
+    local path="$1"
+    [[ -d "$path" ]] || return 0
+    local file
+    for file in "$path"/*.{c,cpp,h} "$path"/include/*.{c,cpp,h}; do
+        [[ -f "$file" ]] || continue
+        echo "format: $file"
+        "$CLANG_FORMAT" -i "$file"
     done
+}
+
+for app in "${APPS[@]}"; do
+    format_tree "$ROOT/$app/main"
+    format_tree "$ROOT/$app/tasks"
+done
+
+for comp in "${COMPONENTS[@]}"; do
+    format_tree "$ROOT/components/$comp"
+    format_tree "$ROOT/components/$comp/include"
 done
 
 echo "done."

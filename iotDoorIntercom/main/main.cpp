@@ -15,6 +15,8 @@
 #include <lib/support/CodeUtils.h>
 
 #include <cam_task.h>
+#include <cosmos_battery.h>
+#include <cosmos_battery_matter.h>
 #include <cosmos_matter_ota.h>
 #include <door_intercom_task.h>
 #include <evt_service_task.h>
@@ -179,6 +181,19 @@ extern "C" void app_main(void)
         return;
     }
 
+    cosmos_battery_config_t battery_config;
+    cosmos_battery_config_set_defaults(&battery_config);
+    battery_config.endpoint_id = cosmos_battery_matter_add_endpoint(node);
+    if (battery_config.endpoint_id == 0) {
+        ESP_LOGE(TAG, "Failed to create battery endpoint");
+        return;
+    }
+    err = cosmos_battery_init(&battery_config);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "cosmos_battery_init failed: %d", err);
+        return;
+    }
+
     err = esp_matter::start(app_event_cb);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "esp_matter::start failed: %d", err);
@@ -197,6 +212,12 @@ extern "C" void app_main(void)
     cam_server = http_server_task_start(NULL);
     if (!cam_server) {
         ESP_LOGE(TAG, "Failed to start MJPEG stream server");
+        return;
+    }
+
+    err = cosmos_battery_start();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "cosmos_battery_start failed: %d", err);
         return;
     }
 

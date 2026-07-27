@@ -9,6 +9,8 @@
 
 #include <esp_matter.h>
 
+#include <cosmos_battery.h>
+#include <cosmos_battery_matter.h>
 #include <cosmos_matter_ota.h>
 #include <factory_reset_task.h>
 #include <lamp_task.h>
@@ -80,6 +82,19 @@ extern "C" void app_main(void)
         attribute::get(light_endpoint_id, ColorControl::Id, ColorControl::Attributes::ColorTemperatureMireds::Id);
     attribute::set_deferred_persistence(color_temp_attribute);
 
+    cosmos_battery_config_t battery_config;
+    cosmos_battery_config_set_defaults(&battery_config);
+    battery_config.endpoint_id = cosmos_battery_matter_add_endpoint(node);
+    if (battery_config.endpoint_id == 0) {
+        ESP_LOGE(TAG, "Failed to create battery endpoint");
+        return;
+    }
+    err = cosmos_battery_init(&battery_config);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "cosmos_battery_init failed: %d", err);
+        return;
+    }
+
     err = esp_matter::start(app_event_cb);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "esp_matter::start failed: %d", err);
@@ -101,6 +116,12 @@ extern "C" void app_main(void)
     err = user_button_task_start(light_endpoint_id);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "user_button_task_start failed: %d", err);
+        return;
+    }
+
+    err = cosmos_battery_start();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "cosmos_battery_start failed: %d", err);
         return;
     }
 

@@ -169,31 +169,50 @@ SKU 5 MVP (Matter + event-gated MJPEG + OTA) is **done**. This phase hardens the
 
 ---
 
-## Phase 6 — Optional “open source polish”
+## Phase 6 — Open-source polish (parallel with Phase 5)
 
+**Runs in parallel** with Phase 5 fabrication / soak / Flux carriers. Does **not** block PCB fab or gift Beta.
 
-| Task                                                     | Effort | Status |
-| -------------------------------------------------------- | ------ | ------ |
-| Doxygen on all `tasks/*.h` (see [CODE_STYLE.md](CODE_STYLE.md); done in Phase 1½) | M      | Done   |
-| Pre-commit or CI check: `clang-format --dry-run` on `main/` and `tasks/` | S      | —      |
-| Issue templates / release tags per app `PROJECT_VER`     | S      | —      |
-| Schematic or link to hardware repo in `docs/HARDWARE.md` | S      | —      |
+```mermaid
+flowchart TB
+  subgraph phase5 [Phase 5 product]
+    Flux[Flux carriers SKU 2/4/5]
+    Fab[Fab + mfg Steps 3-4]
+    Soak[Battery soak / lamp LED x10]
+    Tool[Toolchain bump later]
+  end
+  subgraph phase6 [Phase 6 polish]
+    Fmt[clang-format CI]
+    Issues[Issue templates + RELEASING.md]
+    Ecad[HARDWARE ECAD link table]
+  end
+  phase5 -.->|parallel| phase6
+```
 
+| Task | Effort | Status |
+|------|--------|--------|
+| Doxygen on all `tasks/*.h` (see [CODE_STYLE.md](CODE_STYLE.md); done in Phase 1½) | M | Done |
+| CI: `clang-format --dry-run` on app `main/` / `tasks/` + shared components | S | Done — [`.github/workflows/clang-format.yml`](../.github/workflows/clang-format.yml) |
+| Issue templates / release tags per app `PROJECT_VER` | S | Done — [`.github/ISSUE_TEMPLATE/`](../.github/ISSUE_TEMPLATE/) + [RELEASING.md](RELEASING.md) |
+| Schematic or link to hardware repo in [HARDWARE.md](HARDWARE.md) | S | Done — ECAD tracking table (paste Flux URLs when projects exist) |
 
 ---
 
-## Suggested order (Phases 0–4 done)
+## Suggested order
 
 ```mermaid
 flowchart LR
-  P4[Phase 4 CI] --> P5a[Phase 5 Battery]
-  P5a --> P5b[Hardware checklist]
-  P5b --> P5c[Apps 4 and 5]
+  P4[Phase 4 CI] --> P5[Phase 5 product]
+  P5 --> P5fab[Fab / soak]
+  P4 --> P6[Phase 6 polish]
+  P6 -.-> P5fab
 ```
 
-**Now:** Phase 5.a remaining — migrate to `endpoint::doorbell` after toolchain bump; then Beta branch.  
+**Track A (Phase 5):** Flux carriers for SKU 2 + 4 + 5; lamp LED×10; fab → mfg Steps 3–4; battery soak; later toolchain bump + `endpoint::doorbell`.  
+**Track B (Phase 6):** clang-format CI, issue templates, release tagging docs, ECAD link table — **started**.  
+**Done (battery):** `cosmos_battery` on SKU 2/4 (GPIO0) and SKU 5 (GPIO5).  
 **Later:** Matter Camera + WebRTC.  
-**Done (Phase 5 / 5.a so far):** SKU MVP + generic_switch doorbell + HTTPS `/stream` + latched tamper siren.  
+**Done (Phase 5 / 5.a so far):** SKU MVP + generic_switch doorbell + HTTPS `/stream` + latched tamper siren + HA-first packages.  
 **Separate repo:** [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field) — HA + Pi OTA.
 
 ---
@@ -213,10 +232,14 @@ Copy into a GitHub issue or project board:
 - [x] Phase 5 — `iotDoorIntercom` MVP (Matter + MJPEG on XIAO S3 Sense)
 - [x] Phase 5 — hardware bring-up checklist ([HARDWARE.md](HARDWARE.md) — binary sensor prototype)
 - [x] Phase 5 — manufacturing docs ([MANUFACTURING.md](MANUFACTURING.md), `tools/mfg/`; Steps 1–2 done, 3–4 after PCB)
+- [ ] Phase 5 — Flux carriers SKU 2/4/5 → fab → flash/ship
 - [x] Phase 5.a — generic_switch doorbell + HTTPS `/stream` + tamper contact_sensor
 - [x] Phase 5.a — tamper siren GPIO4 + Matter OnOff clear (latched); full Alarm cluster later
 - [ ] Phase 5.a — migrate to `endpoint::doorbell` after toolchain bump
 - [ ] Phase 5.a — Matter Camera + WebRTC (after HTTPS/doorbell model)
+- [x] Phase 6 — clang-format CI + format script covers all SKUs
+- [x] Phase 6 — issue templates + [RELEASING.md](RELEASING.md)
+- [x] Phase 6 — HARDWARE ECAD link table (URLs TBD)
 - HA / Pi fleet — [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
 
 Update the **Status** section in the root README when major milestones land.

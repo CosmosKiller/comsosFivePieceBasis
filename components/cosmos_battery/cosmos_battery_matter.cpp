@@ -18,7 +18,7 @@ uint16_t cosmos_battery_matter_add_endpoint(esp_matter::node_t *node)
 {
     esp_matter::endpoint::power_source::config_t config;
     config.power_source.feature_flags = esp_matter::cluster::power_source::feature::battery::get_id() |
-                                          esp_matter::cluster::power_source::feature::replaceable::get_id();
+                                        esp_matter::cluster::power_source::feature::replaceable::get_id();
 
     endpoint_t *endpoint = esp_matter::endpoint::power_source::create(node, &config, ENDPOINT_FLAG_NONE, NULL);
     if (!endpoint) {
@@ -35,7 +35,7 @@ uint16_t cosmos_battery_matter_add_endpoint(esp_matter::node_t *node)
     esp_matter::cluster::power_source::attribute::create_bat_voltage(power_cluster, nullable<uint32_t>(),
                                                                      nullable<uint32_t>(0), nullable<uint32_t>(0xFFFF));
     esp_matter::cluster::power_source::attribute::create_bat_percent_remaining(power_cluster, nullable<uint8_t>(),
-                                                                                nullable<uint8_t>(0), nullable<uint8_t>(200));
+                                                                               nullable<uint8_t>(0), nullable<uint8_t>(200));
     esp_matter::cluster::power_source::attribute::create_bat_present(power_cluster, true);
 
     const uint16_t endpoint_id = esp_matter::endpoint::get_id(endpoint);
