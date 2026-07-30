@@ -6,6 +6,7 @@ menu "Cosmos Matter Common"
         default 9
         help
             Active-low long-press button for Matter factory reset.
-            XIAO ESP32-C6 BOOT is GPIO9; XIAO ESP32-S3 Sense BOOT is GPIO0.
+            XIAO ESP32-C6 BOOT is GPIO9; XIAO ESP32-S3 Sense BOOT is GPIO0;
+            XIAO ESP32-C5 BOOT is GPIO28.
 
 endmenu

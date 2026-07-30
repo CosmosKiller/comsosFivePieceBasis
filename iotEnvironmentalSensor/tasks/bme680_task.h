@@ -10,8 +10,8 @@
 #include <esp_err.h>
 
 #define I2C_BUS     I2C_NUM_0         /*!< I2C peripheral */
-#define I2C_SCL_PIN GPIO_NUM_22       /*!< I2C clock GPIO */
-#define I2C_SDA_PIN GPIO_NUM_21       /*!< I2C data GPIO */
+#define I2C_SCL_PIN GPIO_NUM_24       /*!< I2C clock — XIAO C5 D5 (HARDWARE.md) */
+#define I2C_SDA_PIN GPIO_NUM_23       /*!< I2C data — XIAO C5 D4 (HARDWARE.md) */
 #define I2C_FREQ    I2C_FREQ_100K     /*!< I2C bus frequency */
 #define I2C_ADDR    BME680_I2C_ADDR_0 /*!< BME680 I2C address */
 

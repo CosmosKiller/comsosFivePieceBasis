@@ -216,7 +216,7 @@ SKU 5 MVP (Matter + event-gated MJPEG + OTA) is **done**. This phase hardens the
 ```mermaid
 flowchart TB
   subgraph phase5 [Phase 5 product]
-    Flux[Flux carriers SKU 2/4/5]
+    Flux[Flux carriers SKU 1-5]
     Fab[Fab + mfg Steps 3-4]
     Soak[Battery soak / lamp LED x10]
     Tool[Toolchain bump later]
@@ -248,7 +248,7 @@ flowchart LR
   P6 -.-> P5fab
 ```
 
-**Track A (Phase 5):** Flux carriers for SKU 1–2 / 4–5; lamp LED×10; fab → mfg Steps 3–4; battery soak.  
+**Track A (Phase 5):** Flux carriers for SKU 1–5; lamp LED×10; env display/encoder UI later; fab → mfg Steps 3–4; battery soak.  
 **Track B (Phase 6):** clang-format CI, issue templates, release tagging docs, ECAD link table — **done** (paste Flux URLs when projects exist).  
 **Post-Beta cleanup combo:** Plan B (Cosmos naming) + IDF/esp-matter bump + `endpoint::doorbell` — see [combo](#post-beta-cleanup-combo--plan-b--toolchain--5a).  
 **Done (battery):** `cosmos_battery` on SKU 2/4 (GPIO0) and SKU 5 (GPIO5).  
@@ -276,7 +276,7 @@ Copy into a GitHub issue or project board:
 - [x] Phase 5 — `iotDoorIntercom` MVP (Matter + MJPEG on XIAO S3 Sense)
 - [x] Phase 5 — hardware bring-up checklist ([HARDWARE.md](HARDWARE.md) — binary sensor prototype)
 - [x] Phase 5 — manufacturing docs ([MANUFACTURING.md](MANUFACTURING.md), `tools/mfg/`; Steps 1–2 done, 3–4 after PCB)
-- [ ] Phase 5 — Flux carriers SKU 1/2/4/5 → fab → flash/ship (power architecture locked in HARDWARE.md)
+- [ ] Phase 5 — Flux carriers SKU 1/2/3/4/5 → fab → flash/ship (power architecture locked in HARDWARE.md)
 - [x] Phase 5.a — generic_switch doorbell + HTTPS `/stream` + tamper contact_sensor
 - [x] Phase 5.a — tamper siren GPIO4 + Matter OnOff clear (latched); full Alarm cluster later
 - [ ] Phase 5.a — migrate to `endpoint::doorbell` (part of Post-Beta cleanup combo)

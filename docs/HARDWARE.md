@@ -42,11 +42,11 @@ Battery SKUs use a **single-cell (1S) Li-ion** pack (3.0–4.2 V). Do **not** pu
 | SKU | Product USB-C | Which connector | Module USB-C |
 |-----|---------------|-----------------|--------------|
 | **1 / 2** | Yes — charge + flash | **XIAO on-module** only | **Is** the product port (edge access in enclosure) |
-| **3** | Yes — power only (no cell) | **XIAO on-module** only | **Is** the product port |
+| **3** | Yes — desk power only (no cell) | **Carrier receptacle (J1)** | Flash / bring-up only; do **not** dual-feed with J1 |
 | **4** | Yes — power + charge + LED 5 V | **Carrier receptacle (J1)** | Flash / bring-up only; do **not** dual-feed charge with J1 |
 | **5** | Yes — charge (+ run while charging) | **Carrier receptacle (J1)** | Flash / bring-up only; do **not** dual-feed charge with J1 |
 
-**Why carrier USB on 4 / 5?** Higher current (LEDs / camera), sealed or awkward module orientation, and a single controlled VBUS → charger → BAT / LED-OR path. Product charging must go through **J1**, not a second live cable into the module jack.
+**Why carrier USB on 3 / 4 / 5?** Higher current (display / LEDs / camera), awkward module orientation, and a single controlled VBUS → system (and charger on 4/5) path. Product power/charge must go through **J1**, not a second live cable into the module jack.
 
 #### Hard anti-leakage rules (all SKUs)
 
@@ -85,14 +85,18 @@ USB-C (module edge OK) ──► XIAO onboard charger ──► BAT pads ──�
 - Optional carrier USB-C only if it is **VBUS → same charger input** (not a second path to BAT).
 - ADC divider: ≥100 k / 100 k (or MOSFET-gated) so sense is not a constant drain.
 
-**SKU 3 — no battery, USB-C only**
+**SKU 3 — desk USB, no battery (display + BME680)**
 
 ```text
-USB-C ──► XIAO VBUS / 5V ──► onboard LDO ──► 3V3 ──► MCU + BME680 (+ display later)
+Carrier USB-C (J1) ──► VBUS 5V ──► XIAO `5V` ──► onboard LDO ──► 3V3 ──► MCU
+                              │
+                              ├──► BME680 VDD (3.3 V)
+                              └──► ST7789 VDD (3.3 V) + BL driver from GPIO12
 ```
 
-- **No** charger IC, **no** BAT pads populated, **no** `cosmos_battery` divider on the carrier for v1.
-- Do not leave BAT pads floating into a connector that could short; omit JST / leave DNP.
+- **No** charger IC, **no** JST, **no** battery divider on v1 (GPIO6 reserved for v2).
+- Module USB-C = flash / bring-up only — do not dual-feed with J1.
+- Place J1 by hand in Flux; size traces for display backlight peaks.
 
 **SKU 4 — USB primary + portable boost**
 
@@ -154,6 +158,7 @@ The cell stays **electrically attached** whenever it is installed (and charges w
 | **XIAO MCU → 3V3** | **On-module** (e.g. C6: SGM40567 charger + diode/FET → LDO) | USB plugged: VBUS feeds LDO + charges cell. USB unplugged: BAT feeds LDO. Do not also hard-feed XIAO `5V` from a second uncontrolled source. |
 | **SKU 4 LED 5 V** | **Carrier only** (ideal diode / load-switch OR + **boost EN**) | USB plugged: LEDs from **carrier USB VBUS**; **boost EN = off** → cell does **not** feed LEDs. Battery / lamp Off: boost EN off. XIAO does **not** switch the LED rail. |
 | **SKU 1 / 2 / 5 loads** | Run from **3V3 or BAT+** after XIAO / carrier protect | No 5 V boost. Use module USB (or carrier USB → charger only) for charge; do not hang loads on XIAO `5V`. |
+| **SKU 3 loads** | Carrier **J1 VBUS** → XIAO `5V` / 3V3 | No battery on v1; display + BME680 from 3V3; module USB flash-only. |
 | **SKU 4 / 5 with carrier power-path PMIC** | **Carrier SYS** feeds system; XIAO may see only BAT+/SYS | Prefer this when camera / LED current is high. Avoid stacking a second charger into XIAO BAT while a carrier charger already owns the cell. |
 
 **SKU 4 mental model when USB-C is plugged:** battery is charging (and still connected); **MCU** may be on USB via XIAO or via carrier SYS; **LEDs** must be on **USB VBUS via OR**, not on the boost/cell path.
@@ -202,7 +207,7 @@ Firmware GPIO + Flux prompts in this file are the **source of truth** until Gerb
 |-----|-------------------------|------|
 | iotDoorSensor (1) | Carrier in progress (Flux.ai) | *Add project URL when shared* |
 | iotDualModeBtn (2) | Prompt + BOM ready — layout next | *Add project URL when shared* |
-| iotEnvironmentalSensor (3) | Deferred (C5 + display) | — |
+| iotEnvironmentalSensor (3) | Prompt + BOM ready (60×60 mm) | *Add project URL when shared* |
 | iotBedsideLamp (4) | Prompt + BOM ready (Ø50 mm) | *Add project URL when shared* |
 | iotDoorIntercom (5) | Prompt + BOM ready (outdoor 60×100) | *Add project URL when shared* |
 
@@ -545,25 +550,129 @@ Matter generic switch, `iot_button_task`, `cosmos_battery` (GPIO0), OTA via `cos
 
 ---
 
-## iotEnvironmentalSensor
+## iotEnvironmentalSensor (SKU 3)
 
-**Board (target):** [Seeed XIAO ESP32-C5](https://wiki.seeedstudio.com/xiao_esp32c5_getting_started/)
+**Board:** [Seeed XIAO ESP32-C5](https://wiki.seeedstudio.com/xiao_esp32c5_getting_started/)  
+**Matter role:** Temperature / humidity / pressure (BME680); local UI later.  
+**PID (test):** `0x8003` — see [MANUFACTURING.md](MANUFACTURING.md).  
+**GPIO source of truth:** this file (firmware must match; old bench pins were temporary).
 
-Follow [Cosmos carrier design rules](#cosmos-carrier-design-rules); battery sense on **A6 / GPIO6** (not A0).
+> **Note:** Target is **esp32c5** (`sdkconfig.defaults`, CMake); run `idf.py set-target esp32c5` locally to regenerate `sdkconfig`. C5 is still a preview IDF target.
 
-| Signal | Role |
-|--------|------|
-| D0/GPIO1, D1/GPIO0, D2/GPIO25, BOOT/GPIO28 | Rotary encoder, reset |
-| GPIO23 / GPIO24 | I2C SDA / SCL (BME680) |
-| SPI (GPIO8–12, etc.) | ST7789 display (planned) |
-| A6/GPIO6 | Battery monitoring (ADC1_CH6) |
-| Optional | RGB LED outputs |
+### Product decisions (locked for v1 carrier)
 
-**Modules:** Matter, BME680, OTA via `cosmos_matter_ota` — battery via `cosmos_battery`; display, custom QR open.
+| Item | Choice |
+|------|--------|
+| Form | **60 × 60 mm** square PCB |
+| Environment | Desk / indoor; enclosure + mounting holes + display orientation — **your choice in Flux** |
+| Power | **Carrier USB-C (J1)** only — no battery, no JST, no charger on v1 |
+| Sensor | **BME680 bare** on carrier (I2C) |
+| Display | **1.3" 240×240 ST7789**, SPI, **no CS** (tie module CS to GND), **no touch**; soldered module |
+| Encoder | **EC11** through-hole with integrated push |
+| Factory reset | **Separate tact** on BOOT (not the encoder push) |
+| RGB / addr LED | **Not on v1** — optional upgrade later |
+| Battery | **v2 only** — reserve **GPIO6** (ADC_BAT); no divider / cell on v1 |
+| Firmware v1 bring-up | BME680 + Matter + OTA now; encoder / display / reset UI tasks when carrier arrives |
 
-> **Note:** Target is **esp32c5** (`sdkconfig.defaults`, CMake); run `idf.py set-target esp32c5` locally to regenerate `sdkconfig`.
+### GPIO map (must match firmware)
 
-*Flux prompt and BOM — TBD (higher complexity: I2C sensor + display + encoder).*
+| XIAO pin | ESP GPIO | Function / wiring |
+|----------|----------|-------------------|
+| D0 | GPIO1 | Encoder **A** |
+| D1 | GPIO0 | Encoder **B** |
+| D2 | GPIO25 | Encoder **push** (to GND; SW pull-up) |
+| BOOT | GPIO28 | Factory-reset tact to GND (`CONFIG_FACTORY_RESET_BUTTON_GPIO=28`) |
+| D4 | GPIO23 | BME680 **SDA** |
+| D5 | GPIO24 | BME680 **SCL** |
+| D8 | GPIO8 | ST7789 **SCK** |
+| D9 | GPIO9 | ST7789 **DC** |
+| D10 | GPIO10 | ST7789 **MOSI** |
+| D6 | GPIO11 | ST7789 **RST** |
+| D7 | GPIO12 | ST7789 **BL** (PWM / GPIO → NPN or FET + resistor; active HIGH = on) |
+| ADC_BAT | GPIO6 | **Reserved v2** battery sense — DNP divider on v1 |
+| — | GPIO26 | XIAO **ADC_CRL** (on-module bat-sense enable) — leave for v2; do not load on v1 |
+
+**ST7789 CS:** hard-tie module **CS to GND** (no MCU CS pin).  
+**Unused v1:** D3/GPIO7; RGB / WS2812 footprints omitted.
+
+### Flux.ai project prompt
+
+```text
+Design a square 2-layer carrier PCB for "Cosmos iotEnvironmentalSensor" — a desk Matter environmental display (BME680 + ST7789 + EC11).
+
+Form factor:
+- Square PCB, 60 × 60 mm. Mounting holes, enclosure, and exact placement of display / encoder / USB are designer choice.
+- Center or offset pocket for Seeed XIAO ESP32-C5 (castellated). Keep on-module / u.FL antenna clearances per Seeed (no copper under antenna region).
+
+Core module:
+- Seeed XIAO ESP32-C5.
+
+Power (v1 — no battery):
+- Carrier USB-C receptacle (J1) as the only product power input. Place J1 by hand.
+- VBUS 5 V → XIAO `5V` pin (MCU onboard LDO → 3V3). Feed BME680 and ST7789 from regulated 3.3 V (XIAO 3V3 or a small carrier LDO if current budget needs it).
+- No JST, no charger IC, no battery pouch on v1. Do not dual-feed module USB-C and J1 onto VBUS.
+- Module USB-C = flash / bring-up only.
+- Size power traces for ST7789 backlight peaks (~50–100 mA class) + Wi-Fi.
+
+BME680 (bare):
+- Place BME680 with recommended I2C pull-ups (4.7 kΩ to 3V3 on SDA/SCL), 100 nF local decoupling, and airflow / keep-out so the sensor is not heat-soaked by the MCU or backlight.
+- SDA = XIAO D4 (GPIO23), SCL = XIAO D5 (GPIO24). Tie SDO for I2C address 0x76 (ADDR_0) unless your BOM uses 0x77.
+- Do not reassign I2C pins.
+
+Display (soldered module):
+- 1.3" 240×240 ST7789 SPI module, no touch.
+- Tie module CS to GND (no CS GPIO).
+- Wiring: SCK=D8/GPIO8, MOSI=D10/GPIO10, DC=D9/GPIO9, RST=D6/GPIO11, BL=D7/GPIO12 via transistor/FET + series resistor (GPIO high = backlight on). VDD=3.3 V, common GND.
+- Orientation and connector style are designer choice.
+
+Encoder + reset:
+- Through-hole EC11: A→D0/GPIO1, B→D1/GPIO0, push→D2/GPIO25 to GND (firmware pull-up). Debounce caps optional.
+- Separate factory-reset tact: BOOT/GPIO28 to GND (long press ≥ 5 s). Do not combine with encoder push.
+
+Reserved / DNP for v2:
+- Leave silkscreen / pads note for future 1S JST + 100 k / 100 k divider into GPIO6 (ADC_BAT). Do not populate on v1.
+- No RGB or addressable LED footprints on v1 (optional upgrade later).
+
+Layout:
+- 2 layers, 1.6 mm FR4, 1 oz, JLCPCB-friendly, 0603 passives.
+- Solid GND pour; antenna keep-out on XIAO.
+- Silkscreen: 5V, 3V3, GND, SDA, SCL, ENC A/B/SW, RESET, TFT DC/RST/BL, REV, product name.
+- Test pads: 5V, 3V3, GND, SDA, SCL, GPIO6 (v2).
+
+GPIO lock (do not reassign):
+- Enc A=GPIO1, B=GPIO0, push=GPIO25, Reset=GPIO28, SDA=23, SCL=24, SCK=8, DC=9, MOSI=10, RST=11, BL=12. GPIO6 reserved v2 only.
+```
+
+### Bill of materials (prototype carrier)
+
+| Ref | Qty | Description | Notes |
+|-----|-----|-------------|--------|
+| U1 | 1 | [Seeed XIAO ESP32-C5](https://wiki.seeedstudio.com/xiao_esp32c5_getting_started/) | Matter MCU |
+| U2 | 1 | BME680 (bare) | I2C; addr 0x76 typical |
+| R_I2C | 2 | 4.7 kΩ, 0603 | SDA / SCL pull-up to 3V3 |
+| C_BME | 1–2 | 100 nF, 0603 | Local BME680 decoupling |
+| DISP1 | 1 | ST7789 1.3" 240×240 SPI module | No touch; CS→GND |
+| R_BL / Q_BL | 1 | BL series R + NPN/FET | Drive from GPIO12 |
+| SW_ENC | 1 | EC11 rotary encoder w/ push | Through-hole |
+| SW_RST | 1 | Tact switch | Factory reset — GPIO28 |
+| J1 | 1 | USB-C receptacle | Product power only (place in Flux) |
+| C_USB | 1–2 | 10 µF + 100 nF | VBUS bulk / HF |
+| — | — | Enclosure / stand | Mechanical — deferred |
+
+**DNP v1 / v2 reserve:** JST-PH, battery divider R1/R2, BAT1 pouch, RGB / WS2812.
+
+### Bring-up checklist (carrier)
+
+- [ ] USB-C (J1) powers MCU + BME680; Matter temp/humidity/pressure update in HA
+- [ ] ST7789 lights (BL) and accepts SPI once UI firmware lands
+- [ ] EC11 A/B/push and separate reset tact wired to locked GPIOs
+- [ ] Module USB used for flash without fighting J1
+- [ ] No battery / no Power Source required for v1 field units
+- [ ] OTA image builds (`CHIP_OTA_IMAGE_BUILD`)
+
+### Firmware modules
+
+Matter temp/humidity/pressure, `bme680_task` (I2C GPIO23/24), OTA via `cosmos_matter_ota`, factory reset on GPIO28. **Display / encoder / LVGL / custom QR / `cosmos_battery` — later** (battery reserved GPIO6 for v2 carrier).
 
 ---
 

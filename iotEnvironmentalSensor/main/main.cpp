@@ -115,6 +115,7 @@ extern "C" void app_main()
         return;
     }
 
+#if CONFIG_COSMOS_BATTERY_ENABLE
     cosmos_battery_config_t battery_config;
     cosmos_battery_config_set_defaults(&battery_config);
     battery_config.endpoint_id = cosmos_battery_matter_add_endpoint(node);
@@ -127,6 +128,7 @@ extern "C" void app_main()
         ESP_LOGE(TAG, "cosmos_battery_init failed: %d", err);
         return;
     }
+#endif
 
     // Start Matter stack (this starts transports, commissioning, etc.)
     err = esp_matter::start(app_event_cb);
@@ -141,11 +143,13 @@ extern "C" void app_main()
         return;
     }
 
+#if CONFIG_COSMOS_BATTERY_ENABLE
     err = cosmos_battery_start();
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "cosmos_battery_start failed: %d", err);
         return;
     }
+#endif
 
     // Start factory reset task
     factory_reset_task();
