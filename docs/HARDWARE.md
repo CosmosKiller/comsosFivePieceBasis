@@ -1,4 +1,8 @@
-# Hardware reference
+# I was planning on switching from XIOA ESP32-S3 to this board for SKU. what sounds intersting to me are two things:
+
+- LoRA (To use this as a gateway)
+
+- And the Hardware reference
 
 Per-device GPIO, carrier-board guidance, and ECAD prompts. Update this file when pinouts or the BOM change; keep app `To-Do.MD` notes in sync until retired (see [POLISH_PLAN.md](POLISH_PLAN.md)).
 
@@ -12,16 +16,18 @@ Shared defaults for **low-voltage, sensor-class, 2-layer** carriers across all S
 
 ### Electrical
 
-| Rule | Value / note |
-|------|----------------|
-| Supply domain | **1S Li-ion** (3.0–4.2 V) or regulated **3.3 V** to XIAO `3V3` / `VIN` per Seeed guidance; firmware assumes **1S** thresholds (empty 3.0 V, full 4.2 V) |
-| Max board voltage | **≤ 12 V** at any net (low-voltage hobby/prototype class) |
-| Logic | **3.3 V** CMOS only on XIAO GPIO — no 5 V on module pins |
-| Battery sense | Resistive divider **2:1** (e.g. 100 kΩ / 100 kΩ) to ADC pin; **`divider_ratio = 2.0`** in `cosmos_battery` |
-| ADC filter | **100 nF** ceramic from sense node (mid-divider tap) to **GND**, close to module pin |
-| Digital inputs | Match firmware pull: contact sensor uses **pull-down** (reed open = high-Z, closed = tied high) |
-| Factory reset | **GPIO9** (`BOOT` on XIAO): long-press ≥ 5 s (`CONFIG_BUTTON_LONG_PRESS_TIME_MS=5000`); expose accessible tact switch |
-| Decoupling | **100 nF** on each LED branch / noisy output near load; module relies on XIAO on-board decoupling |
+
+| Rule              | Value / note                                                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Supply domain     | **1S Li-ion** (3.0–4.2 V) or regulated **3.3 V** to XIAO `3V3` / `VIN` per Seeed guidance; firmware assumes **1S** thresholds (empty 3.0 V, full 4.2 V) |
+| Max board voltage | **≤ 12 V** at any net (low-voltage hobby/prototype class)                                                                                               |
+| Logic             | **3.3 V** CMOS only on XIAO GPIO — no 5 V on module pins                                                                                                |
+| Battery sense     | Resistive divider **2:1** (e.g. 100 kΩ / 100 kΩ) to ADC pin; `**divider_ratio = 2.0`** in `cosmos_battery`                                              |
+| ADC filter        | **100 nF** ceramic from sense node (mid-divider tap) to **GND**, close to module pin                                                                    |
+| Digital inputs    | Match firmware pull: contact sensor uses **pull-down** (reed open = high-Z, closed = tied high)                                                         |
+| Factory reset     | **GPIO9** (`BOOT` on XIAO): long-press ≥ 5 s (`CONFIG_BUTTON_LONG_PRESS_TIME_MS=5000`); expose accessible tact switch                                   |
+| Decoupling        | **100 nF** on each LED branch / noisy output near load; module relies on XIAO on-board decoupling                                                       |
+
 
 ### Power architecture (1S family)
 
@@ -29,22 +35,26 @@ Battery SKUs use a **single-cell (1S) Li-ion** pack (3.0–4.2 V). Do **not** pu
 
 #### Product power roles (locked)
 
-| SKU | Role | USB-C | Battery |
-|-----|------|-------|---------|
-| **1** Door sensor | Fully portable | **Charge (+ flash) only** | Always runs from 1S |
-| **2** Dual-mode btn | Fully portable | **Charge (+ flash) only** | Always runs from 1S |
-| **3** Env sensor | Mains / desk | **Only power source** | **None** (v1) |
-| **4** Bedside lamp | USB primary; portable when needed | Power + charge; normal use plugged | 1S for cordless use |
-| **5** Door intercom | Fully portable | **Charge (+ flash) only**; may run while charging | Always runs from 1S |
+
+| SKU                 | Role                              | USB-C                                             | Battery             |
+| ------------------- | --------------------------------- | ------------------------------------------------- | ------------------- |
+| **1** Door sensor   | Fully portable                    | **Charge (+ flash) only**                         | Always runs from 1S |
+| **2** Dual-mode btn | Fully portable                    | **Charge (+ flash) only**                         | Always runs from 1S |
+| **3** Env sensor    | Mains / desk                      | **Only power source**                             | **None** (v1)       |
+| **4** Bedside lamp  | USB primary; portable when needed | Power + charge; normal use plugged                | 1S for cordless use |
+| **5** Door intercom | Fully portable                    | **Charge (+ flash) only**; may run while charging | Always runs from 1S |
+
 
 #### USB-C port strategy (locked)
 
-| SKU | Product USB-C | Which connector | Module USB-C |
-|-----|---------------|-----------------|--------------|
-| **1 / 2** | Yes — charge + flash | **XIAO on-module** only | **Is** the product port (edge access in enclosure) |
-| **3** | Yes — desk power only (no cell) | **Carrier receptacle (J1)** | Flash / bring-up only; do **not** dual-feed with J1 |
-| **4** | Yes — power + charge + LED 5 V | **Carrier receptacle (J1)** | Flash / bring-up only; do **not** dual-feed charge with J1 |
-| **5** | Yes — charge (+ run while charging) | **Carrier receptacle (J1)** | Flash / bring-up only; do **not** dual-feed charge with J1 |
+
+| SKU       | Product USB-C                       | Which connector             | Module USB-C                                               |
+| --------- | ----------------------------------- | --------------------------- | ---------------------------------------------------------- |
+| **1 / 2** | Yes — charge + flash                | **XIAO on-module** only     | **Is** the product port (edge access in enclosure)         |
+| **3**     | Yes — desk power only (no cell)     | **Carrier receptacle (J1)** | Flash / bring-up only; do **not** dual-feed with J1        |
+| **4**     | Yes — power + charge + LED 5 V      | **Carrier receptacle (J1)** | Flash / bring-up only; do **not** dual-feed charge with J1 |
+| **5**     | Yes — charge (+ run while charging) | **Carrier receptacle (J1)** | Flash / bring-up only; do **not** dual-feed charge with J1 |
+
 
 **Why carrier USB on 3 / 4 / 5?** Higher current (display / LEDs / camera), awkward module orientation, and a single controlled VBUS → system (and charger on 4/5) path. Product power/charge must go through **J1**, not a second live cable into the module jack.
 
@@ -52,13 +62,15 @@ Battery SKUs use a **single-cell (1S) Li-ion** pack (3.0–4.2 V). Do **not** pu
 
 Never create a path that lets one rail back-feed another:
 
-| Forbidden | Why |
-|-----------|-----|
-| Tie **USB VBUS / XIAO `5V`** directly to **BAT+** | Back-feeds the cell / charger; can fight USB host |
-| Tie **boost VOUT (5 V)** to **USB VBUS** or **XIAO `5V`** without OR / load-switch | Boost pushes into USB or USB fights boost |
-| Tie **boost VOUT** to **XIAO `3V3`** or GPIO rails | Overvoltage / latch-up |
-| Power peripherals from **XIAO `5V`** and expect them on battery | `5V` is dead on battery — only VBUS |
-| Carrier USB-C **and** module USB-C both wired to VBUS without a single controlled path | Dual feed / charge confusion |
+
+| Forbidden                                                                              | Why                                               |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Tie **USB VBUS / XIAO `5V`** directly to **BAT+**                                      | Back-feeds the cell / charger; can fight USB host |
+| Tie **boost VOUT (5 V)** to **USB VBUS** or **XIAO `5V`** without OR / load-switch     | Boost pushes into USB or USB fights boost         |
+| Tie **boost VOUT** to **XIAO `3V3`** or GPIO rails                                     | Overvoltage / latch-up                            |
+| Power peripherals from **XIAO `5V`** and expect them on battery                        | `5V` is dead on battery — only VBUS               |
+| Carrier USB-C **and** module USB-C both wired to VBUS without a single controlled path | Dual feed / charge confusion                      |
+
 
 **Allowed OR points only:**
 
@@ -112,15 +124,17 @@ USB-C 5V ──► power-path / 1S charger + protect ──► BAT+ / cell
          └──── ideal-diode / load-switch OR ──────┴──► WS2812 VDD only
 ```
 
-| Rule | Detail |
-|------|--------|
-| Boost IC | e.g. **MT3608** @ **5.00 V**, **≥ 1.5 A** |
-| Boost VIN | BAT+ after protect only |
-| Boost VOUT | **LED rail only** |
-| USB plugged | LEDs from **carrier** USB 5 V via OR; **boost EN = off** (cell does not feed LEDs) |
-| Battery / lamp Off | **boost EN = off** (GPIO or USB-detect) |
-| MCU vs LEDs | XIAO (or carrier SYS) switches MCU USB↔BAT; **carrier** switches LED rail — see [Who switches what](#who-switches-what-mcu-vs-loads) |
-| Cell | ≥3000 mAh, ~1–2 A peaks |
+
+| Rule               | Detail                                                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Boost IC           | e.g. **MT3608** @ **5.00 V**, **≥ 1.5 A**                                                                                            |
+| Boost VIN          | BAT+ after protect only                                                                                                              |
+| Boost VOUT         | **LED rail only**                                                                                                                    |
+| USB plugged        | LEDs from **carrier** USB 5 V via OR; **boost EN = off** (cell does not feed LEDs)                                                   |
+| Battery / lamp Off | **boost EN = off** (GPIO or USB-detect)                                                                                              |
+| MCU vs LEDs        | XIAO (or carrier SYS) switches MCU USB↔BAT; **carrier** switches LED rail — see [Who switches what](#who-switches-what-mcu-vs-loads) |
+| Cell               | ≥3000 mAh, ~1–2 A peaks                                                                                                              |
+
 
 **Why not 2S + buck?** Shared 1S line + firmware; revisit only if soak shows brownouts.
 
@@ -140,12 +154,14 @@ USB-C ──► 1S charger + protect ──► BAT+ / cell ──► XIAO BAT (S
 
 #### XIAO `5V` pin vs USB-C
 
-On XIAO ESP32-C6 / S3 / C5, header **`5V`** = **USB VBUS**:
+On XIAO ESP32-C6 / S3 / C5, header `**5V**` = **USB VBUS**:
 
-| Power source | `5V` pin | `3V3` pin |
-|--------------|----------|-----------|
-| USB-C plugged in | ≈ **5 V** | Regulated 3.3 V |
+
+| Power source     | `5V` pin          | `3V3` pin                |
+| ---------------- | ----------------- | ------------------------ |
+| USB-C plugged in | ≈ **5 V**         | Regulated 3.3 V          |
 | **Battery only** | **No usable 5 V** | Regulated 3.3 V from BAT |
+
 
 Not a boost from the cell. Battery-only 5 V loads need a **carrier boost** (SKU 4). Feeding *into* `5V` needs a diode and a single charge path — prefer carrier USB-C → charger for products.
 
@@ -153,13 +169,15 @@ Not a boost from the cell. Battery-only 5 V loads need a **carrier boost** (SKU 
 
 The cell stays **electrically attached** whenever it is installed (and charges when USB is present). That is not the same as “battery is always the load supply.”
 
-| Path | Who switches USB ↔ battery | Notes |
-|------|----------------------------|--------|
-| **XIAO MCU → 3V3** | **On-module** (e.g. C6: SGM40567 charger + diode/FET → LDO) | USB plugged: VBUS feeds LDO + charges cell. USB unplugged: BAT feeds LDO. Do not also hard-feed XIAO `5V` from a second uncontrolled source. |
-| **SKU 4 LED 5 V** | **Carrier only** (ideal diode / load-switch OR + **boost EN**) | USB plugged: LEDs from **carrier USB VBUS**; **boost EN = off** → cell does **not** feed LEDs. Battery / lamp Off: boost EN off. XIAO does **not** switch the LED rail. |
-| **SKU 1 / 2 / 5 loads** | Run from **3V3 or BAT+** after XIAO / carrier protect | No 5 V boost. Use module USB (or carrier USB → charger only) for charge; do not hang loads on XIAO `5V`. |
-| **SKU 3 loads** | Carrier **J1 VBUS** → XIAO `5V` / 3V3 | No battery on v1; display + BME680 from 3V3; module USB flash-only. |
-| **SKU 4 / 5 with carrier power-path PMIC** | **Carrier SYS** feeds system; XIAO may see only BAT+/SYS | Prefer this when camera / LED current is high. Avoid stacking a second charger into XIAO BAT while a carrier charger already owns the cell. |
+
+| Path                                       | Who switches USB ↔ battery                                     | Notes                                                                                                                                                                   |
+| ------------------------------------------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **XIAO MCU → 3V3**                         | **On-module** (e.g. C6: SGM40567 charger + diode/FET → LDO)    | USB plugged: VBUS feeds LDO + charges cell. USB unplugged: BAT feeds LDO. Do not also hard-feed XIAO `5V` from a second uncontrolled source.                            |
+| **SKU 4 LED 5 V**                          | **Carrier only** (ideal diode / load-switch OR + **boost EN**) | USB plugged: LEDs from **carrier USB VBUS**; **boost EN = off** → cell does **not** feed LEDs. Battery / lamp Off: boost EN off. XIAO does **not** switch the LED rail. |
+| **SKU 1 / 2 / 5 loads**                    | Run from **3V3 or BAT+** after XIAO / carrier protect          | No 5 V boost. Use module USB (or carrier USB → charger only) for charge; do not hang loads on XIAO `5V`.                                                                |
+| **SKU 3 loads**                            | Carrier **J1 VBUS** → XIAO `5V` / 3V3                          | No battery on v1; display + BME680 from 3V3; module USB flash-only.                                                                                                     |
+| **SKU 4 / 5 with carrier power-path PMIC** | **Carrier SYS** feeds system; XIAO may see only BAT+/SYS       | Prefer this when camera / LED current is high. Avoid stacking a second charger into XIAO BAT while a carrier charger already owns the cell.                             |
+
 
 **SKU 4 mental model when USB-C is plugged:** battery is charging (and still connected); **MCU** may be on USB via XIAO or via carrier SYS; **LEDs** must be on **USB VBUS via OR**, not on the boost/cell path.
 
@@ -167,29 +185,44 @@ The cell stays **electrically attached** whenever it is installed (and charges w
 
 | Prefer | Avoid |
 |--------|--------|
-| **Active** piezo rated **3–5 V** (or explicit 3.3 V) | “5 V only” parts if the board has no 5 V rail |
+| **Active** piezo rated **3–5 V** (or explicit 3.3 V) | “5 V only” parts if the board has no 5 V rail; **passive** (PWM) unless a dedicated GPIO is added |
 
-Drive with **NPN** (e.g. S8050) + ~1 kΩ base from GPIO: collector to buzzer ← **3V3** or **BAT+** (both sit in 3–5 V). Do not source buzzer current from the GPIO pin. Optional flyback diode if the part is inductive.
+Drive with **NPN** (e.g. S8050) + ~1 kΩ base from GPIO: collector to buzzer ← **3V3** or **BAT+**. Do not source buzzer current from the GPIO pin. Flyback diode if the part is magnetic/inductive.
+
+**SKU 1 — two pitches, no extra GPIO:** two **different active** MPNs (fixed factory tones). Share the existing LED nets:
+
+| Sound | GPIO | LED | Typical f | Role |
+|-------|------|-----|-----------|------|
+| Arm / confirm | GPIO22 | Confirm (yellow) | **~2.3 kHz** | Softer chirp |
+| Alarm | GPIO23 | Alarm (red) | **~4 kHz** | Harsher alarm |
+
+Firmware stays on/off (same blink as the LED). Do **not** put both buzzers on one GPIO. Status LED (GPIO21) stays silent.
+
+**SKU 5** keeps a single alarm/siren active piezo on GPIO4.
 
 ### RF / layout (Wi‑Fi SKUs: C6, C5)
 
-| Rule | Value / note |
-|------|----------------|
-| Antenna keep-out | **No copper, ground fill, or components** under the XIAO PCB antenna area (module end opposite USB) |
-| Ground | Solid **GND** pour on bottom layer; stitch vias near module ground pads |
-| USB | If USB-C is broken out, follow Seeed/XIAO keep-out and differential routing guidelines (optional on carrier — programming can use edge USB on module) |
+
+| Rule             | Value / note                                                                                                                                          |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Antenna keep-out | **No copper, ground fill, or components** under the XIAO PCB antenna area (module end opposite USB)                                                   |
+| Ground           | Solid **GND** pour on bottom layer; stitch vias near module ground pads                                                                               |
+| USB              | If USB-C is broken out, follow Seeed/XIAO keep-out and differential routing guidelines (optional on carrier — programming can use edge USB on module) |
+
 
 ### PCB fabrication
 
-| Parameter | Default |
-|-----------|---------|
-| Layers | **2** |
-| Thickness | **1.6 mm** |
-| Copper | **1 oz** |
-| Min trace/space | **6 mil / 6 mil** (JLCPCB 2-layer capability) |
-| Via | **0.3 mm drill / 0.6 mm pad** (or fab default) |
-| Silkscreen | Product name, `3V3`, `GND`, `BAT+`, revision |
-| Test | **BAT sense**, **3V3**, **GND** pads or test points for bring-up |
+
+| Parameter       | Default                                                          |
+| --------------- | ---------------------------------------------------------------- |
+| Layers          | **2**                                                            |
+| Thickness       | **1.6 mm**                                                       |
+| Copper          | **1 oz**                                                         |
+| Min trace/space | **6 mil / 6 mil** (JLCPCB 2-layer capability)                    |
+| Via             | **0.3 mm drill / 0.6 mm pad** (or fab default)                   |
+| Silkscreen      | Product name, `3V3`, `GND`, `BAT+`, revision                     |
+| Test            | **BAT sense**, **3V3**, **GND** pads or test points for bring-up |
+
 
 ### Design workflow (Flux / KiCad)
 
@@ -203,13 +236,15 @@ Drive with **NPN** (e.g. S8050) + ~1 kΩ base from GPIO: collector to buzzer ←
 
 Firmware GPIO + Flux prompts in this file are the **source of truth** until Gerbers land.
 
-| SKU | Flux / schematic status | Link |
-|-----|-------------------------|------|
-| iotDoorSensor (1) | Carrier in progress (Flux.ai) | *Add project URL when shared* |
-| iotDualModeBtn (2) | Prompt + BOM ready — layout next | *Add project URL when shared* |
-| iotEnvironmentalSensor (3) | Prompt + BOM ready (60×60 mm) | *Add project URL when shared* |
-| iotBedsideLamp (4) | Prompt + BOM ready (Ø50 mm) | *Add project URL when shared* |
-| iotDoorIntercom (5) | Prompt + BOM ready (outdoor 60×100) | *Add project URL when shared* |
+
+| SKU                        | Flux / schematic status             | Link                                                                             |
+| -------------------------- | ----------------------------------- | -------------------------------------------------------------------------------- |
+| iotDoorSensor (1)          | Schematic started (Flux.ai)         | [cosmos-iotDoorSensor](https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o) |
+| iotDualModeBtn (2)         | Prompt + BOM ready — layout next    | *Add project URL when shared*                                                    |
+| iotEnvironmentalSensor (3) | Prompt + BOM ready (60×60 mm)       | *Add project URL when shared*                                                    |
+| iotBedsideLamp (4)         | Prompt + BOM ready (Ø50 mm)         | *Add project URL when shared*                                                    |
+| iotDoorIntercom (5)        | Prompt + BOM ready (outdoor 60×100) | *Add project URL when shared*                                                    |
+
 
 When a Flux or KiCad project is public (or in a private hardware repo), paste the URL in the table above and optionally add a `hardware/` submodule or sibling repo note here.
 
@@ -224,14 +259,16 @@ When a Flux or KiCad project is public (or in a private hardware repo), paste th
 
 ### GPIO map (must match firmware)
 
-| XIAO pin | ESP GPIO | Firmware | Function |
-|----------|----------|----------|----------|
-| D9 | GPIO20 | `SENSOR_PIN` | Reed / contact input (pull-down in SW) |
-| D3 | GPIO21 | `STATE_LED_PIN` | Status LED (event aggregator) |
-| D4 | GPIO22 | `CONFIRM_LED_PIN` | Arm / confirm indicator |
-| D5 | GPIO23 | `ALARM_LED_PIN` | Alarm / panic indicator |
-| D0 / A0 | GPIO0 | `CONFIG_COSMOS_BATTERY_ADC_GPIO` | Battery voltage sense (ADC1) |
-| BOOT | GPIO9 | `FACTORY_RESET_BUTTON_PIN` | Factory reset (long-press) |
+
+| XIAO pin | ESP GPIO | Firmware                         | Function                               |
+| -------- | -------- | -------------------------------- | -------------------------------------- |
+| D9       | GPIO20   | `SENSOR_PIN`                     | Reed / contact input (pull-down in SW) |
+| D3       | GPIO21   | `STATE_LED_PIN`                  | Status LED (event aggregator)          |
+| D4       | GPIO22   | `CONFIRM_LED_PIN`                | Arm / confirm indicator                |
+| D5       | GPIO23   | `ALARM_LED_PIN`                  | Alarm / panic indicator                |
+| D0 / A0  | GPIO0    | `CONFIG_COSMOS_BATTERY_ADC_GPIO` | Battery voltage sense (ADC1)           |
+| BOOT     | GPIO9    | `FACTORY_RESET_BUTTON_PIN`       | Factory reset (long-press)             |
+
 
 Unused in current firmware (available for carrier features): D1, D2, D6–D8, D10.
 
@@ -239,7 +276,7 @@ Unused in current firmware (available for carrier features): D1, D2, D6–D8, D1
 
 **Battery sense:** Tap divider at **D0/A0**; firmware scales by **2.0×** to infer cell voltage.
 
-**Indicators:** Active-high LED drive from GPIO21–23. Optional **3–5 V active piezo** via NPN (collector from **3V3** or **BAT+**) — see [Piezo buzzers](#piezo-buzzers-sku-1--5).
+**Indicators:** Active-high LED drive from GPIO21–23. **Two active piezos** (distinct pitches): arm on GPIO22 with confirm LED, alarm on GPIO23 with alarm LED — see [Piezo buzzers](#piezo-buzzers-sku-1--5).
 
 ### Flux.ai project prompt
 
@@ -265,10 +302,9 @@ Digital inputs:
 - Tactile push button from XIAO BOOT (GPIO9) to GND for Matter factory reset (long press 5 s). Use a separate user-accessible button, not only the tiny module boot switch.
 
 Digital outputs (3.3 V, active high):
-- D3 GPIO21 → green LED + 330 Ω series resistor to GND.
-- D4 GPIO22 → yellow or blue "confirm" LED + 330 Ω.
-- D5 GPIO23 → red "alarm" LED + 330 Ω.
-- Optional: **3–5 V active piezo** (not 5 V-only) on alarm and/or status channel via NPN (S8050), base ~1 kΩ from GPIO; collector supplies buzzer from **3V3 or BAT+**. Flyback diode if inductive.
+- D3 GPIO21 → green LED + 330 Ω series resistor to GND. No buzzer on this net.
+- D4 GPIO22 → yellow or blue "confirm" LED + 330 Ω. **Arm buzzer:** 3–5 V **active** piezo ~2.3 kHz via NPN (S8050), base ~1 kΩ from GPIO22; collector from 3V3 or BAT+. Distinct MPN from the alarm buzzer.
+- D5 GPIO23 → red "alarm" LED + 330 Ω. **Alarm buzzer:** 3–5 V **active** piezo ~4 kHz via NPN, same topology, different MPN. Flyback if magnetic.
 
 Layout:
 - 2 layers, 1.6 mm FR4, 1 oz copper.
@@ -282,25 +318,30 @@ Do not assign or reroute GPIOs differently from the table above. Target low-cost
 
 ### Bill of materials (prototype)
 
-| Ref | Qty | Description | Notes |
-|-----|-----|-------------|--------|
-| U1 | 1 | [Seeed XIAO ESP32-C6](https://www.seeedstudio.com/XIAO-ESP32C6-p-5914.html) | Matter + Wi-Fi MCU module |
-| SW1 | 1 | Reed switch, normally open (magnetic contact) | Door/window sense; e.g. GPS-14 or similar |
-| SW2 | 1 | Tact switch, through-hole or SMD | Factory reset on **GPIO9** / BOOT |
-| J1 | 1 | JST-PH 2.0, 2-pin | 1S pouch |
-| BAT1 | 1 | 1S Li-ion pouch | Off-board, JST; match enclosure; 3.7 V nominal |
-| R1, R2 | 2 | 100 kΩ, 0603, 1% | Battery voltage divider |
-| R3–R5 | 3 | 330 Ω, 0603 | LED current limit (~3 mA at 3.3 V) |
-| C1 | 1 | 100 nF, 0603, X7R | ADC filter at D0 |
-| C2 | 1 | 100 nF, 0603, X7R | Optional VBAT / VIN decoupling |
-| D1 | 1 | Green LED, 0603 | Status (`STATE_LED`) |
-| D2 | 1 | Blue or yellow LED, 0603 | Confirm (`CONFIRM_LED`) |
-| D3 | 1 | Red LED, 0603 | Alarm (`ALARM_LED`) |
-| Q1, Q2 | 0–2 | NPN SOT-23 (e.g. S8050) | Only if buzzers need more current than GPIO |
-| BZ1, BZ2 | 0–2 | 3–5 V active buzzer, SMD or wired | Optional; parallel with D1/D2 per product industrial design |
-| R6, R7 | 0–2 | 1 kΩ, 0603 | NPN base resistors if buzzers used |
-| — | — | M2 standoffs / screws | Enclosure-dependent |
-| — | — | Enclosure, magnet (for reed) | Mechanical; not on PCB BOM |
+
+| Ref      | Qty | Description                                                                 | Notes                                                       |
+| -------- | --- | --------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| U1       | 1   | [Seeed XIAO ESP32-C6](https://www.seeedstudio.com/XIAO-ESP32C6-p-5914.html) | Matter + Wi-Fi MCU module                                   |
+| SW1      | 1   | Reed switch, normally open (magnetic contact)                               | Door/window sense; e.g. GPS-14 or similar                   |
+| SW2      | 1   | Tact switch, through-hole or SMD                                            | Factory reset on **GPIO9** / BOOT                           |
+| J1       | 1   | JST-PH 2.0, 2-pin                                                           | 1S pouch                                                    |
+| BAT1     | 1   | 1S Li-ion pouch                                                             | Off-board, JST; match enclosure; 3.7 V nominal              |
+| R1, R2   | 2   | 100 kΩ, 0603, 1%                                                            | Battery voltage divider                                     |
+| R3–R5    | 3   | 330 Ω, 0603                                                                 | LED current limit (~3 mA at 3.3 V)                          |
+| C1       | 1   | 100 nF, 0603, X7R                                                           | ADC filter at D0                                            |
+| C2       | 1   | 100 nF, 0603, X7R                                                           | Optional VBAT / VIN decoupling                              |
+| D1       | 1   | Green LED, 0603                                                             | Status (`STATE_LED`)                                        |
+| D2       | 1   | Blue or yellow LED, 0603                                                    | Confirm (`CONFIRM_LED`)                                     |
+| D3       | 1   | Red LED, 0603                                                               | Alarm (`ALARM_LED`)                                         |
+| Q1 | 1 | NPN SOT-23 (S8050) | Alarm buzzer low-side, GPIO23 |
+| Q2 | 1 | NPN SOT-23 (S8050) | Arm buzzer low-side, GPIO22 |
+| BZ1 | 1 | 3–5 V **active** ~4 kHz | Alarm; e.g. CMI-1295IC-0385T class |
+| BZ2 | 1 | 3–5 V **active** ~2.3 kHz | Arm/confirm; **different MPN** from BZ1 |
+| R6, R7 | 2 | 1 kΩ, 0603 | NPN base resistors |
+| D_BZ | 0–2 | 1N4148 class | Flyback if magnetic buzzers |
+| —        | —   | M2 standoffs / screws                                                       | Enclosure-dependent                                         |
+| —        | —   | Enclosure, magnet (for reed)                                                | Mechanical; not on PCB BOM                                  |
+
 
 **Bring-up checklist** — prototype validated 2026-07 (XIAO ESP32-C6 bench carrier; contact input exercised with a **latching toggle** in place of reed for Boolean State testing).
 
@@ -309,7 +350,7 @@ Do not assign or reroute GPIOs differently from the table above. Target low-cost
 - [x] Long-press factory reset clears fabric (GPIO9)
 - [x] Battery percent updates in Matter Power Source cluster (endpoint 3) and visible in Home Assistant
 - [x] LEDs match `evt_service` / panic tasks on GPIO21–23
-- [x] HA low-battery package — [`home-assistant/packages/cosmos_door_sensor.yaml`](../home-assistant/packages/cosmos_door_sensor.yaml) installed and notifying; fleet/OTA in [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
+- [x] HA low-battery package — `[home-assistant/packages/cosmos_door_sensor.yaml](../home-assistant/packages/cosmos_door_sensor.yaml)` installed and notifying; fleet/OTA in [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
 
 ### Firmware modules
 
@@ -326,23 +367,27 @@ Matter, contact sensor driver, event service, panic/alarm outputs, OTA via `cosm
 
 ### Product decisions (locked for v1 carrier)
 
-| Item | Choice |
-|------|--------|
-| Form | **Circular PCB**, LED ring onboard |
-| LEDs | **10× WS2812** (or SK6812), single data line |
-| Ring / board OD | **≈ Ø50 mm** (10× 5050 LEDs need ~Ø45–55 mm; treat “5 mm” as typo for 50 mm — change OD in Flux if you want larger) |
-| Buttons | **2 only** — user + factory reset (no third) |
-| Battery | **1S** pouch via **JST-PH 2.0**; size free; target **≥ 3 h at full brightness** → recommend **≥ 3000 mAh** (see power budget) |
-| USB | USB-C on carrier for power + charge |
+
+| Item            | Choice                                                                                                                        |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Form            | **Circular PCB**, LED ring onboard                                                                                            |
+| LEDs            | **10× WS2812** (or SK6812), single data line                                                                                  |
+| Ring / board OD | **≈ Ø50 mm** (10× 5050 LEDs need ~Ø45–55 mm; treat “5 mm” as typo for 50 mm — change OD in Flux if you want larger)           |
+| Buttons         | **2 only** — user + factory reset (no third)                                                                                  |
+| Battery         | **1S** pouch via **JST-PH 2.0**; size free; target **≥ 3 h at full brightness** → recommend **≥ 3000 mAh** (see power budget) |
+| USB             | USB-C on carrier for power + charge                                                                                           |
+
 
 ### GPIO map (carrier — must match firmware / Kconfig)
 
-| XIAO pin | ESP GPIO | Firmware / Kconfig | Function |
-|----------|----------|--------------------|----------|
-| D8 | GPIO19 | `CONFIG_BEDSIDE_LAMP_LED_GPIO` | WS2812 data (RMT) — **10 LEDs** |
-| D9 | GPIO20 | `CONFIG_BEDSIDE_LAMP_USER_BUTTON_GPIO` | User tact (toggle / double / long → presets) |
-| BOOT | GPIO9 | `FACTORY_RESET_BUTTON_PIN` | Factory reset tact (long ≥ 5 s) |
-| D0 / A0 | GPIO0 | `CONFIG_COSMOS_BATTERY_ADC_GPIO` | Battery sense (divider mid-tap) |
+
+| XIAO pin | ESP GPIO | Firmware / Kconfig                     | Function                                     |
+| -------- | -------- | -------------------------------------- | -------------------------------------------- |
+| D8       | GPIO19   | `CONFIG_BEDSIDE_LAMP_LED_GPIO`         | WS2812 data (RMT) — **10 LEDs**              |
+| D9       | GPIO20   | `CONFIG_BEDSIDE_LAMP_USER_BUTTON_GPIO` | User tact (toggle / double / long → presets) |
+| BOOT     | GPIO9    | `FACTORY_RESET_BUTTON_PIN`             | Factory reset tact (long ≥ 5 s)              |
+| D0 / A0  | GPIO0    | `CONFIG_COSMOS_BATTERY_ADC_GPIO`       | Battery sense (divider mid-tap)              |
+
 
 **MVP DevKit (today):** LED data **GPIO8**, user **GPIO20**, reset **GPIO9**. Battery ADC on **GPIO0** is enabled in firmware (floating / unused on DevKit until carrier divider is wired). Carrier needs LED GPIO19 + LED count 10 override.
 
@@ -350,23 +395,27 @@ Do **not** reuse the user button for factory reset.
 
 ### Power budget (full white, rough)
 
-| Load | Estimate |
-|------|----------|
-| 10× WS2812 @ full white | ~500–600 mA @ 5 V |
-| ESP32-C6 + Wi‑Fi | ~80–150 mA |
-| Total | ~0.7–0.8 A |
-| **3 h runtime** | **≥ 2.4 Ah** usable → specify **1S 3000–3500 mAh** pouch |
 
-**Rails:** USB-C 5 V → charge IC → **1S** cell (JST). Cell → XIAO `BAT` (MCU 3.3 V; on-module charger/LDO also switches USB↔BAT for the MCU when module USB is used). **Separate 5 V boost from BAT+** (MT3608-class, ≥1.5 A, set to 5.00 V) → WS2812 VDD only. When USB is present: LEDs from **carrier USB VBUS** via ideal-diode/OR; **boost EN = off** so the cell does not feed LEDs. MCU path ≠ LED path — see [Who switches what](#who-switches-what-mcu-vs-loads). Data from GPIO19 (3.3 V) via series resistor. Shared **`cosmos_battery`** divider **2:1** on GPIO0. See [Power architecture](#power-architecture-1s-family). **Not 2S.**
+| Load                    | Estimate                                                 |
+| ----------------------- | -------------------------------------------------------- |
+| 10× WS2812 @ full white | ~500–600 mA @ 5 V                                        |
+| ESP32-C6 + Wi‑Fi        | ~80–150 mA                                               |
+| Total                   | ~0.7–0.8 A                                               |
+| **3 h runtime**         | **≥ 2.4 Ah** usable → specify **1S 3000–3500 mAh** pouch |
+
+
+**Rails:** USB-C 5 V → charge IC → **1S** cell (JST). Cell → XIAO `BAT` (MCU 3.3 V; on-module charger/LDO also switches USB↔BAT for the MCU when module USB is used). **Separate 5 V boost from BAT+** (MT3608-class, ≥1.5 A, set to 5.00 V) → WS2812 VDD only. When USB is present: LEDs from **carrier USB VBUS** via ideal-diode/OR; **boost EN = off** so the cell does not feed LEDs. MCU path ≠ LED path — see [Who switches what](#who-switches-what-mcu-vs-loads). Data from GPIO19 (3.3 V) via series resistor. Shared `**cosmos_battery`** divider **2:1** on GPIO0. See [Power architecture](#power-architecture-1s-family). **Not 2S.**
 
 ### MVP — DevKitC-1 bench setup
 
-| Signal | DevKit (now) | Target carrier |
-|--------|--------------|----------------|
+
+| Signal          | DevKit (now)      | Target carrier        |
+| --------------- | ----------------- | --------------------- |
 | Addressable LED | GPIO8 — 1× WS2812 | GPIO19 — **10×** ring |
-| User button | GPIO20 | Dedicated tact |
-| Factory reset | GPIO9 (BOOT) | Dedicated tact |
-| Power | USB | USB-C + 1S JST |
+| User button     | GPIO20            | Dedicated tact        |
+| Factory reset   | GPIO9 (BOOT)      | Dedicated tact        |
+| Power           | USB               | USB-C + 1S JST        |
+
 
 Build with `ESP_MATTER_DEVICE_PATH=$ESP_MATTER_PATH/device_hal/device/esp32c6_devkit_c`.
 
@@ -416,24 +465,26 @@ Do not reassign GPIOs from: LED=GPIO19, user=GPIO20, reset=GPIO9, battery ADC=GP
 
 ### Bill of materials (prototype carrier)
 
-| Ref | Qty | Description | Notes |
-|-----|-----|-------------|--------|
-| U1 | 1 | [Seeed XIAO ESP32-C6](https://www.seeedstudio.com/XIAO-ESP32C6-p-5914.html) | Matter MCU |
-| LED1–LED10 | 10 | WS2812B / SK6812, 5050 | Ring, one data line |
-| R_LED | 1 | 33–100 Ω, 0603 | Series on DIN |
-| SW1 | 1 | Tact switch | User — GPIO20 |
-| SW2 | 1 | Tact switch | Factory reset — GPIO9 |
-| J1 | 1 | USB-C receptacle (power) | Charge + 5 V |
-| J2 | 1 | JST-PH 2.0, 2-pin | 1S pouch ≥ 3000 mAh |
-| U2 | 1 | 1S Li-ion charger + protection | e.g. TP4056 + DW01 path |
-| U3 | 1 | 5 V boost ≥ 1.5 A (e.g. MT3608 set to 5.00 V) | VIN=BAT+, VOUT=LED 5 V only |
-| D_OR | 1–2 | Schottky / ideal-diode / load-switch | **Required:** USB 5 V OR boost → LED_VDD; never hard-short |
-| C_BST | 1–2 | 10–47 µF | Boost input/output bulk |
-| R1, R2 | 2 | 100 kΩ, 0603, 1% | Battery divider |
-| C1 | 1 | 100 nF, 0603 | ADC filter |
-| C_LED | 10 | 100 nF, 0603 | Local LED decoupling (optional but recommended) |
-| BAT1 | 1 | 1S Li-ion pouch ≥ 3000 mAh | Off-board, JST; size OK |
-| — | — | Diffuser / enclosure | Mechanical |
+
+| Ref        | Qty | Description                                                                 | Notes                                                      |
+| ---------- | --- | --------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| U1         | 1   | [Seeed XIAO ESP32-C6](https://www.seeedstudio.com/XIAO-ESP32C6-p-5914.html) | Matter MCU                                                 |
+| LED1–LED10 | 10  | WS2812B / SK6812, 5050                                                      | Ring, one data line                                        |
+| R_LED      | 1   | 33–100 Ω, 0603                                                              | Series on DIN                                              |
+| SW1        | 1   | Tact switch                                                                 | User — GPIO20                                              |
+| SW2        | 1   | Tact switch                                                                 | Factory reset — GPIO9                                      |
+| J1         | 1   | USB-C receptacle (power)                                                    | Charge + 5 V                                               |
+| J2         | 1   | JST-PH 2.0, 2-pin                                                           | 1S pouch ≥ 3000 mAh                                        |
+| U2         | 1   | 1S Li-ion charger + protection                                              | e.g. TP4056 + DW01 path                                    |
+| U3         | 1   | 5 V boost ≥ 1.5 A (e.g. MT3608 set to 5.00 V)                               | VIN=BAT+, VOUT=LED 5 V only                                |
+| D_OR       | 1–2 | Schottky / ideal-diode / load-switch                                        | **Required:** USB 5 V OR boost → LED_VDD; never hard-short |
+| C_BST      | 1–2 | 10–47 µF                                                                    | Boost input/output bulk                                    |
+| R1, R2     | 2   | 100 kΩ, 0603, 1%                                                            | Battery divider                                            |
+| C1         | 1   | 100 nF, 0603                                                                | ADC filter                                                 |
+| C_LED      | 10  | 100 nF, 0603                                                                | Local LED decoupling (optional but recommended)            |
+| BAT1       | 1   | 1S Li-ion pouch ≥ 3000 mAh                                                  | Off-board, JST; size OK                                    |
+| —          | —   | Diffuser / enclosure                                                        | Mechanical                                                 |
+
 
 ### Bring-up checklist (carrier)
 
@@ -461,25 +512,29 @@ Follow [Cosmos carrier design rules](#cosmos-carrier-design-rules).
 
 ### Product decisions (locked for v1 carrier)
 
-| Item | Choice |
-|------|--------|
-| Form | Compact handheld / wall puck (similar class to door sensor) |
-| Buttons | **2** — large action tact + recessed factory-reset tact |
-| Indicators | **2× discrete LEDs** (firmware today — not a single RGB package) |
-| Power | **1S** Li-ion pouch via **JST-PH 2.0** (`J1`); battery sense on carrier |
-| Environment | Indoor (default); conformal coat optional |
+
+| Item        | Choice                                                                  |
+| ----------- | ----------------------------------------------------------------------- |
+| Form        | Compact handheld / wall puck (similar class to door sensor)             |
+| Buttons     | **2** — large action tact + recessed factory-reset tact                 |
+| Indicators  | **2× discrete LEDs** (firmware today — not a single RGB package)        |
+| Power       | **1S** Li-ion pouch via **JST-PH 2.0** (`J1`); battery sense on carrier |
+| Environment | Indoor (default); conformal coat optional                               |
+
 
 > Early notes mentioned “RGB LED”; shipping firmware drives **two** GPIOs (`SINGLE_PRESS` / `MULTI_PRESS`). PCB matches firmware.
 
 ### GPIO map (must match firmware)
 
-| XIAO pin | ESP GPIO | Firmware | Function / wiring |
-|----------|----------|----------|-------------------|
-| D9 | GPIO20 | `BUTTON_GPIO_PIN` | Action tact to **GND** (iot_button pull-up; press = LOW) |
-| BOOT | GPIO9 | `FACTORY_RESET_BUTTON_PIN` | Reset tact to **GND**; long ≥ 5 s — **not** the action button |
-| D3 | GPIO21 | `SINGLE_PRESS_LED_PIN` | Active-high LED + 330 Ω (single-press feedback) |
-| D8 | GPIO19 | `MULTI_PRESS_LED_PIN` | Active-high LED + 330 Ω (multi-press feedback) |
-| D0 / A0 | GPIO0 | `CONFIG_COSMOS_BATTERY_ADC_GPIO` | Battery divider mid-tap (2:1) |
+
+| XIAO pin | ESP GPIO | Firmware                         | Function / wiring                                             |
+| -------- | -------- | -------------------------------- | ------------------------------------------------------------- |
+| D9       | GPIO20   | `BUTTON_GPIO_PIN`                | Action tact to **GND** (iot_button pull-up; press = LOW)      |
+| BOOT     | GPIO9    | `FACTORY_RESET_BUTTON_PIN`       | Reset tact to **GND**; long ≥ 5 s — **not** the action button |
+| D3       | GPIO21   | `SINGLE_PRESS_LED_PIN`           | Active-high LED + 330 Ω (single-press feedback)               |
+| D8       | GPIO19   | `MULTI_PRESS_LED_PIN`            | Active-high LED + 330 Ω (multi-press feedback)                |
+| D0 / A0  | GPIO0    | `CONFIG_COSMOS_BATTERY_ADC_GPIO` | Battery divider mid-tap (2:1)                                 |
+
 
 Unused on carrier for v1 (available): D1, D2, D4–D7, D10.
 
@@ -521,20 +576,22 @@ GPIO lock (do not reassign):
 
 ### Bill of materials (prototype)
 
-| Ref | Qty | Description | Notes |
-|-----|-----|-------------|--------|
-| U1 | 1 | [Seeed XIAO ESP32-C6](https://www.seeedstudio.com/XIAO-ESP32C6-p-5914.html) | Matter MCU |
-| SW1 | 1 | Tact switch (large / soft) | Action — GPIO20 to GND |
-| SW2 | 1 | Tact switch (recessed) | Factory reset — GPIO9 to GND |
-| D1 | 1 | Green LED, 0603 | Single-press (`GPIO21`) |
-| D2 | 1 | Blue or yellow LED, 0603 | Multi-press (`GPIO19`) |
-| R3, R4 | 2 | 330 Ω, 0603 | LED current limit |
-| J1 | 1 | JST-PH 2.0, 2-pin | 1S pouch |
-| BAT1 | 1 | 1S Li-ion pouch | Off-board, JST; match enclosure |
-| R1, R2 | 2 | 100 kΩ, 0603, 1% | Battery divider → GPIO0 |
-| C1 | 1 | 100 nF, 0603, X7R | ADC filter |
-| C2 | 1 | 100 nF, 0603 | Optional VBAT decoupling |
-| — | — | Enclosure / wall plate | Mechanical |
+
+| Ref    | Qty | Description                                                                 | Notes                           |
+| ------ | --- | --------------------------------------------------------------------------- | ------------------------------- |
+| U1     | 1   | [Seeed XIAO ESP32-C6](https://www.seeedstudio.com/XIAO-ESP32C6-p-5914.html) | Matter MCU                      |
+| SW1    | 1   | Tact switch (large / soft)                                                  | Action — GPIO20 to GND          |
+| SW2    | 1   | Tact switch (recessed)                                                      | Factory reset — GPIO9 to GND    |
+| D1     | 1   | Green LED, 0603                                                             | Single-press (`GPIO21`)         |
+| D2     | 1   | Blue or yellow LED, 0603                                                    | Multi-press (`GPIO19`)          |
+| R3, R4 | 2   | 330 Ω, 0603                                                                 | LED current limit               |
+| J1     | 1   | JST-PH 2.0, 2-pin                                                           | 1S pouch                        |
+| BAT1   | 1   | 1S Li-ion pouch                                                             | Off-board, JST; match enclosure |
+| R1, R2 | 2   | 100 kΩ, 0603, 1%                                                            | Battery divider → GPIO0         |
+| C1     | 1   | 100 nF, 0603, X7R                                                           | ADC filter                      |
+| C2     | 1   | 100 nF, 0603                                                                | Optional VBAT decoupling        |
+| —      | —   | Enclosure / wall plate                                                      | Mechanical                      |
+
 
 ### Bring-up checklist
 
@@ -561,36 +618,40 @@ Matter generic switch, `iot_button_task`, `cosmos_battery` (GPIO0), OTA via `cos
 
 ### Product decisions (locked for v1 carrier)
 
-| Item | Choice |
-|------|--------|
-| Form | **60 × 60 mm** square PCB |
-| Environment | Desk / indoor; enclosure + mounting holes + display orientation — **your choice in Flux** |
-| Power | **Carrier USB-C (J1)** only — no battery, no JST, no charger on v1 |
-| Sensor | **BME680 bare** on carrier (I2C) |
-| Display | **1.3" 240×240 ST7789**, SPI, **no CS** (tie module CS to GND), **no touch**; soldered module |
-| Encoder | **EC11** through-hole with integrated push |
-| Factory reset | **Separate tact** on BOOT (not the encoder push) |
-| RGB / addr LED | **Not on v1** — optional upgrade later |
-| Battery | **v2 only** — reserve **GPIO6** (ADC_BAT); no divider / cell on v1 |
-| Firmware v1 bring-up | BME680 + Matter + OTA now; encoder / display / reset UI tasks when carrier arrives |
+
+| Item                 | Choice                                                                                        |
+| -------------------- | --------------------------------------------------------------------------------------------- |
+| Form                 | **60 × 60 mm** square PCB                                                                     |
+| Environment          | Desk / indoor; enclosure + mounting holes + display orientation — **your choice in Flux**     |
+| Power                | **Carrier USB-C (J1)** only — no battery, no JST, no charger on v1                            |
+| Sensor               | **BME680 bare** on carrier (I2C)                                                              |
+| Display              | **1.3" 240×240 ST7789**, SPI, **no CS** (tie module CS to GND), **no touch**; soldered module |
+| Encoder              | **EC11** through-hole with integrated push                                                    |
+| Factory reset        | **Separate tact** on BOOT (not the encoder push)                                              |
+| RGB / addr LED       | **Not on v1** — optional upgrade later                                                        |
+| Battery              | **v2 only** — reserve **GPIO6** (ADC_BAT); no divider / cell on v1                            |
+| Firmware v1 bring-up | BME680 + Matter + OTA now; encoder / display / reset UI tasks when carrier arrives            |
+
 
 ### GPIO map (must match firmware)
 
-| XIAO pin | ESP GPIO | Function / wiring |
-|----------|----------|-------------------|
-| D0 | GPIO1 | Encoder **A** |
-| D1 | GPIO0 | Encoder **B** |
-| D2 | GPIO25 | Encoder **push** (to GND; SW pull-up) |
-| BOOT | GPIO28 | Factory-reset tact to GND (`CONFIG_FACTORY_RESET_BUTTON_GPIO=28`) |
-| D4 | GPIO23 | BME680 **SDA** |
-| D5 | GPIO24 | BME680 **SCL** |
-| D8 | GPIO8 | ST7789 **SCK** |
-| D9 | GPIO9 | ST7789 **DC** |
-| D10 | GPIO10 | ST7789 **MOSI** |
-| D6 | GPIO11 | ST7789 **RST** |
-| D7 | GPIO12 | ST7789 **BL** (PWM / GPIO → NPN or FET + resistor; active HIGH = on) |
-| ADC_BAT | GPIO6 | **Reserved v2** battery sense — DNP divider on v1 |
-| — | GPIO26 | XIAO **ADC_CRL** (on-module bat-sense enable) — leave for v2; do not load on v1 |
+
+| XIAO pin | ESP GPIO | Function / wiring                                                               |
+| -------- | -------- | ------------------------------------------------------------------------------- |
+| D0       | GPIO1    | Encoder **A**                                                                   |
+| D1       | GPIO0    | Encoder **B**                                                                   |
+| D2       | GPIO25   | Encoder **push** (to GND; SW pull-up)                                           |
+| BOOT     | GPIO28   | Factory-reset tact to GND (`CONFIG_FACTORY_RESET_BUTTON_GPIO=28`)               |
+| D4       | GPIO23   | BME680 **SDA**                                                                  |
+| D5       | GPIO24   | BME680 **SCL**                                                                  |
+| D8       | GPIO8    | ST7789 **SCK**                                                                  |
+| D9       | GPIO9    | ST7789 **DC**                                                                   |
+| D10      | GPIO10   | ST7789 **MOSI**                                                                 |
+| D6       | GPIO11   | ST7789 **RST**                                                                  |
+| D7       | GPIO12   | ST7789 **BL** (PWM / GPIO → NPN or FET + resistor; active HIGH = on)            |
+| ADC_BAT  | GPIO6    | **Reserved v2** battery sense — DNP divider on v1                               |
+| —        | GPIO26   | XIAO **ADC_CRL** (on-module bat-sense enable) — leave for v2; do not load on v1 |
+
 
 **ST7789 CS:** hard-tie module **CS to GND** (no MCU CS pin).  
 **Unused v1:** D3/GPIO7; RGB / WS2812 footprints omitted.
@@ -645,19 +706,21 @@ GPIO lock (do not reassign):
 
 ### Bill of materials (prototype carrier)
 
-| Ref | Qty | Description | Notes |
-|-----|-----|-------------|--------|
-| U1 | 1 | [Seeed XIAO ESP32-C5](https://wiki.seeedstudio.com/xiao_esp32c5_getting_started/) | Matter MCU |
-| U2 | 1 | BME680 (bare) | I2C; addr 0x76 typical |
-| R_I2C | 2 | 4.7 kΩ, 0603 | SDA / SCL pull-up to 3V3 |
-| C_BME | 1–2 | 100 nF, 0603 | Local BME680 decoupling |
-| DISP1 | 1 | ST7789 1.3" 240×240 SPI module | No touch; CS→GND |
-| R_BL / Q_BL | 1 | BL series R + NPN/FET | Drive from GPIO12 |
-| SW_ENC | 1 | EC11 rotary encoder w/ push | Through-hole |
-| SW_RST | 1 | Tact switch | Factory reset — GPIO28 |
-| J1 | 1 | USB-C receptacle | Product power only (place in Flux) |
-| C_USB | 1–2 | 10 µF + 100 nF | VBUS bulk / HF |
-| — | — | Enclosure / stand | Mechanical — deferred |
+
+| Ref         | Qty | Description                                                                       | Notes                              |
+| ----------- | --- | --------------------------------------------------------------------------------- | ---------------------------------- |
+| U1          | 1   | [Seeed XIAO ESP32-C5](https://wiki.seeedstudio.com/xiao_esp32c5_getting_started/) | Matter MCU                         |
+| U2          | 1   | BME680 (bare)                                                                     | I2C; addr 0x76 typical             |
+| R_I2C       | 2   | 4.7 kΩ, 0603                                                                      | SDA / SCL pull-up to 3V3           |
+| C_BME       | 1–2 | 100 nF, 0603                                                                      | Local BME680 decoupling            |
+| DISP1       | 1   | ST7789 1.3" 240×240 SPI module                                                    | No touch; CS→GND                   |
+| R_BL / Q_BL | 1   | BL series R + NPN/FET                                                             | Drive from GPIO12                  |
+| SW_ENC      | 1   | EC11 rotary encoder w/ push                                                       | Through-hole                       |
+| SW_RST      | 1   | Tact switch                                                                       | Factory reset — GPIO28             |
+| J1          | 1   | USB-C receptacle                                                                  | Product power only (place in Flux) |
+| C_USB       | 1–2 | 10 µF + 100 nF                                                                    | VBUS bulk / HF                     |
+| —           | —   | Enclosure / stand                                                                 | Mechanical — deferred              |
+
 
 **DNP v1 / v2 reserve:** JST-PH, battery divider R1/R2, BAT1 pouch, RGB / WS2812.
 
@@ -685,29 +748,33 @@ Matter temp/humidity/pressure, `bme680_task` (I2C GPIO23/24), OTA via `cosmos_ma
 
 ### Product decisions (locked for v1 carrier)
 
-| Item | Choice |
-|------|--------|
-| Board size | **≈ 60 × 100 mm** (doorbell / wall-mount) |
-| Environment | **Outdoor** enclosure (gasketed camera window, conformal coat PCB) |
-| Power | **USB-C** + **JST-PH 2.0** 1S pouch; battery sense on carrier |
-| Front controls | Doorbell tact + **AM312** mini PIR (3.3 V) on carrier |
-| Tamper | **Leaf spring → chassis GND** when seated; **two gold pads on PCB back** closed by **pogo pins** in the housing (series or parallel path — both must make contact when mounted) |
-| Siren | Piezo + LED on **GPIO4**, NPN drive (same idea as door-sensor alarm) |
-| Door lock | **None** for v1 (GPIO5 used for battery ADC) |
-| Camera | Keep Sense camera FPC / expansion; do not reassign DVP pins |
+
+| Item           | Choice                                                                                                                                                                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Board size     | **≈ 60 × 100 mm** (doorbell / wall-mount)                                                                                                                                       |
+| Environment    | **Outdoor** enclosure (gasketed camera window, conformal coat PCB)                                                                                                              |
+| Power          | **USB-C** + **JST-PH 2.0** 1S pouch; battery sense on carrier                                                                                                                   |
+| Front controls | Doorbell tact + **AM312** mini PIR (3.3 V) on carrier                                                                                                                           |
+| Tamper         | **Leaf spring → chassis GND** when seated; **two gold pads on PCB back** closed by **pogo pins** in the housing (series or parallel path — both must make contact when mounted) |
+| Siren          | Piezo + LED on **GPIO4**, NPN drive (same idea as door-sensor alarm)                                                                                                            |
+| Door lock      | **None** for v1 (GPIO5 used for battery ADC)                                                                                                                                    |
+| Camera         | Keep Sense camera FPC / expansion; do not reassign DVP pins                                                                                                                     |
+
 
 ### GPIO map (must match firmware)
 
-| XIAO pin | ESP GPIO | Firmware | Function / wiring |
-|----------|----------|----------|-------------------|
-| D0 | GPIO1 | `DOORBELL_PIN` | Tact to **3.3 V** (SW pull-down); press = HIGH |
-| D1 | GPIO2 | `PIR_PIN` | AM312 **OUT** (active HIGH); module VCC=3.3 V, GND |
-| D2 | GPIO3 | `TAMPER_PIN` | SW pull-up; **LOW when seated** (path to GND via leaf spring + back pads/pogos) |
-| D3 | GPIO4 | `ALARM_LED_PIN` | NPN → red LED + piezo (active HIGH blink) |
-| D4 | GPIO5 | `CONFIG_COSMOS_BATTERY_ADC_GPIO` | Mid-tap of 100 k / 100 k divider (`cosmos_battery` enabled) |
-| BOOT | GPIO0 | `FACTORY_RESET_BUTTON_PIN` | Tact to **GND**; long ≥ 5 s (not the doorbell) |
-| — | GPIO21 | `LED_PIN` | On-module user LED — stream status (no carrier LED required) |
-| Sense DVP | (fixed) | `cam_task.h` | Camera — do not steal these GPIOs |
+
+| XIAO pin  | ESP GPIO | Firmware                         | Function / wiring                                                               |
+| --------- | -------- | -------------------------------- | ------------------------------------------------------------------------------- |
+| D0        | GPIO1    | `DOORBELL_PIN`                   | Tact to **3.3 V** (SW pull-down); press = HIGH                                  |
+| D1        | GPIO2    | `PIR_PIN`                        | AM312 **OUT** (active HIGH); module VCC=3.3 V, GND                              |
+| D2        | GPIO3    | `TAMPER_PIN`                     | SW pull-up; **LOW when seated** (path to GND via leaf spring + back pads/pogos) |
+| D3        | GPIO4    | `ALARM_LED_PIN`                  | NPN → red LED + piezo (active HIGH blink)                                       |
+| D4        | GPIO5    | `CONFIG_COSMOS_BATTERY_ADC_GPIO` | Mid-tap of 100 k / 100 k divider (`cosmos_battery` enabled)                     |
+| BOOT      | GPIO0    | `FACTORY_RESET_BUTTON_PIN`       | Tact to **GND**; long ≥ 5 s (not the doorbell)                                  |
+| —         | GPIO21   | `LED_PIN`                        | On-module user LED — stream status (no carrier LED required)                    |
+| Sense DVP | (fixed)  | `cam_task.h`                     | Camera — do not steal these GPIOs                                               |
+
 
 **Unused for v1 (do not load door-lock features):** former door-lock plan on GPIO5 — superseded by battery ADC.
 
@@ -778,29 +845,31 @@ GPIO lock (do not reassign):
 
 ### Bill of materials (prototype carrier)
 
-| Ref | Qty | Description | Notes |
-|-----|-----|-------------|--------|
-| U1 | 1 | [Seeed XIAO ESP32-S3 Sense](https://www.seeedstudio.com/XIAO-ESP32S3-Sense-p-5639.html) | Camera + Wi‑Fi MCU |
-| SW1 | 1 | Doorbell tact (large / weatherized) | To 3.3 V / GPIO1 |
-| SW2 | 1 | Tact switch, recessed | Factory reset GPIO0 |
-| U2 | 1 | AM312 (or 3.3 V mini PIR) | OUT → GPIO2 |
-| SW3 | 1 | Leaf spring / chassis contact | Tamper to GND when seated |
-| PAD1, PAD2 | 2 | Gold / pogo landing pads (back) | Case pogo short when closed |
-| — | 2 | Pogo pins (in enclosure) | Mechanical; not on PCB BOM |
-| Q1 | 1 | NPN SOT-23 (S8050) | Siren / LED drive |
-| R_B | 1 | 1 kΩ, 0603 | NPN base |
-| D_ALM | 1 | Red LED, 0603 | Alarm visual |
-| R_LED | 1 | 330 Ω, 0603 | LED limit |
-| BZ1 | 1 | 3–5 V active piezo (not 5 V-only) | Siren; NPN from 3V3/BAT+ |
-| J1 | 1 | USB-C receptacle | Power + charge |
-| J2 | 1 | JST-PH 2.0, 2-pin | 1S pouch |
-| U3 | 1 | 1S charger + protection | TP4056-class or better |
-| R1, R2 | 2 | 100 kΩ, 0603, 1% | Battery divider → GPIO5 |
-| C1 | 1 | 100 nF, 0603 | ADC filter |
-| C2 | 1 | 100 nF–10 µF | VIN / BAT decoupling as needed |
-| BAT1 | 1 | 1S Li-ion pouch | Size for outdoor runtime; JST |
-| — | — | Outdoor enclosure, gaskets, camera window, Fresnel for PIR | Mechanical |
-| — | — | Conformal coat | After electrical bring-up |
+
+| Ref        | Qty | Description                                                                             | Notes                          |
+| ---------- | --- | --------------------------------------------------------------------------------------- | ------------------------------ |
+| U1         | 1   | [Seeed XIAO ESP32-S3 Sense](https://www.seeedstudio.com/XIAO-ESP32S3-Sense-p-5639.html) | Camera + Wi‑Fi MCU             |
+| SW1        | 1   | Doorbell tact (large / weatherized)                                                     | To 3.3 V / GPIO1               |
+| SW2        | 1   | Tact switch, recessed                                                                   | Factory reset GPIO0            |
+| U2         | 1   | AM312 (or 3.3 V mini PIR)                                                               | OUT → GPIO2                    |
+| SW3        | 1   | Leaf spring / chassis contact                                                           | Tamper to GND when seated      |
+| PAD1, PAD2 | 2   | Gold / pogo landing pads (back)                                                         | Case pogo short when closed    |
+| —          | 2   | Pogo pins (in enclosure)                                                                | Mechanical; not on PCB BOM     |
+| Q1         | 1   | NPN SOT-23 (S8050)                                                                      | Siren / LED drive              |
+| R_B        | 1   | 1 kΩ, 0603                                                                              | NPN base                       |
+| D_ALM      | 1   | Red LED, 0603                                                                           | Alarm visual                   |
+| R_LED      | 1   | 330 Ω, 0603                                                                             | LED limit                      |
+| BZ1        | 1   | 3–5 V active piezo (not 5 V-only)                                                       | Siren; NPN from 3V3/BAT+       |
+| J1         | 1   | USB-C receptacle                                                                        | Power + charge                 |
+| J2         | 1   | JST-PH 2.0, 2-pin                                                                       | 1S pouch                       |
+| U3         | 1   | 1S charger + protection                                                                 | TP4056-class or better         |
+| R1, R2     | 2   | 100 kΩ, 0603, 1%                                                                        | Battery divider → GPIO5        |
+| C1         | 1   | 100 nF, 0603                                                                            | ADC filter                     |
+| C2         | 1   | 100 nF–10 µF                                                                            | VIN / BAT decoupling as needed |
+| BAT1       | 1   | 1S Li-ion pouch                                                                         | Size for outdoor runtime; JST  |
+| —          | —   | Outdoor enclosure, gaskets, camera window, Fresnel for PIR                              | Mechanical                     |
+| —          | —   | Conformal coat                                                                          | After electrical bring-up      |
+
 
 ### Bring-up checklist
 
@@ -811,7 +880,7 @@ GPIO lock (do not reassign):
 - [ ] USB-C charges pouch; divider on GPIO5 reads plausible % in Matter / HA
 - [ ] HTTPS MJPEG through camera window; Wi‑Fi RSSI acceptable in metal/plastic enclosure
 - [ ] Factory reset on BOOT only (not doorbell)
-- [ ] HA package + Lovelace — [`home-assistant/`](../home-assistant/)
+- [ ] HA package + Lovelace — `[home-assistant/](../home-assistant/)`
 
 ### Firmware modules
 
