@@ -185,16 +185,16 @@ The cell stays **electrically attached** whenever it is installed (and charges w
 
 | Prefer | Avoid |
 |--------|--------|
-| **Active** piezo rated **3–5 V** (or explicit 3.3 V) | “5 V only” parts if the board has no 5 V rail; **passive** (PWM) unless a dedicated GPIO is added |
+| **Active** magnetic/piezo rated **3–5 V** (or explicit 3.3 V) | “5 V only” parts if the board has no 5 V rail; **passive** (PWM) unless a dedicated GPIO is added |
 
 Drive with **NPN** (e.g. S8050) + ~1 kΩ base from GPIO: collector to buzzer ← **3V3** or **BAT+**. Do not source buzzer current from the GPIO pin. Flyback diode if the part is magnetic/inductive.
 
-**SKU 1 — two pitches, no extra GPIO:** two **different active** MPNs (fixed factory tones). Share the existing LED nets:
+**SKU 1 — same MPN, two channels, no extra GPIO:** both buzzers are PUI **AI-1223-TWT-3V-2-R** (active magnetic, **2.3 kHz**, 2–4 V). Arm vs alarm are distinguished by **which channel and blink pattern**, not pitch.
 
-| Sound | GPIO | LED | Typical f | Role |
-|-------|------|-----|-----------|------|
-| Arm / confirm | GPIO22 | Confirm (yellow) | **~2.3 kHz** | Softer chirp |
-| Alarm | GPIO23 | Alarm (red) | **~4 kHz** | Harsher alarm |
+| Sound | GPIO | LED | Designator | MPN |
+|-------|------|-----|------------|-----|
+| Arm / confirm | GPIO22 | Confirm (yellow) | **BZ2** | PUI **AI-1223-TWT-3V-2-R** |
+| Alarm | GPIO23 | Alarm (red) | **BZ1** | PUI **AI-1223-TWT-3V-2-R** (same) |
 
 Firmware stays on/off (same blink as the LED). Do **not** put both buzzers on one GPIO. Status LED (GPIO21) stays silent.
 
@@ -212,16 +212,24 @@ Firmware stays on/off (same blink as the LED). Do **not** put both buzzers on on
 
 ### PCB fabrication
 
+Target fab: **JLCPCB standard 2-layer** (capability floor is 5 mil / 5 mil; we keep a **6 mil** margin).
+
 
 | Parameter       | Default                                                          |
 | --------------- | ---------------------------------------------------------------- |
-| Layers          | **2**                                                            |
+| Layers          | **2** (no 4-layer; no blind/buried / via-in-pad)                 |
 | Thickness       | **1.6 mm**                                                       |
-| Copper          | **1 oz**                                                         |
-| Min trace/space | **6 mil / 6 mil** (JLCPCB 2-layer capability)                    |
-| Via             | **0.3 mm drill / 0.6 mm pad** (or fab default)                   |
+| Copper          | **1 oz** (0.035 mm) both sides                                   |
+| Min trace/space | **6 mil / 6 mil** (0.1524 mm)                                    |
+| Default signal  | **10 mil** (GPIO / LED / control / ADC)                          |
+| Power traces    | **VBAT ≥ 20 mil (0.5 mm)**; **3V3 / GND stubs ≥ 16 mil (0.4 mm)** |
+| Via             | **0.3 mm drill / 0.6 mm pad** through-hole only                  |
+| Copper to edge  | **≥ 0.3 mm**                                                     |
+| Mask / silk     | Green mask, white silk; text ≥ **1.0 mm**, stroke ≥ **0.15 mm**  |
 | Silkscreen      | Product name, `3V3`, `GND`, `BAT+`, revision                     |
 | Test            | **BAT sense**, **3V3**, **GND** pads or test points for bring-up |
+
+**SKU 1 Flux:** rulesets locked under [PCB Fabrication Rules](https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o/files/pcb-fabrication-rules~o3).
 
 
 ### Design workflow (Flux / KiCad)
@@ -239,7 +247,7 @@ Firmware GPIO + Flux prompts in this file are the **source of truth** until Gerb
 
 | SKU                        | Flux / schematic status             | Link                                                                             |
 | -------------------------- | ----------------------------------- | -------------------------------------------------------------------------------- |
-| iotDoorSensor (1)          | Schematic started (Flux.ai)         | [cosmos-iotDoorSensor](https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o) |
+| iotDoorSensor (1)          | Placement done; JLCPCB 2L DRC locked; routing incomplete | [cosmos-iotDoorSensor](https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o) |
 | iotDualModeBtn (2)         | Prompt + BOM ready — layout next    | *Add project URL when shared*                                                    |
 | iotEnvironmentalSensor (3) | Prompt + BOM ready (60×60 mm)       | *Add project URL when shared*                                                    |
 | iotBedsideLamp (4)         | Prompt + BOM ready (Ø50 mm)         | *Add project URL when shared*                                                    |
@@ -255,7 +263,19 @@ When a Flux or KiCad project is public (or in a private hardware repo), paste th
 **Firmware app:** `iotDoorSensor/`  
 **Module:** [Seeed XIAO ESP32-C6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/)  
 **Matter (test):** VID **65522** (`0xFFF2`), PID **32769** (`0x8001`)  
-**Role:** Matter door/window contact sensor, status LEDs, optional panic/alarm outputs, battery reporting.
+**Role:** Matter door/window contact sensor, status LEDs, optional panic/alarm outputs, battery reporting.  
+**Flux:** [cosmos-iotDoorSensor](https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o) — schematic + placement complete; routing not finished.
+
+### Product decisions (locked for v1 carrier)
+
+| Item | Choice |
+|------|--------|
+| Form | **30 × 90 mm** 2-layer PCB, **5 mm** corner radius |
+| Module | Seeed XIAO ESP32-C6; USB-C on module = charge + flash only |
+| Battery | **1S** pouch via **JST-PH 2.0** right-angle header (**U2** `S2B-PH-K-S(LF)(SN)`) → XIAO BAT+/BAT− |
+| Buzzers | **Two channels, same MPN** — PUI **AI-1223-TWT-3V-2-R** (2.3 kHz) on GPIO22 (arm) and GPIO23 (alarm); distinguish by pattern |
+| Reed | Coto **CT10-1530-G1** (SMD NO) |
+| Factory reset | XUNPU **TS-1088-AR02016** tact to BOOT/GPIO9 |
 
 ### GPIO map (must match firmware)
 
@@ -264,8 +284,8 @@ When a Flux or KiCad project is public (or in a private hardware repo), paste th
 | -------- | -------- | -------------------------------- | -------------------------------------- |
 | D9       | GPIO20   | `SENSOR_PIN`                     | Reed / contact input (pull-down in SW) |
 | D3       | GPIO21   | `STATE_LED_PIN`                  | Status LED (event aggregator)          |
-| D4       | GPIO22   | `CONFIRM_LED_PIN`                | Arm / confirm indicator                |
-| D5       | GPIO23   | `ALARM_LED_PIN`                  | Alarm / panic indicator                |
+| D4       | GPIO22   | `CONFIRM_LED_PIN`                | Arm / confirm LED + **BZ2**            |
+| D5       | GPIO23   | `ALARM_LED_PIN`                  | Alarm LED + **BZ1**                    |
 | D0 / A0  | GPIO0    | `CONFIG_COSMOS_BATTERY_ADC_GPIO` | Battery voltage sense (ADC1)           |
 | BOOT     | GPIO9    | `FACTORY_RESET_BUTTON_PIN`       | Factory reset (long-press)             |
 
@@ -276,72 +296,63 @@ Unused in current firmware (available for carrier features): D1, D2, D6–D8, D1
 
 **Battery sense:** Tap divider at **D0/A0**; firmware scales by **2.0×** to infer cell voltage.
 
-**Indicators:** Active-high LED drive from GPIO21–23. **Two active piezos** (distinct pitches): arm on GPIO22 with confirm LED, alarm on GPIO23 with alarm LED — see [Piezo buzzers](#piezo-buzzers-sku-1--5).
+**Indicators:** Active-high LED drive from GPIO21–23. **BZ1** (alarm) and **BZ2** (arm) are both **AI-1223-TWT-3V-2-R** via NPN on GPIO23 / GPIO22 — see [Piezo buzzers](#piezo-buzzers-sku-1--5).
 
 ### Flux.ai project prompt
 
-Copy into Flux when starting the carrier board (adjust board size and JST part numbers to taste):
+Copy into Flux when iterating the carrier (board size / JST already locked in the live project):
 
-> **Status:** Carrier PCB in progress in Flux.ai (Jul 2026) for user-test builds; prompt below matches validated bench prototype GPIO map.
+> **Status:** Flux schematic + placement done (Aug 2026); routing remaining. Project: https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o
 
 ```text
-Design a 2-layer carrier PCB for the "Cosmos iotDoorSensor" — a compact Wi-Fi Matter door/window contact sensor.
+Design / finish a 2-layer carrier PCB for the "Cosmos iotDoorSensor" — compact Wi-Fi Matter door/window contact sensor.
 
-Core module:
-- Seeed XIAO ESP32-C6 (castellated module), mounted on the edge with USB accessible for flashing.
+Form:
+- Board outline 30 × 90 mm, 5 mm corner radius, 2 layers, 1.6 mm FR4, 1 oz.
+- Seeed XIAO ESP32-C6 castellated; USB-C on the module accessible for charge + flash.
 - Keep the antenna area at the module end clear: no copper or components under the on-module PCB antenna.
 
 Power:
-- **J1:** JST-PH 2.0, 2-pin for 1S Li-ion pouch (3.7 V nominal, 4.2 V max). No on-board cell holder.
-- Optional: reverse-polarity protection (Schottky or P-FET) and 100 nF on VBAT.
-- Connect J1 to XIAO **BAT+ / BAT− pads** (not 3V3). USB-C on the module = charge + flash only; on-module charger/LDO switches USB↔BAT for MCU 3V3. Do not hang loads on XIAO `5V`.
-- Battery monitor: 100 kΩ + 100 kΩ divider from BAT+ to GND; mid tap to XIAO D0 (A0 / GPIO0). 100 nF from tap to GND at the module pin.
+- U2: JST-PH 2.0 right-angle 2-pin S2B-PH-K-S(LF)(SN) for 1S Li-ion pouch (3.7 V nominal, 4.2 V max). Edge-accessible mating.
+- Connect U2 to XIAO BAT+ / BAT− (not 3V3). Do not hang loads on XIAO 5V.
+- Battery monitor: 100 kΩ + 100 kΩ divider BAT+ to GND; mid tap to XIAO D0 (GPIO0). 100 nF from tap to GND; 100 nF on VBAT.
 
 Digital inputs:
-- Reed switch (normally-open magnetic contact) from 3.3 V to XIAO D9 (GPIO20). Software uses pull-down — open = low, closed = high.
-- Tactile push button from XIAO BOOT (GPIO9) to GND for Matter factory reset (long press 5 s). Use a separate user-accessible button, not only the tiny module boot switch.
+- Reed CT10-1530-G1 from 3.3 V to XIAO D9 (GPIO20). SW pull-down; closed = HIGH.
+- Factory-reset tact TS-1088-AR02016 from XIAO BOOT (GPIO9) to GND.
 
 Digital outputs (3.3 V, active high):
-- D3 GPIO21 → green LED + 330 Ω series resistor to GND. No buzzer on this net.
-- D4 GPIO22 → yellow or blue "confirm" LED + 330 Ω. **Arm buzzer:** 3–5 V **active** piezo ~2.3 kHz via NPN (S8050), base ~1 kΩ from GPIO22; collector from 3V3 or BAT+. Distinct MPN from the alarm buzzer.
-- D5 GPIO23 → red "alarm" LED + 330 Ω. **Alarm buzzer:** 3–5 V **active** piezo ~4 kHz via NPN, same topology, different MPN. Flyback if magnetic.
+- D3 GPIO21 → green LED (e.g. Würth 150060VS75000) + 330 Ω. No buzzer.
+- D4 GPIO22 → yellow LED (e.g. LTST-C190KSKT) + 330 Ω, and BZ2 AI-1223-TWT-3V-2-R via S8050 + 1 kΩ base; BZ+ = 3V3. Optional DNP flyback.
+- D5 GPIO23 → red LED (e.g. LTST-C190KRKT) + 330 Ω, and BZ1 AI-1223-TWT-3V-2-R (same MPN) via S8050 + 1 kΩ; flyback 1N4148 populated.
 
 Layout:
-- 2 layers, 1.6 mm FR4, 1 oz copper.
-- Rough board size 45–55 mm × 25–35 mm (wall-mount friendly); 3× M2 mounting holes.
-- Label silkscreen: BAT+, GND, 3V3, D9 SENSE, revision.
-- Solid ground pour on bottom; do not place ground fill under XIAO Wi-Fi antenna.
-- Include test pads for BAT+, 3V3, GND, and ADC sense.
-
-Do not assign or reroute GPIOs differently from the table above. Target low-cost JLCPCB assembly; prefer 0603 passives.
+- Placement complete in Flux; finish routing; solid GND pour; antenna keep-out; test pads BAT+/3V3/GND/ADC.
+- Do not reassign GPIOs. JLCPCB-friendly 0603 passives.
 ```
 
-### Bill of materials (prototype)
+### Bill of materials (prototype — matches Flux)
 
 
-| Ref      | Qty | Description                                                                 | Notes                                                       |
-| -------- | --- | --------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| U1       | 1   | [Seeed XIAO ESP32-C6](https://www.seeedstudio.com/XIAO-ESP32C6-p-5914.html) | Matter + Wi-Fi MCU module                                   |
-| SW1      | 1   | Reed switch, normally open (magnetic contact)                               | Door/window sense; e.g. GPS-14 or similar                   |
-| SW2      | 1   | Tact switch, through-hole or SMD                                            | Factory reset on **GPIO9** / BOOT                           |
-| J1       | 1   | JST-PH 2.0, 2-pin                                                           | 1S pouch                                                    |
-| BAT1     | 1   | 1S Li-ion pouch                                                             | Off-board, JST; match enclosure; 3.7 V nominal              |
-| R1, R2   | 2   | 100 kΩ, 0603, 1%                                                            | Battery voltage divider                                     |
-| R3–R5    | 3   | 330 Ω, 0603                                                                 | LED current limit (~3 mA at 3.3 V)                          |
-| C1       | 1   | 100 nF, 0603, X7R                                                           | ADC filter at D0                                            |
-| C2       | 1   | 100 nF, 0603, X7R                                                           | Optional VBAT / VIN decoupling                              |
-| D1       | 1   | Green LED, 0603                                                             | Status (`STATE_LED`)                                        |
-| D2       | 1   | Blue or yellow LED, 0603                                                    | Confirm (`CONFIRM_LED`)                                     |
-| D3       | 1   | Red LED, 0603                                                               | Alarm (`ALARM_LED`)                                         |
-| Q1 | 1 | NPN SOT-23 (S8050) | Alarm buzzer low-side, GPIO23 |
-| Q2 | 1 | NPN SOT-23 (S8050) | Arm buzzer low-side, GPIO22 |
-| BZ1 | 1 | 3–5 V **active** ~4 kHz | Alarm; e.g. CMI-1295IC-0385T class |
-| BZ2 | 1 | 3–5 V **active** ~2.3 kHz | Arm/confirm; **different MPN** from BZ1 |
-| R6, R7 | 2 | 1 kΩ, 0603 | NPN base resistors |
-| D_BZ | 0–2 | 1N4148 class | Flyback if magnetic buzzers |
-| —        | —   | M2 standoffs / screws                                                       | Enclosure-dependent                                         |
-| —        | —   | Enclosure, magnet (for reed)                                                | Mechanical; not on PCB BOM                                  |
-
+| Ref | Qty | Description | Notes |
+|-----|-----|-------------|--------|
+| U1 | 1 | Seeed XIAO ESP32-C6 (MPN 113991254) | Matter MCU module |
+| U2 | 1 | JST **S2B-PH-K-S(LF)(SN)** | Right-angle PH 2.0, 1S pouch |
+| BAT1 | 1 | 1S Li-ion pouch | Off-board; 3.7 V nominal |
+| SW1 | 1 | Coto **CT10-1530-G1** | Reed NO, SMD |
+| SW2 | 1 | XUNPU **TS-1088-AR02016** | Factory reset — GPIO9 |
+| R1, R2 | 2 | 100 kΩ, 0603, 1% | Battery divider |
+| R3–R5 | 3 | 330 Ω, 0603 | LED series |
+| R6, R7 | 2 | 1 kΩ, 0603 | Q1 / Q2 base |
+| C1, C2 | 2 | 100 nF, 0603 | VBAT bypass + ADC filter |
+| LED1 | 1 | Würth **150060VS75000** | Green status — GPIO21 |
+| LED2 | 1 | Lite-On **LTST-C190KSKT** | Yellow confirm — GPIO22 |
+| LED3 | 1 | Lite-On **LTST-C190KRKT** | Red alarm — GPIO23 |
+| Q1, Q2 | 2 | **S8050** SOT-23 | Alarm / arm buzzer low-side |
+| BZ1, BZ2 | 2 | PUI **AI-1223-TWT-3V-2-R** | Same 2.3 kHz active; alarm / arm |
+| D1 | 1 | **1N4148W** | Flyback on BZ1 (populated) |
+| D2 | 0–1 | **1N4148W** | Flyback on BZ2 — **DNP / exclude BOM** in Flux |
+| — | — | Enclosure, magnet | Mechanical |
 
 **Bring-up checklist** — prototype validated 2026-07 (XIAO ESP32-C6 bench carrier; contact input exercised with a **latching toggle** in place of reed for Boolean State testing).
 
@@ -350,7 +361,8 @@ Do not assign or reroute GPIOs differently from the table above. Target low-cost
 - [x] Long-press factory reset clears fabric (GPIO9)
 - [x] Battery percent updates in Matter Power Source cluster (endpoint 3) and visible in Home Assistant
 - [x] LEDs match `evt_service` / panic tasks on GPIO21–23
-- [x] HA low-battery package — `[home-assistant/packages/cosmos_door_sensor.yaml](../home-assistant/packages/cosmos_door_sensor.yaml)` installed and notifying; fleet/OTA in [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
+- [x] HA low-battery package — [`home-assistant/packages/cosmos_door_sensor.yaml`](../home-assistant/packages/cosmos_door_sensor.yaml) installed and notifying; fleet/OTA in [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
+- [ ] Flux carrier: finish routing → Gerbers → fab bring-up (reed + both buzzers)
 
 ### Firmware modules
 
