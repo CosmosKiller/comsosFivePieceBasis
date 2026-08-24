@@ -11,6 +11,7 @@
 
 #include <app-common/zap-generated/attributes/Accessors.h>
 #include <app/clusters/boolean-state-server/CodegenIntegration.h>
+#include <clusters/occupancy_sensing/integration.h>
 #include <esp_matter.h>
 #include <lib/support/CodeUtils.h>
 
@@ -18,6 +19,7 @@
 #include <cosmos_battery.h>
 #include <cosmos_battery_matter.h>
 #include <cosmos_matter_ota.h>
+#include <door_intercom_matter_notify.h>
 #include <door_intercom_task.h>
 #include <evt_service_task.h>
 #include <factory_reset_task.h>
@@ -34,11 +36,14 @@ using namespace esp_matter::endpoint;
 using namespace chip::app::Clusters;
 
 uint16_t intercom_endpoint_id = 0;
+uint16_t occupancy_endpoint_id = 0;
 uint16_t doorbell_endpoint_id = 0;
 uint16_t tamper_endpoint_id = 0;
 uint16_t siren_endpoint_id = 0;
 uint16_t doorlock_endpoint_id = 0;
 httpd_handle_t cam_server;
+
+static bool s_matter_started = false;
 
 static void occupancy_sensor_notification(uint16_t endpoint_id, bool occupancy, void *user_data);
 static void doorbell_notification(uint16_t endpoint_id, bool pressed, void *user_data);
@@ -108,7 +113,8 @@ extern "C" void app_main(void)
         ESP_LOGE(TAG, "Failed to create occupancy sensor endpoint");
         return;
     }
-    ESP_LOGI(TAG, "Occupancy (PIR) endpoint ID: %d", endpoint::get_id(occupancy_sensor_ep));
+    occupancy_endpoint_id = endpoint::get_id(occupancy_sensor_ep);
+    ESP_LOGI(TAG, "Occupancy (PIR) endpoint ID: %d", occupancy_endpoint_id);
 
     /* HA-first: Generic Switch (0x000F) so python-matter-server creates event.*.
      * True Matter Doorbell (0x0148) after esp-matter + HA support bump. */
@@ -150,7 +156,7 @@ extern "C" void app_main(void)
         .pir_sensor =
             {
                 .cb = occupancy_sensor_notification,
-                .endpoint_id = endpoint::get_id(occupancy_sensor_ep),
+                .endpoint_id = occupancy_endpoint_id,
             },
         .tamper =
             {
@@ -199,6 +205,7 @@ extern "C" void app_main(void)
         ESP_LOGE(TAG, "esp_matter::start failed: %d", err);
         return;
     }
+    s_matter_started = true;
 
     /* Matter stack is up — publish initial tamper Boolean State. */
     tamper_notification(tamper_endpoint_id, security_module_tamper_is_open(), NULL);
@@ -226,15 +233,17 @@ extern "C" void app_main(void)
 
 static void occupancy_sensor_notification(uint16_t endpoint_id, bool occupancy, void *user_data)
 {
+    (void)user_data;
     chip::DeviceLayer::SystemLayer().ScheduleLambda([endpoint_id, occupancy]() {
-        attribute_t *attribute =
-            attribute::get(endpoint_id, OccupancySensing::Id, OccupancySensing::Attributes::Occupancy::Id);
-
-        esp_matter_attr_val_t val = esp_matter_invalid(NULL);
-        attribute::get_val(attribute, &val);
-        val.val.b = occupancy;
-
-        attribute::update(endpoint_id, OccupancySensing::Id, OccupancySensing::Attributes::Occupancy::Id, &val);
+        /* OccupancySensing is DataModelProvider-backed — attribute::update() only writes
+         * esp-matter RAM; Matter clients never see it (esp-matter #1738). */
+        auto *cluster = OccupancySensing::FindClusterOnEndpoint(endpoint_id);
+        if (cluster == nullptr) {
+            ESP_LOGE(TAG, "Occupancy cluster missing on ep=%u", endpoint_id);
+            return;
+        }
+        cluster->SetOccupancy(occupancy);
+        ESP_LOGI(TAG, "Occupancy ep=%u occupied=%d", endpoint_id, occupancy);
     });
 }
 
@@ -259,10 +268,13 @@ static void doorbell_notification(uint16_t endpoint_id, bool pressed, void *user
 static void tamper_notification(uint16_t endpoint_id, bool tampered, void *user_data)
 {
     chip::DeviceLayer::SystemLayer().ScheduleLambda([endpoint_id, tampered]() {
-        ESP_LOGW(TAG, "Tamper state: endpoint_id=%d, tampered=%d", endpoint_id, tampered);
+        /* NC to GND when seated: GPIO LOW = contact closed (OK). Matter/HA contact sensors
+         * treat StateValue true as closed; controllers invert to show tamper ON when open. */
+        const bool contact_closed = !tampered;
+        ESP_LOGI(TAG, "Tamper ep=%u open=%d seated=%d", endpoint_id, tampered, contact_closed);
         auto booleanState = BooleanState::FindClusterOnEndpoint(endpoint_id);
         VerifyOrReturn(booleanState != nullptr);
-        booleanState->SetStateValue(tampered);
+        booleanState->SetStateValue(contact_closed);
 
         /* Latch: only force alarm OnOff ON when tampered. Remount leaves OnOff/siren alone. */
         if (tampered && siren_endpoint_id != 0) {
@@ -275,4 +287,28 @@ static void tamper_notification(uint16_t endpoint_id, bool tampered, void *user_
             }
         }
     });
+}
+
+void door_intercom_matter_notify_occupancy(bool occupancy)
+{
+    if (!s_matter_started) {
+        return;
+    }
+    occupancy_sensor_notification(occupancy_endpoint_id, occupancy, NULL);
+}
+
+void door_intercom_matter_notify_doorbell(bool pressed)
+{
+    if (!s_matter_started) {
+        return;
+    }
+    doorbell_notification(doorbell_endpoint_id, pressed, NULL);
+}
+
+void door_intercom_matter_notify_tamper(bool tampered)
+{
+    if (!s_matter_started) {
+        return;
+    }
+    tamper_notification(tamper_endpoint_id, tampered, NULL);
 }

@@ -792,6 +792,8 @@ Matter temp/humidity/pressure, `bme680_task` (I2C GPIO23/24), OTA via `cosmos_ma
 
 ### Tamper electromechanical detail
 
+GPIO: internal pull-up on D2; **LOW = seated (NC to GND)**, **HIGH = open/tampered**. Matter Boolean State uses contact-sensor convention (**true = closed/seated**); HA inverts so tamper is **off when grounded**, **on when open**.
+
 ```text
 Seated (OK):   TAMPER_PIN ── leaf spring ── chassis GND
                  also: back pad A ── pogo ── case jumper ── pogo ── back pad B

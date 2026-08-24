@@ -11,6 +11,8 @@ using namespace esp_matter;
 
 static const char *TAG = "door_intercom_task";
 extern uint16_t intercom_endpoint_id;
+extern uint16_t occupancy_endpoint_id;
+extern uint16_t tamper_endpoint_id;
 extern uint16_t siren_endpoint_id;
 extern uint16_t doorlock_endpoint_id;
 
@@ -28,27 +30,15 @@ static door_intercom_ctx_t s_ctx;
  */
 static void IRAM_ATTR door_intercom_task_doorbell_isr_handler(void *pArg)
 {
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     int level = gpio_get_level(DOORBELL_PIN);
 
-    // Call Matter callback if initialized
-    if (s_ctx.config->doorbell.cb) {
-        s_ctx.config->doorbell.cb(s_ctx.config->doorbell.endpoint_id, level, s_ctx.config->user_data);
-    }
-
-    /* Stream/LED policy: enable on press. Matter Switch events are sent via doorbell.cb. */
-    if (level == 1) {
-        evt_service_event_t evt = {
-            .source = EVT_SOURCE_DOORBELL,
-            .type = EVT_TYPE_TRIGGERED,
-            .value = level,
-        };
-        evt_service_post(&evt);
-    }
-
-    if (xHigherPriorityTaskWoken) {
-        portYIELD_FROM_ISR();
-    }
+    /* Matter updates run from evt_service task — never call Matter APIs from ISR. */
+    evt_service_event_t evt = {
+        .source = EVT_SOURCE_DOORBELL,
+        .type = level ? EVT_TYPE_TRIGGERED : EVT_TYPE_CLEARED,
+        .value = level,
+    };
+    evt_service_post(&evt);
 }
 
 esp_err_t door_intercom_attribute_update(door_intercom_task_handle_t driver_handle, uint16_t endpoint_id, uint32_t cluster_id,
@@ -84,7 +74,9 @@ esp_err_t door_intercom_attribute_update(door_intercom_task_handle_t driver_hand
                 // Handle door lock attribute update if needed
             }
         }
-    } else {
+    } else if (endpoint_id == occupancy_endpoint_id || endpoint_id == tamper_endpoint_id) {
+        /* PIR/tamper Matter updates originate in main.cpp notification callbacks. */
+    } else if (endpoint_id != 0) {
         ESP_LOGW(TAG, "Unknown endpoint ID: %d", endpoint_id);
     }
     return err;

@@ -29,10 +29,7 @@ static esp_err_t adc_gpio_to_channel(int gpio, adc_unit_t *unit, adc_channel_t *
     *channel = static_cast<adc_channel_t>(gpio);
     return ESP_OK;
 #else
-    (void)gpio;
-    (void)unit;
-    (void)channel;
-    return ESP_ERR_NOT_SUPPORTED;
+    return adc_oneshot_io_to_channel(gpio, unit, channel);
 #endif
 }
 

@@ -28,10 +28,6 @@ static void IRAM_ATTR security_module_task_pir_isr_handler(void *pArg)
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     int level = gpio_get_level(PIR_PIN);
 
-    if (s_ctx.is_initialized && s_ctx.config && s_ctx.config->pir_sensor.cb) {
-        s_ctx.config->pir_sensor.cb(s_ctx.config->pir_sensor.endpoint_id, level, s_ctx.config->user_data);
-    }
-
     evt_service_event_t evt = {
         .source = EVT_SOURCE_PIR,
         .type = level ? EVT_TYPE_TRIGGERED : EVT_TYPE_CLEARED,
@@ -57,10 +53,6 @@ static void IRAM_ATTR security_module_task_tamper_isr_handler(void *pArg)
 {
     int level = gpio_get_level(TAMPER_PIN);
     bool tampered = (level == 1);
-
-    if (s_ctx.is_initialized && s_ctx.config && s_ctx.config->tamper.cb) {
-        s_ctx.config->tamper.cb(s_ctx.config->tamper.endpoint_id, tampered, s_ctx.config->user_data);
-    }
 
     evt_service_event_t evt = {
         .source = EVT_SOURCE_PANIC,

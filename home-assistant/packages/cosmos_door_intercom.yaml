@@ -65,8 +65,10 @@ automation:
 
   - id: cosmos_door_intercom_occupancy_stream
     alias: "Cosmos door intercom — occupancy enables stream"
-    description: When PIR reports occupied, enable the stream gate.
-    mode: single
+    description: >-
+      Match firmware TRIGGER_TIME_MS (5000): wait 5 s of sustained occupancy
+      before enabling the Matter stream gate (same as device EVT_TYPE_SUSTAINED).
+    mode: restart
     triggers:
       - trigger: state
         entity_id: binary_sensor.cosmos_door_intercom_occupancy # TODO
@@ -76,7 +78,36 @@ automation:
         entity_id: input_boolean.cosmos_door_intercom_auto_stream
         state: "on"
     actions:
+      - delay:
+          milliseconds: 5000
+      - condition: state
+        entity_id: binary_sensor.cosmos_door_intercom_occupancy # TODO
+        state: "on"
       - action: switch.turn_on
+        target:
+          entity_id: switch.cosmos_door_intercom # TODO
+      - action: notify.mobile_app_my_phone # TODO: your Companion notify service
+        data:
+          title: "Puerta — movimiento"
+          message: Se detectó movimiento sostenido. La cámara en vivo está encendida.
+          data:
+            channel: alarm_stream
+            importance: high
+            ttl: 0
+            priority: high
+
+  - id: cosmos_door_intercom_occupancy_stream_off
+    alias: "Cosmos door intercom — occupancy clears stream"
+    description: >-
+      When PIR occupancy clears, turn Off the Matter stream gate
+      (matches firmware EVT_TYPE_CLEARED → stream disabled).
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.cosmos_door_intercom_occupancy # TODO
+        to: "off"
+    actions:
+      - action: switch.turn_off
         target:
           entity_id: switch.cosmos_door_intercom # TODO
 

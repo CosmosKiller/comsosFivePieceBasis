@@ -3,6 +3,7 @@
 #include <freertos/queue.h>
 #include <string.h>
 
+#include <door_intercom_matter_notify.h>
 #include <evt_service_task.h>
 #include <http_stream_task.h>
 #include <panic_alarm_task.h>
@@ -30,6 +31,7 @@ static void evt_service_task_handler(void *pArg)
                 if (evt.type == EVT_TYPE_TRIGGERED) {
                     ESP_LOGI(TAG, "Motion detected!");
                     gpio_set_level(LED_PIN, 1);
+                    door_intercom_matter_notify_occupancy(true);
                 } else if (evt.type == EVT_TYPE_SUSTAINED) {
                     ESP_LOGI(TAG, "Motion sustained - stream active");
                     gpio_set_level(LED_PIN, 1);
@@ -38,6 +40,7 @@ static void evt_service_task_handler(void *pArg)
                     ESP_LOGI(TAG, "Motion ended.");
                     gpio_set_level(LED_PIN, 0);
                     http_stream_task_service_enabled(false);
+                    door_intercom_matter_notify_occupancy(false);
                 }
                 break;
 
@@ -46,6 +49,9 @@ static void evt_service_task_handler(void *pArg)
                     ESP_LOGI(TAG, "Doorbell pressed! Call requested.");
                     gpio_set_level(LED_PIN, 1);
                     http_stream_task_service_enabled(true);
+                    door_intercom_matter_notify_doorbell(true);
+                } else if (evt.type == EVT_TYPE_CLEARED) {
+                    door_intercom_matter_notify_doorbell(false);
                 }
                 break;
 
@@ -68,9 +74,11 @@ static void evt_service_task_handler(void *pArg)
                     gpio_set_level(LED_PIN, 1);
                     http_stream_task_service_enabled(true);
                     panic_alarm_task_init();
+                    door_intercom_matter_notify_tamper(true);
                 } else if (evt.type == EVT_TYPE_CLEARED) {
                     /* Remount / charging unmount settle — do not silence siren. */
                     ESP_LOGW(TAG, "Tamper cleared — unit seated (siren stays latched until HA clears)");
+                    door_intercom_matter_notify_tamper(false);
                 }
                 break;
 
@@ -148,6 +156,16 @@ esp_err_t evt_service_post(evt_service_event_t *evt)
     }
 
     evt->timestamp = esp_log_timestamp();
+
+    if (xPortInIsrContext()) {
+        BaseType_t woken = pdFALSE;
+        if (xQueueSendFromISR(evt_queue, evt, &woken) != pdTRUE) {
+            ESP_LOGW(TAG, "Event queue full (ISR), dropping source %d", evt->source);
+            return ESP_ERR_NO_MEM;
+        }
+        portYIELD_FROM_ISR(woken);
+        return ESP_OK;
+    }
 
     BaseType_t ret = xQueueSend(evt_queue, evt, pdMS_TO_TICKS(100));
     if (ret != pdPASS) {
