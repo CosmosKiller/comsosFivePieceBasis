@@ -157,19 +157,24 @@ esp_err_t evt_service_post(evt_service_event_t *evt)
 
     evt->timestamp = esp_log_timestamp();
 
-    if (xPortInIsrContext()) {
-        BaseType_t woken = pdFALSE;
-        if (xQueueSendFromISR(evt_queue, evt, &woken) != pdTRUE) {
-            ESP_LOGW(TAG, "Event queue full (ISR), dropping source %d", evt->source);
-            return ESP_ERR_NO_MEM;
-        }
-        portYIELD_FROM_ISR(woken);
-        return ESP_OK;
-    }
-
     BaseType_t ret = xQueueSend(evt_queue, evt, pdMS_TO_TICKS(100));
     if (ret != pdPASS) {
         ESP_LOGW(TAG, "Event queue full, dropping event from source %d", evt->source);
+        return ESP_ERR_NO_MEM;
+    }
+
+    return ESP_OK;
+}
+
+esp_err_t evt_service_post_from_isr(evt_service_event_t *evt, BaseType_t *woken)
+{
+    if (!evt_queue || evt == NULL) {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    evt->timestamp = (uint32_t)(xTaskGetTickCountFromISR() * portTICK_PERIOD_MS);
+
+    if (xQueueSendFromISR(evt_queue, evt, woken) != pdPASS) {
         return ESP_ERR_NO_MEM;
     }
 

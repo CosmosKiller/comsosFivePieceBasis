@@ -33,7 +33,7 @@ static void IRAM_ATTR security_module_task_pir_isr_handler(void *pArg)
         .type = level ? EVT_TYPE_TRIGGERED : EVT_TYPE_CLEARED,
         .value = level,
     };
-    evt_service_post(&evt);
+    evt_service_post_from_isr(&evt, &xHigherPriorityTaskWoken);
 
     if (level == 1) {
         xTimerStartFromISR(detection_timer, &xHigherPriorityTaskWoken);
@@ -41,9 +41,7 @@ static void IRAM_ATTR security_module_task_pir_isr_handler(void *pArg)
         xTimerStopFromISR(detection_timer, &xHigherPriorityTaskWoken);
     }
 
-    if (xHigherPriorityTaskWoken) {
-        portYIELD_FROM_ISR();
-    }
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 /**
@@ -51,6 +49,7 @@ static void IRAM_ATTR security_module_task_pir_isr_handler(void *pArg)
  */
 static void IRAM_ATTR security_module_task_tamper_isr_handler(void *pArg)
 {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     int level = gpio_get_level(TAMPER_PIN);
     bool tampered = (level == 1);
 
@@ -59,7 +58,8 @@ static void IRAM_ATTR security_module_task_tamper_isr_handler(void *pArg)
         .type = tampered ? EVT_TYPE_TRIGGERED : EVT_TYPE_CLEARED,
         .value = level,
     };
-    evt_service_post(&evt);
+    evt_service_post_from_isr(&evt, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 static void security_module_task_pir_timer_cb(TimerHandle_t xTimer)

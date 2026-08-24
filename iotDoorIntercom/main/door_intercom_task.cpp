@@ -30,6 +30,7 @@ static door_intercom_ctx_t s_ctx;
  */
 static void IRAM_ATTR door_intercom_task_doorbell_isr_handler(void *pArg)
 {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     int level = gpio_get_level(DOORBELL_PIN);
 
     /* Matter updates run from evt_service task — never call Matter APIs from ISR. */
@@ -38,7 +39,8 @@ static void IRAM_ATTR door_intercom_task_doorbell_isr_handler(void *pArg)
         .type = level ? EVT_TYPE_TRIGGERED : EVT_TYPE_CLEARED,
         .value = level,
     };
-    evt_service_post(&evt);
+    evt_service_post_from_isr(&evt, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 esp_err_t door_intercom_attribute_update(door_intercom_task_handle_t driver_handle, uint16_t endpoint_id, uint32_t cluster_id,

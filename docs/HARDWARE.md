@@ -24,8 +24,9 @@ Shared defaults for **low-voltage, sensor-class, 2-layer** carriers across all S
 | Logic             | **3.3 V** CMOS only on XIAO GPIO — no 5 V on module pins                                                                                                |
 | Battery sense     | Resistive divider **2:1** (e.g. 100 kΩ / 100 kΩ) to ADC pin; `**divider_ratio = 2.0`** in `cosmos_battery`                                              |
 | ADC filter        | **100 nF** ceramic from sense node (mid-divider tap) to **GND**, close to module pin                                                                    |
-| Digital inputs    | Match firmware pull: contact sensor uses **pull-down** (reed open = high-Z, closed = tied high)                                                         |
-| Factory reset     | **GPIO9** (`BOOT` on XIAO): long-press ≥ 5 s (`CONFIG_BUTTON_LONG_PRESS_TIME_MS=5000`); expose accessible tact switch                                   |
+| Digital inputs    | **Mandatory external** pull-up or pull-down on the carrier — **do not rely on MCU internal pulls alone** (noise, EMI, fab variance, floating open). Default **10 kΩ**, 0603. Firmware may keep the matching internal pull as a secondary/belt-and-suspenders only. |
+| Pull polarity     | Switch/reed to **3V3** → **10 kΩ to GND** (idle LOW). Switch/tact/tamper to **GND** → **10 kΩ to 3V3** (idle HIGH). Place the resistor at the module pin. |
+| Factory reset     | Dedicated tact to **GND** + **external 10 kΩ pull-up to 3V3**; long-press ≥ 5 s (`CONFIG_BUTTON_LONG_PRESS_TIME_MS=5000`)                               |
 | Decoupling        | **100 nF** on each LED branch / noisy output near load; module relies on XIAO on-board decoupling                                                       |
 
 
@@ -282,17 +283,19 @@ When a Flux or KiCad project is public (or in a private hardware repo), paste th
 
 | XIAO pin | ESP GPIO | Firmware                         | Function                               |
 | -------- | -------- | -------------------------------- | -------------------------------------- |
-| D9       | GPIO20   | `SENSOR_PIN`                     | Reed / contact input (pull-down in SW) |
+| D9       | GPIO20   | `SENSOR_PIN`                     | Reed to **3V3** + **10 kΩ to GND** (closed = HIGH) |
 | D3       | GPIO21   | `STATE_LED_PIN`                  | Status LED (event aggregator)          |
 | D4       | GPIO22   | `CONFIRM_LED_PIN`                | Arm / confirm LED + **BZ2**            |
 | D5       | GPIO23   | `ALARM_LED_PIN`                  | Alarm LED + **BZ1**                    |
 | D0 / A0  | GPIO0    | `CONFIG_COSMOS_BATTERY_ADC_GPIO` | Battery voltage sense (ADC1)           |
-| BOOT     | GPIO9    | `FACTORY_RESET_BUTTON_PIN`       | Factory reset (long-press)             |
+| BOOT     | GPIO9    | `FACTORY_RESET_BUTTON_PIN`       | Tact to **GND** + **10 kΩ to 3V3**     |
 
 
 Unused in current firmware (available for carrier features): D1, D2, D6–D8, D10.
 
-**Sensor logic:** GPIO20 with **internal pull-down** — configure reed switch between **3.3 V** and **D9** (closed = high = triggered). Debouncing is software/GPIO ISR.
+**Sensor logic:** Reed between **3.3 V** and **D9**; **external 10 kΩ pull-down to GND** at D9 (open = LOW, closed = HIGH). Firmware may also enable an internal pull-down as secondary only. Debouncing is software/GPIO ISR.
+
+**Factory reset:** Tact **BOOT → GND** with **external 10 kΩ pull-up to 3V3** at BOOT.
 
 **Battery sense:** Tap divider at **D0/A0**; firmware scales by **2.0×** to infer cell voltage.
 
@@ -317,9 +320,9 @@ Power:
 - Connect U2 to XIAO BAT+ / BAT− (not 3V3). Do not hang loads on XIAO 5V.
 - Battery monitor: 100 kΩ + 100 kΩ divider BAT+ to GND; mid tap to XIAO D0 (GPIO0). 100 nF from tap to GND; 100 nF on VBAT.
 
-Digital inputs:
-- Reed CT10-1530-G1 from 3.3 V to XIAO D9 (GPIO20). SW pull-down; closed = HIGH.
-- Factory-reset tact TS-1088-AR02016 from XIAO BOOT (GPIO9) to GND.
+Digital inputs (external pulls mandatory — do not rely on MCU internals alone):
+- Reed CT10-1530-G1 from 3.3 V to XIAO D9 (GPIO20). **10 kΩ pull-down to GND at D9**; closed = HIGH.
+- Factory-reset tact TS-1088-AR02016 from XIAO BOOT (GPIO9) to GND. **10 kΩ pull-up to 3V3 at BOOT**.
 
 Digital outputs (3.3 V, active high):
 - D3 GPIO21 → green LED (e.g. Würth 150060VS75000) + 330 Ω. No buzzer.
@@ -341,6 +344,8 @@ Layout:
 | BAT1 | 1 | 1S Li-ion pouch | Off-board; 3.7 V nominal |
 | SW1 | 1 | Coto **CT10-1530-G1** | Reed NO, SMD |
 | SW2 | 1 | XUNPU **TS-1088-AR02016** | Factory reset — GPIO9 |
+| R8 | 1 | **10 kΩ**, 0603 | **Pull-down** at D9 / GPIO20 (reed) |
+| R9 | 1 | **10 kΩ**, 0603 | **Pull-up** at BOOT / GPIO9 |
 | R1, R2 | 2 | 100 kΩ, 0603, 1% | Battery divider |
 | R3–R5 | 3 | 330 Ω, 0603 | LED series |
 | R6, R7 | 2 | 1 kΩ, 0603 | Q1 / Q2 base |
@@ -396,8 +401,8 @@ Matter, contact sensor driver, event service, panic/alarm outputs, OTA via `cosm
 | XIAO pin | ESP GPIO | Firmware / Kconfig                     | Function                                     |
 | -------- | -------- | -------------------------------------- | -------------------------------------------- |
 | D8       | GPIO19   | `CONFIG_BEDSIDE_LAMP_LED_GPIO`         | WS2812 data (RMT) — **10 LEDs**              |
-| D9       | GPIO20   | `CONFIG_BEDSIDE_LAMP_USER_BUTTON_GPIO` | User tact (toggle / double / long → presets) |
-| BOOT     | GPIO9    | `FACTORY_RESET_BUTTON_PIN`             | Factory reset tact (long ≥ 5 s)              |
+| D9       | GPIO20   | `CONFIG_BEDSIDE_LAMP_USER_BUTTON_GPIO` | User tact to **GND** + **10 kΩ to 3V3**          |
+| BOOT     | GPIO9    | `FACTORY_RESET_BUTTON_PIN`             | Factory reset tact to **GND** + **10 kΩ to 3V3** |
 | D0 / A0  | GPIO0    | `CONFIG_COSMOS_BATTERY_ADC_GPIO`       | Battery sense (divider mid-tap)              |
 
 
@@ -462,8 +467,8 @@ Power:
 - Do **not** put 5 V on XIAO GPIO or 3V3. Do **not** power WS2812 from 3V3, raw BAT, or XIAO `5V` alone for battery mode.
 
 Buttons (exactly two):
-- User tact: XIAO D9 (GPIO20) to GND (firmware pull-up / button library). Accessible on top or side of enclosure.
-- Factory-reset tact: XIAO BOOT (GPIO9) to GND, long-press ≥ 5 s. Separate from user button; recess or side placement to avoid accidents.
+- User tact: XIAO D9 (GPIO20) to GND + **10 kΩ pull-up to 3V3 at D9**. Accessible on top or side of enclosure.
+- Factory-reset tact: XIAO BOOT (GPIO9) to GND + **10 kΩ pull-up to 3V3 at BOOT**, long-press ≥ 5 s. Separate from user button; recess or side placement to avoid accidents.
 
 Layout:
 - 2 layers, 1.6 mm FR4, 1 oz copper.
@@ -485,6 +490,8 @@ Do not reassign GPIOs from: LED=GPIO19, user=GPIO20, reset=GPIO9, battery ADC=GP
 | R_LED      | 1   | 33–100 Ω, 0603                                                              | Series on DIN                                              |
 | SW1        | 1   | Tact switch                                                                 | User — GPIO20                                              |
 | SW2        | 1   | Tact switch                                                                 | Factory reset — GPIO9                                      |
+| R_PU1      | 1   | **10 kΩ**, 0603                                                             | Pull-up at GPIO20                                          |
+| R_PU2      | 1   | **10 kΩ**, 0603                                                             | Pull-up at BOOT / GPIO9                                    |
 | J1         | 1   | USB-C receptacle (power)                                                    | Charge + 5 V                                               |
 | J2         | 1   | JST-PH 2.0, 2-pin                                                           | 1S pouch ≥ 3000 mAh                                        |
 | U2         | 1   | 1S Li-ion charger + protection                                              | e.g. TP4056 + DW01 path                                    |
@@ -541,8 +548,8 @@ Follow [Cosmos carrier design rules](#cosmos-carrier-design-rules).
 
 | XIAO pin | ESP GPIO | Firmware                         | Function / wiring                                             |
 | -------- | -------- | -------------------------------- | ------------------------------------------------------------- |
-| D9       | GPIO20   | `BUTTON_GPIO_PIN`                | Action tact to **GND** (iot_button pull-up; press = LOW)      |
-| BOOT     | GPIO9    | `FACTORY_RESET_BUTTON_PIN`       | Reset tact to **GND**; long ≥ 5 s — **not** the action button |
+| D9       | GPIO20   | `BUTTON_GPIO_PIN`                | Action tact to **GND** + **10 kΩ to 3V3** (press = LOW)   |
+| BOOT     | GPIO9    | `FACTORY_RESET_BUTTON_PIN`       | Reset tact to **GND** + **10 kΩ to 3V3**; long ≥ 5 s — **not** the action button |
 | D3       | GPIO21   | `SINGLE_PRESS_LED_PIN`           | Active-high LED + 330 Ω (single-press feedback)               |
 | D8       | GPIO19   | `MULTI_PRESS_LED_PIN`            | Active-high LED + 330 Ω (multi-press feedback)                |
 | D0 / A0  | GPIO0    | `CONFIG_COSMOS_BATTERY_ADC_GPIO` | Battery divider mid-tap (2:1)                                 |
@@ -566,8 +573,8 @@ Power:
 - Battery monitor: 100 kΩ + 100 kΩ divider from BAT+ to GND; mid tap to XIAO D0 (A0 / GPIO0). 100 nF from tap to GND at the module pin.
 
 Buttons (exactly two — do not combine):
-- Primary action tact: between XIAO D9 (GPIO20) and GND. Large, easy to press. Firmware uses pull-up.
-- Factory-reset tact: between XIAO BOOT (GPIO9) and GND. Recessed or side-mounted; long press ≥ 5 s. Separate from the action button.
+- Primary action tact: between XIAO D9 (GPIO20) and GND. **10 kΩ pull-up to 3V3 at D9.** Large, easy to press.
+- Factory-reset tact: between XIAO BOOT (GPIO9) and GND. **10 kΩ pull-up to 3V3 at BOOT.** Recessed or side-mounted; long press ≥ 5 s. Separate from the action button.
 
 LEDs (two discrete, active high):
 - D3 GPIO21 → LED (e.g. green) + 330 Ω to GND — single-press indicator.
@@ -594,6 +601,8 @@ GPIO lock (do not reassign):
 | U1     | 1   | [Seeed XIAO ESP32-C6](https://www.seeedstudio.com/XIAO-ESP32C6-p-5914.html) | Matter MCU                      |
 | SW1    | 1   | Tact switch (large / soft)                                                  | Action — GPIO20 to GND          |
 | SW2    | 1   | Tact switch (recessed)                                                      | Factory reset — GPIO9 to GND    |
+| R_PU1  | 1   | **10 kΩ**, 0603                                                             | Pull-up at GPIO20               |
+| R_PU2  | 1   | **10 kΩ**, 0603                                                             | Pull-up at BOOT / GPIO9         |
 | D1     | 1   | Green LED, 0603                                                             | Single-press (`GPIO21`)         |
 | D2     | 1   | Blue or yellow LED, 0603                                                    | Multi-press (`GPIO19`)          |
 | R3, R4 | 2   | 330 Ω, 0603                                                                 | LED current limit               |
@@ -652,8 +661,8 @@ Matter generic switch, `iot_button_task`, `cosmos_battery` (GPIO0), OTA via `cos
 | -------- | -------- | ------------------------------------------------------------------------------- |
 | D0       | GPIO1    | Encoder **A**                                                                   |
 | D1       | GPIO0    | Encoder **B**                                                                   |
-| D2       | GPIO25   | Encoder **push** (to GND; SW pull-up)                                           |
-| BOOT     | GPIO28   | Factory-reset tact to GND (`CONFIG_FACTORY_RESET_BUTTON_GPIO=28`)               |
+| D2       | GPIO25   | Encoder **push** to GND + **10 kΩ to 3V3**                                              |
+| BOOT     | GPIO28   | Factory-reset tact to GND + **10 kΩ to 3V3** (`CONFIG_FACTORY_RESET_BUTTON_GPIO=28`)   |
 | D4       | GPIO23   | BME680 **SDA**                                                                  |
 | D5       | GPIO24   | BME680 **SCL**                                                                  |
 | D8       | GPIO8    | ST7789 **SCK**                                                                  |
@@ -699,8 +708,8 @@ Display (soldered module):
 - Orientation and connector style are designer choice.
 
 Encoder + reset:
-- Through-hole EC11: A→D0/GPIO1, B→D1/GPIO0, push→D2/GPIO25 to GND (firmware pull-up). Debounce caps optional.
-- Separate factory-reset tact: BOOT/GPIO28 to GND (long press ≥ 5 s). Do not combine with encoder push.
+- Through-hole EC11: A→D0/GPIO1, B→D1/GPIO0, push→D2/GPIO25 to GND + **10 kΩ pull-up to 3V3 at GPIO25**. Debounce caps optional.
+- Separate factory-reset tact: BOOT/GPIO28 to GND + **10 kΩ pull-up to 3V3 at BOOT** (long press ≥ 5 s). Do not combine with encoder push.
 
 Reserved / DNP for v2:
 - Leave silkscreen / pads note for future 1S JST + 100 k / 100 k divider into GPIO6 (ADC_BAT). Do not populate on v1.
@@ -724,6 +733,8 @@ GPIO lock (do not reassign):
 | U1          | 1   | [Seeed XIAO ESP32-C5](https://wiki.seeedstudio.com/xiao_esp32c5_getting_started/) | Matter MCU                         |
 | U2          | 1   | BME680 (bare)                                                                     | I2C; addr 0x76 typical             |
 | R_I2C       | 2   | 4.7 kΩ, 0603                                                                      | SDA / SCL pull-up to 3V3           |
+| R_PU_ENC    | 1   | **10 kΩ**, 0603                                                                   | Encoder push pull-up (GPIO25)      |
+| R_PU_RST    | 1   | **10 kΩ**, 0603                                                                   | Factory-reset pull-up (GPIO28)     |
 | C_BME       | 1–2 | 100 nF, 0603                                                                      | Local BME680 decoupling            |
 | DISP1       | 1   | ST7789 1.3" 240×240 SPI module                                                    | No touch; CS→GND                   |
 | R_BL / Q_BL | 1   | BL series R + NPN/FET                                                             | Drive from GPIO12                  |
@@ -778,12 +789,12 @@ Matter temp/humidity/pressure, `bme680_task` (I2C GPIO23/24), OTA via `cosmos_ma
 
 | XIAO pin  | ESP GPIO | Firmware                         | Function / wiring                                                               |
 | --------- | -------- | -------------------------------- | ------------------------------------------------------------------------------- |
-| D0        | GPIO1    | `DOORBELL_PIN`                   | Tact to **3.3 V** (SW pull-down); press = HIGH                                  |
-| D1        | GPIO2    | `PIR_PIN`                        | AM312 **OUT** (active HIGH); module VCC=3.3 V, GND                              |
-| D2        | GPIO3    | `TAMPER_PIN`                     | SW pull-up; **LOW when seated** (path to GND via leaf spring + back pads/pogos) |
+| D0        | GPIO1    | `DOORBELL_PIN`                   | Tact to **3.3 V** + **10 kΩ to GND**; press = HIGH                              |
+| D1        | GPIO2    | `PIR_PIN`                        | AM312 **OUT** + **10 kΩ to GND**; VCC=3.3 V, GND                                |
+| D2        | GPIO3    | `TAMPER_PIN`                     | Path to **GND when seated** + **10 kΩ to 3V3**; open = HIGH                     |
 | D3        | GPIO4    | `ALARM_LED_PIN`                  | NPN → red LED + piezo (active HIGH blink)                                       |
 | D4        | GPIO5    | `CONFIG_COSMOS_BATTERY_ADC_GPIO` | Mid-tap of 100 k / 100 k divider (`cosmos_battery` enabled)                     |
-| BOOT      | GPIO0    | `FACTORY_RESET_BUTTON_PIN`       | Tact to **GND**; long ≥ 5 s (not the doorbell)                                  |
+| BOOT      | GPIO0    | `FACTORY_RESET_BUTTON_PIN`       | Tact to **GND** + **10 kΩ to 3V3**; long ≥ 5 s (not the doorbell)               |
 | —         | GPIO21   | `LED_PIN`                        | On-module user LED — stream status (no carrier LED required)                    |
 | Sense DVP | (fixed)  | `cam_task.h`                     | Camera — do not steal these GPIOs                                               |
 
@@ -792,7 +803,7 @@ Matter temp/humidity/pressure, `bme680_task` (I2C GPIO23/24), OTA via `cosmos_ma
 
 ### Tamper electromechanical detail
 
-GPIO: internal pull-up on D2; **LOW = seated (NC to GND)**, **HIGH = open/tampered**. Matter Boolean State uses contact-sensor convention (**true = closed/seated**); HA inverts so tamper is **off when grounded**, **on when open**.
+GPIO: **external 10 kΩ pull-up to 3V3** on D2 (firmware internal pull-up secondary only); **LOW = seated (NC to GND)**, **HIGH = open/tampered**. Matter Boolean State uses contact-sensor convention (**true = closed/seated**); HA inverts so tamper is **off when grounded**, **on when open**.
 
 ```text
 Seated (OK):   TAMPER_PIN ── leaf spring ── chassis GND
@@ -801,7 +812,7 @@ Seated (OK):   TAMPER_PIN ── leaf spring ── chassis GND
                   recommended: leaf spring is the chassis NC; pogo pads are a second NC in series
                   so opening the case OR lifting the board trips tamper)
 
-Open (alarm):  path broken → internal pull-up → HIGH → latched panic_alarm + Matter contact open
+Open (alarm):  path broken → external pull-up → HIGH → latched panic_alarm + Matter contact open
 ```
 
 Firmware **does not** clear the siren on remount — HA turns Off the Matter siren OnOff.
@@ -829,15 +840,15 @@ Power (USB-C + pouch):
 - Camera + Wi-Fi are power-hungry — size traces and charger for ≥ 1 A peaks.
 - Conformal-coating friendly: no flux traps; prefer taller connectors only where needed.
 
-Front / user I/O:
-- Large doorbell tact (or off-board tact on short wires to pads): between 3.3 V and XIAO D0 (GPIO1). Firmware pull-down.
-- AM312 (or equivalent 3.3 V mini PIR) with OUT to XIAO D1 (GPIO2), VCC=3.3 V, GND. Place PIR behind a Fresnel window at the top of the faceplate; keep LED/siren optical isolation from PIR.
-- Factory-reset tact to XIAO BOOT (GPIO0) to GND, recessed, separate from doorbell.
+Front / user I/O (external pulls mandatory — do not rely on MCU internals alone):
+- Large doorbell tact: between 3.3 V and XIAO D0 (GPIO1). **10 kΩ pull-down to GND at D0.**
+- AM312 (or equivalent 3.3 V mini PIR) OUT to XIAO D1 (GPIO2) + **10 kΩ pull-down to GND at D1**; VCC=3.3 V, GND. Place PIR behind a Fresnel window; keep LED/siren optical isolation from PIR.
+- Factory-reset tact to XIAO BOOT (GPIO0) to GND + **10 kΩ pull-up to 3V3 at BOOT**, recessed, separate from doorbell.
 
 Tamper (anti-theft / case open):
 - Leaf spring or spring finger that contacts chassis / backplate GND when the unit is screwed to the wall.
 - On the PCB BACK: two exposed gold pads (or pogo landing pads), spaced for pogo pins in the enclosure. When the housing is closed and mounted, pogos short those pads into the tamper-to-GND path.
-- Net TAMPER to XIAO D2 (GPIO3). Firmware internal pull-up: seated = LOW, open = HIGH.
+- Net TAMPER to XIAO D2 (GPIO3) + **10 kΩ pull-up to 3V3 at D2**: seated = LOW, open = HIGH.
 
 Siren (panic alarm):
 - XIAO D3 (GPIO4) → 1 kΩ → NPN base (S8050) → drive in parallel: (a) red LED + 330 Ω; (b) **3–5 V active piezo** (prefer not “5 V only”) with collector feed from **3V3 or BAT+**, flyback diode as needed. GPIO high = siren/LED on (firmware blinks).
@@ -865,6 +876,10 @@ GPIO lock (do not reassign):
 | U1         | 1   | [Seeed XIAO ESP32-S3 Sense](https://www.seeedstudio.com/XIAO-ESP32S3-Sense-p-5639.html) | Camera + Wi‑Fi MCU             |
 | SW1        | 1   | Doorbell tact (large / weatherized)                                                     | To 3.3 V / GPIO1               |
 | SW2        | 1   | Tact switch, recessed                                                                   | Factory reset GPIO0            |
+| R_PD1      | 1   | **10 kΩ**, 0603                                                                         | Pull-down doorbell (GPIO1)     |
+| R_PD2      | 1   | **10 kΩ**, 0603                                                                         | Pull-down PIR OUT (GPIO2)      |
+| R_PU1      | 1   | **10 kΩ**, 0603                                                                         | Pull-up tamper (GPIO3)         |
+| R_PU2      | 1   | **10 kΩ**, 0603                                                                         | Pull-up factory reset (GPIO0)  |
 | U2         | 1   | AM312 (or 3.3 V mini PIR)                                                               | OUT → GPIO2                    |
 | SW3        | 1   | Leaf spring / chassis contact                                                           | Tamper to GND when seated      |
 | PAD1, PAD2 | 2   | Gold / pogo landing pads (back)                                                         | Case pogo short when closed    |

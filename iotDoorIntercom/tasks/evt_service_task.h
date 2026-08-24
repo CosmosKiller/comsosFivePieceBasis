@@ -53,11 +53,19 @@ typedef struct {
 esp_err_t evt_service_init(void);
 
 /**
- * @brief Post event to service
+ * @brief Post event to service (task context only)
  * @param evt Event pointer
  * @return esp_err_t
  */
 esp_err_t evt_service_post(evt_service_event_t *evt);
+
+/**
+ * @brief Post event from GPIO/timer ISR (no logging, no blocking)
+ * @param evt Event pointer
+ * @param woken Set pdTRUE if a higher-priority task was woken; pass to portYIELD_FROM_ISR
+ * @return esp_err_t
+ */
+esp_err_t evt_service_post_from_isr(evt_service_event_t *evt, BaseType_t *woken);
 
 #ifdef __cplusplus
 }
