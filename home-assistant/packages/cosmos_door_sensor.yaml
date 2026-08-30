@@ -1,12 +1,16 @@
-# Cosmos iotDoorSensor — battery alerts (Matter Power Source)
+# Cosmos iotDoorSensor — battery alerts + Matter entity map (Matter Power Source)
 #
 # Loaded as package "cosmos_door_sensor" via !include_dir_named packages
 # (filename = package name — do not add an extra top-level wrapper key).
 #
-# After commissioning:
-#   - Replace sensor.cosmos_contact_battery with your battery entity id (Developer tools → States)
-#   - Replace notify.mobile_app_my_phone with your phone service (Developer tools → Services,
-#     filter "mobile_app", e.g. notify.mobile_app_pixel_8).
+# Matter endpoints (after commissioning — Developer tools → States):
+#   - binary_sensor.* (contact) — reed open/closed
+#   - switch.* (arm) — OnOff ON = arm exit-delay; OFF = disarm only
+#   - binary_sensor.* (panic) — read-only intrusion indicator (clears when reed closes)
+#   - switch.* (siren) — OnOff ON = buzzer; OFF = silence (HA / Alexa / any automation)
+#   - sensor.* — battery %
+#
+# Replace TODO entity ids and notify service after commissioning.
 # HA commissioning / fleet OTA: https://github.com/CosmosKiller/cosmos-ha-field
 
 input_boolean:

@@ -25,8 +25,9 @@ extern "C" {
  */
 typedef enum {
     EVT_SOURCE_SENSOR, /*!< Reed switch / binary input */
-    EVT_SOURCE_ALARM,  /*!< Alarm endpoint activity */
-    EVT_SOURCE_PANIC,  /*!< Panic alarm sequence */
+    EVT_SOURCE_ARM,    /*!< Arm/disarm OnOff — arming sequence only */
+    EVT_SOURCE_SIREN,  /*!< Siren OnOff — remote buzzer on/off (HA, Alexa, etc.) */
+    EVT_SOURCE_PANIC,  /*!< Intrusion confirmed (reed open while armed) */
     EVT_SOURCE_MAX,    /*!< Sentinel (not a valid source) */
 } evt_source_t;
 

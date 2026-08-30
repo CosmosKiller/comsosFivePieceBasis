@@ -15,6 +15,8 @@ using namespace esp_matter;
 
 static const char *TAG = "binary_sensor_task";
 extern uint16_t alarm_led_endpoint_id;
+extern uint16_t siren_endpoint_id;
+extern uint16_t panic_indicator_endpoint_id;
 
 typedef struct {
     binary_sensor_config_t *config;
@@ -26,7 +28,7 @@ typedef struct {
 
 static binary_sensor_ctx_t s_ctx;
 bool is_armed = false;
-bool is_panic = false;
+bool is_panic = false; /*!< Panic indicator active (clears when reed closes). */
 
 typedef struct {
     bool level;
@@ -41,17 +43,19 @@ static void binary_sensor_handle_level(bool level)
     s_ctx.config->cb(s_ctx.config->endpoint_id, level, s_ctx.config->user_data);
 
     evt_service_event_t evt;
-    if (is_panic) {
-        evt = {
-            .source = EVT_SOURCE_PANIC,
-            .type = EVT_TYPE_SUSTAINED,
-            .value = 1,
-        };
-    } else if (!level && is_armed) {
+    if (!level && is_armed) {
+        is_panic = true;
         evt = {
             .source = EVT_SOURCE_PANIC,
             .type = EVT_TYPE_TRIGGERED,
             .value = 1,
+        };
+    } else if (level && is_panic) {
+        is_panic = false;
+        evt = {
+            .source = EVT_SOURCE_PANIC,
+            .type = EVT_TYPE_CLEARED,
+            .value = 0,
         };
     } else {
         evt = {
@@ -103,18 +107,30 @@ esp_err_t binary_sensor_attribute_update(binary_sensor_task_handle_t driver_hand
     (void)driver_handle;
     esp_err_t err = ESP_OK;
 
+    if (endpoint_id == panic_indicator_endpoint_id) {
+        ESP_LOGW(TAG, "Panic indicator is read-only (ep %d)", endpoint_id);
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+
     if (endpoint_id == alarm_led_endpoint_id) {
-        if (cluster_id == OnOff::Id) {
-            if (attribute_id == OnOff::Attributes::OnOff::Id) {
-                evt_service_event_t evt = {
-                    .source = EVT_SOURCE_ALARM,
-                    .type = (val->val.b) ? EVT_TYPE_TRIGGERED : EVT_TYPE_CLEARED,
-                    .value = val->val.i,
-                };
-                evt_service_post(&evt);
-            }
+        if (cluster_id == OnOff::Id && attribute_id == OnOff::Attributes::OnOff::Id) {
+            evt_service_event_t evt = {
+                .source = EVT_SOURCE_ARM,
+                .type = (val->val.b) ? EVT_TYPE_TRIGGERED : EVT_TYPE_CLEARED,
+                .value = val->val.i,
+            };
+            evt_service_post(&evt);
         }
-    } else {
+    } else if (endpoint_id == siren_endpoint_id) {
+        if (cluster_id == OnOff::Id && attribute_id == OnOff::Attributes::OnOff::Id) {
+            evt_service_event_t evt = {
+                .source = EVT_SOURCE_SIREN,
+                .type = (val->val.b) ? EVT_TYPE_TRIGGERED : EVT_TYPE_CLEARED,
+                .value = val->val.i,
+            };
+            evt_service_post(&evt);
+        }
+    } else if (endpoint_id != 0) {
         ESP_LOGW(TAG, "Received attribute update for unknown endpoint: %d", endpoint_id);
     }
 

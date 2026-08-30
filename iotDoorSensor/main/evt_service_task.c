@@ -3,6 +3,7 @@
 #include <freertos/queue.h>
 #include <string.h>
 
+#include <door_sensor_matter_notify.h>
 #include <evt_service_task.h>
 #include <panic_alarm_task.h>
 
@@ -12,14 +13,6 @@ static const char *TAG = "evt_service";
 
 static DRAM_ATTR QueueHandle_t evt_queue = NULL;
 
-/**
- * @brief Handle all events centrally
- *
- * This task will receive events from various sources (sensor, alarm, panic) and handle them accordingly.
- * For example, it can control LEDs, buzzers, or trigger other actions based on the event type and source.
- *
- * @param pArg
- */
 static void evt_service_task_handler(void *pArg)
 {
     evt_service_event_t evt;
@@ -29,7 +22,6 @@ static void evt_service_task_handler(void *pArg)
         if (xQueueReceive(evt_queue, &evt, portMAX_DELAY)) {
             ESP_LOGD(TAG, "Event: source=%d, type=%d, value=%d", evt.source, evt.type, evt.value);
 
-            // Handle based on source and type
             switch (evt.source) {
             case EVT_SOURCE_SENSOR:
                 if (evt.type == EVT_TYPE_TRIGGERED) {
@@ -54,31 +46,37 @@ static void evt_service_task_handler(void *pArg)
                 }
                 break;
 
-            case EVT_SOURCE_ALARM:
+            case EVT_SOURCE_ARM:
                 if (evt.type == EVT_TYPE_TRIGGERED) {
-                    ESP_LOGW(TAG, "Alarm is being armed.");
-                    panic_alarm_task_deinit();    // Ensure any existing alarm is stopped before arming
-                    panic_alarm_task_init(false); // Run arming sequence
+                    ESP_LOGW(TAG, "Arming sequence started.");
+                    panic_alarm_task_start_arming();
                 } else if (evt.type == EVT_TYPE_CLEARED) {
-                    ESP_LOGW(TAG, "Alarm disarmed.");
-                    panic_alarm_task_deinit(); // Reset panic state when alarm is disarmed
-                    for (int i = 0; i < 4; i++) {
-                        gpio_set_level(CONFIRM_LED_PIN, 1);
-                        vTaskDelay(pdMS_TO_TICKS(250));
-                        gpio_set_level(CONFIRM_LED_PIN, 0);
-                        vTaskDelay(pdMS_TO_TICKS(250));
-                    }
+                    ESP_LOGW(TAG, "Disarmed (siren and panic indicator unchanged).");
+                    panic_alarm_task_disarm();
+                }
+                break;
+
+            case EVT_SOURCE_SIREN:
+                if (evt.type == EVT_TYPE_TRIGGERED) {
+                    ESP_LOGW(TAG, "Siren On — buzzer start (remote or latched).");
+                    panic_alarm_task_start_siren();
+                } else if (evt.type == EVT_TYPE_CLEARED) {
+                    ESP_LOGI(TAG, "Siren Off — buzzer stopped.");
+                    panic_alarm_task_stop_siren();
                 }
                 break;
 
             case EVT_SOURCE_PANIC:
                 if (evt.type == EVT_TYPE_TRIGGERED) {
-                    ESP_LOGE(TAG, "Warning! Alarm secuence started.");
-                    panic_alarm_task_deinit();   // Ensure any existing alarm is stopped before starting a new one
-                    panic_alarm_task_init(true); // Ensure panic alarm task is running
-                }
-                if (evt.type == EVT_TYPE_SUSTAINED) {
-                    ESP_LOGE(TAG, "Alarm is active. Disarm the system to stop the alarm.");
+                    ESP_LOGE(TAG, "Intrusion! Reed open while armed.");
+                    door_sensor_matter_notify_panic(true);
+                    door_sensor_matter_notify_siren(true);
+                    panic_alarm_task_start_siren();
+                } else if (evt.type == EVT_TYPE_CLEARED) {
+                    ESP_LOGW(TAG, "Contact closed — clearing panic indicator (siren stays until Off).");
+                    door_sensor_matter_notify_panic(false);
+                } else if (evt.type == EVT_TYPE_SUSTAINED) {
+                    ESP_LOGE(TAG, "Intrusion still active — siren latched until cleared.");
                 }
                 break;
 
@@ -90,13 +88,8 @@ static void evt_service_task_handler(void *pArg)
     }
 }
 
-/**
- * @brief Initialize event service LEDs
- *
- */
 static void evt_service_led_init(void)
 {
-    // State LED config
     gpio_config_t state_led_conf = {
         .pin_bit_mask = (1ULL << STATE_LED_PIN),
         .mode = GPIO_MODE_OUTPUT,
@@ -114,14 +107,12 @@ esp_err_t evt_service_init(void)
         return ESP_OK;
     }
 
-    // Create event queue
     evt_queue = xQueueCreate(EVT_QUEUE_SIZE, sizeof(evt_service_event_t));
     if (!evt_queue) {
         ESP_LOGE(TAG, "Failed to create event queue");
         return ESP_ERR_NO_MEM;
     }
 
-    // Create event handling task
     BaseType_t ret = xTaskCreatePinnedToCore(
         evt_service_task_handler,
         "evt_service_task_handler",
@@ -137,7 +128,6 @@ esp_err_t evt_service_init(void)
         return ESP_ERR_NO_MEM;
     }
 
-    // Initialize GPIO for LEDs
     evt_service_led_init();
 
     ESP_LOGI(TAG, "Event service initialized");
@@ -172,7 +162,7 @@ esp_err_t evt_service_post_from_isr(evt_service_event_t *evt, BaseType_t *woken)
         return ESP_ERR_INVALID_STATE;
     }
 
-    evt->timestamp = esp_log_timestamp();
+    evt->timestamp = (uint32_t)(xTaskGetTickCountFromISR() * portTICK_PERIOD_MS);
 
     if (xQueueSendFromISR(evt_queue, evt, woken) != pdPASS) {
         return ESP_ERR_NO_MEM;

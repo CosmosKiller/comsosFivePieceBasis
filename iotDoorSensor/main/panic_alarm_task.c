@@ -5,20 +5,15 @@
 #include <panic_alarm_task.h>
 
 static const char *TAG = "panic_alarm";
-static bool is_initialized = false;
-static bool gpio_ready = false;
+
+static bool s_gpio_ready = false;
+static TaskHandle_t s_arm_task = NULL;
+static TaskHandle_t s_siren_task = NULL;
 
 extern bool is_armed;
-extern bool is_panic;
 
-TaskHandle_t panic_handle = NULL;
-
-/**
- * @brief Initialize panic alarm buzzer GPIO
- */
 static void panic_alarm_gpio_init(void)
 {
-    // Alarm LED config
     gpio_config_t alarm_led_conf = {
         .pin_bit_mask = (1ULL << ALARM_LED_PIN),
         .mode = GPIO_MODE_OUTPUT,
@@ -28,7 +23,6 @@ static void panic_alarm_gpio_init(void)
     gpio_config(&alarm_led_conf);
     gpio_set_level(ALARM_LED_PIN, 0);
 
-    // Confirm LED config
     gpio_config_t confirm_led_conf = {
         .pin_bit_mask = (1ULL << CONFIRM_LED_PIN),
         .mode = GPIO_MODE_OUTPUT,
@@ -38,11 +32,12 @@ static void panic_alarm_gpio_init(void)
     gpio_config(&confirm_led_conf);
     gpio_set_level(CONFIRM_LED_PIN, 0);
 
-    gpio_ready = true;
+    s_gpio_ready = true;
 }
 
 static void panic_alarm_task_arming(void *pParameters)
 {
+    (void)pParameters;
     ESP_LOGW(TAG, "Arming alarm! one minute to exit the premises.");
 
     for (int i = 0; i < 58; i++) {
@@ -59,100 +54,109 @@ static void panic_alarm_task_arming(void *pParameters)
         vTaskDelay(pdMS_TO_TICKS(250));
     }
 
-    ESP_LOGW(TAG, "Alarm armed! Panic alarm will trigger if door/window is opened.s Entering standby mode...");
-    is_armed = true; // Set alarm state to armed after arming sequence
+    ESP_LOGW(TAG, "Alarm armed! Panic will trigger if door/window opens.");
+    is_armed = true;
 
     while (1) {
         gpio_set_level(ALARM_LED_PIN, 1);
         vTaskDelay(pdMS_TO_TICKS(1000));
         gpio_set_level(ALARM_LED_PIN, 0);
-        vTaskDelay(pdMS_TO_TICKS(599000)); // Keep alarm LED off for 10 minutes to save power while armed
+        vTaskDelay(pdMS_TO_TICKS(599000));
     }
 }
 
-/**
- * @brief Call this function after arming the alarm and detecting a trigger to start the panic alarm sequence
- *
- * @param pParameters
- */
-static void panic_alarm_task_active(void *pParameters)
+static void panic_alarm_task_siren_active(void *pParameters)
 {
-    ESP_LOGW(TAG, "Panic alarm warning! Alarm will start buzzing in 5 seconds. Disarm the system to prevent the alarm from triggering.");
+    (void)pParameters;
+    ESP_LOGW(TAG, "Siren warning — full alarm in a few seconds.");
 
     for (int j = 1000; j >= 250; j -= 250) {
         for (int i = 0; i < 5; i++) {
             gpio_set_level(ALARM_LED_PIN, 1);
-            vTaskDelay(pdMS_TO_TICKS(j)); // Ensure buzzer state is updated
+            vTaskDelay(pdMS_TO_TICKS(j));
             gpio_set_level(ALARM_LED_PIN, 0);
             vTaskDelay(pdMS_TO_TICKS(j));
         }
     }
 
-    ESP_LOGE(TAG, "Panic alarm triggered! Buzzing alarm...");
-    is_panic = true; // Set panic state to keep alarm buzzing
+    ESP_LOGE(TAG, "Siren active (latched until Matter siren Off)");
 
     while (1) {
         gpio_set_level(ALARM_LED_PIN, 1);
-        vTaskDelay(pdMS_TO_TICKS(250)); // Ensure buzzer state is updated
+        vTaskDelay(pdMS_TO_TICKS(250));
         gpio_set_level(ALARM_LED_PIN, 0);
         vTaskDelay(pdMS_TO_TICKS(250));
     }
 }
 
-esp_err_t panic_alarm_task_init(bool alarm_armed)
+esp_err_t panic_alarm_task_start_arming(void)
 {
-    if (is_initialized && panic_handle != NULL) {
-        ESP_LOGW(TAG, "Panic alarm task already initialized");
+    if (s_arm_task != NULL) {
         return ESP_OK;
     }
 
-    // Initialize GPIO for buzzer if not already done
-    if (!gpio_ready) {
+    if (!s_gpio_ready) {
         panic_alarm_gpio_init();
     }
 
-    if (!alarm_armed) {
-        BaseType_t ret = xTaskCreate(
-            panic_alarm_task_arming,
-            "panic_alarm_task_arming",
-            PANIC_ALARM_STACK_SIZE,
-            NULL,
-            PANIC_ALARM_TASK_PRIORITY,
-            &panic_handle);
-        if (ret != pdPASS) {
-            ESP_LOGE(TAG, "Failed to arm panic alarm");
-        }
-    } else {
-        BaseType_t ret = xTaskCreate(
-            panic_alarm_task_active,
-            "panic_alarm_task_active",
-            PANIC_ALARM_STACK_SIZE,
-            NULL,
-            PANIC_ALARM_TASK_PRIORITY,
-            &panic_handle);
-        if (ret != pdPASS) {
-            ESP_LOGE(TAG, "Failed to activate panic alarm");
-            return ESP_ERR_NO_MEM;
-        }
+    BaseType_t ret = xTaskCreate(panic_alarm_task_arming, "panic_alarm_arming", PANIC_ALARM_STACK_SIZE, NULL,
+                                 PANIC_ALARM_TASK_PRIORITY, &s_arm_task);
+    if (ret != pdPASS) {
+        ESP_LOGE(TAG, "Failed to start arming task");
+        s_arm_task = NULL;
+        return ESP_ERR_NO_MEM;
     }
 
-    is_initialized = true;
     return ESP_OK;
 }
 
-esp_err_t panic_alarm_task_deinit(void)
+esp_err_t panic_alarm_task_disarm(void)
 {
-    if (!is_initialized || panic_handle == NULL) {
-        ESP_LOGW(TAG, "Panic alarm task not initialized");
-        return ESP_ERR_INVALID_STATE;
+    if (s_arm_task != NULL) {
+        vTaskDelete(s_arm_task);
+        s_arm_task = NULL;
     }
 
-    vTaskDelete(panic_handle); // Delete the current task (panic alarm task)
-
-    gpio_set_level(ALARM_LED_PIN, 0); // Ensure buzzer is turned off
-
-    is_initialized = false;
-    is_panic = false; // Reset panic state when deinitializing
-    is_armed = false; // Reset armed state when deinitializing
+    is_armed = false;
+    gpio_set_level(CONFIRM_LED_PIN, 0);
+    ESP_LOGI(TAG, "Disarmed (siren unchanged if active)");
     return ESP_OK;
+}
+
+esp_err_t panic_alarm_task_start_siren(void)
+{
+    if (s_siren_task != NULL) {
+        return ESP_OK;
+    }
+
+    if (!s_gpio_ready) {
+        panic_alarm_gpio_init();
+    }
+
+    BaseType_t ret = xTaskCreate(panic_alarm_task_siren_active, "panic_alarm_siren", PANIC_ALARM_STACK_SIZE, NULL,
+                                 PANIC_ALARM_TASK_PRIORITY, &s_siren_task);
+    if (ret != pdPASS) {
+        ESP_LOGE(TAG, "Failed to start siren task");
+        s_siren_task = NULL;
+        return ESP_ERR_NO_MEM;
+    }
+
+    return ESP_OK;
+}
+
+esp_err_t panic_alarm_task_stop_siren(void)
+{
+    if (s_siren_task != NULL) {
+        vTaskDelete(s_siren_task);
+        s_siren_task = NULL;
+    }
+
+    gpio_set_level(ALARM_LED_PIN, 0);
+    ESP_LOGI(TAG, "Siren stopped");
+    return ESP_OK;
+}
+
+bool panic_alarm_task_siren_is_active(void)
+{
+    return s_siren_task != NULL;
 }

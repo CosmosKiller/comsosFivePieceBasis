@@ -1,6 +1,6 @@
 /**
  * @file panic_alarm_task.h
- * @brief Panic alarm buzzer/LED sequence after arming and trigger.
+ * @brief Arming sequence and siren/buzzer output (independent tasks).
  */
 
 #ifndef PANIC_ALARM_TASK_H_
@@ -8,27 +8,27 @@
 
 #include <driver/gpio.h>
 #include <esp_err.h>
+#include <stdbool.h>
 
 #define CONFIRM_LED_PIN GPIO_NUM_22 /*!< LED shown during arming confirm */
-#define ALARM_LED_PIN   GPIO_NUM_23 /*!< LED driven during panic alarm */
+#define ALARM_LED_PIN   GPIO_NUM_23 /*!< Buzzer / alarm output */
 
 #define PANIC_ALARM_STACK_SIZE    3072 /*!< FreeRTOS stack size */
 #define PANIC_ALARM_TASK_PRIORITY 4    /*!< Task priority */
 #define PANIC_ALARM_TASK_CORE_ID  0    /*!< CPU core */
 
-/**
- * @brief Start the panic-alarm task and GPIO outputs.
- *
- * @param alarm_armed If true, enter alarm immediately; if false, run arming sequence first.
- * @return ESP_OK on success, or an error code.
- */
-esp_err_t panic_alarm_task_init(bool alarm_armed);
+/** Run exit-delay arming sequence, then armed standby heartbeat. */
+esp_err_t panic_alarm_task_start_arming(void);
 
-/**
- * @brief Stop the panic-alarm task and release resources.
- *
- * @return ESP_OK on success, or ESP_ERR_INVALID_STATE if not running.
- */
-esp_err_t panic_alarm_task_deinit(void);
+/** Cancel arming/standby; clears armed state only (siren may still run). */
+esp_err_t panic_alarm_task_disarm(void);
+
+/** Start siren countdown then latched buzzer (intrusion or remote OnOff). */
+esp_err_t panic_alarm_task_start_siren(void);
+
+/** Stop buzzer only; does not change armed or panic-indicator state. */
+esp_err_t panic_alarm_task_stop_siren(void);
+
+bool panic_alarm_task_siren_is_active(void);
 
 #endif /* PANIC_ALARM_TASK_H_ */

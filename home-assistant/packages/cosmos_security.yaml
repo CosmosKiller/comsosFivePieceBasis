@@ -1,0 +1,81 @@
+# Cosmos — home security scripts + cross-device alarm orchestration
+#
+# Loaded as package "cosmos_security" via !include_dir_named packages
+# (filename = package name — do not add an extra top-level wrapper key).
+#
+# Use for any intrusion-class event: door/window forced open, intercom mount
+# tamper, or other binary_sensor that means "someone is breaking in".
+#
+# Prerequisites
+#   - light.security_system_lights — light group (UI or YAML); strobes during alarm.
+#   - switch.security_system_sirens — defined below; add every Matter/MQTT siren
+#     switch after commissioning (intercom, each door sensor, future SKUs).
+#   - Replace TODO entity ids in the group + triggers after commissioning.
+#   - Clear intrusion: turn Off switch.security_system_sirens (arm Off only disarms).
+
+switch:
+  - platform: group
+    name: Security System Sirens
+    icon: mdi:alarm-bell
+    entities:
+      - switch.cosmos_door_intercom_siren # TODO: iotDoorIntercom Matter siren
+      - switch.cosmos_door_sensor_siren # TODO: iotDoorSensor Matter siren (one per unit)
+      # - switch.cosmos_door_sensor_2_siren  # duplicate line per additional sensor
+
+script:
+  security_lights_toggle:
+    alias: Security Lights Toggle
+    description: >-
+      Single red alert pulse on the security light group: full-brightness red
+      for 250 ms, then off, with a 250 ms trailing gap. Invoke from automations
+      when something needs attention; call in a repeat loop for a strobe.
+    sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.security_system_lights
+        data:
+          rgb_color: [255, 0, 0]
+          brightness_pct: 100
+      - delay:
+          milliseconds: 250
+      - action: light.turn_off
+        target:
+          entity_id: light.security_system_lights
+      - delay:
+          milliseconds: 250
+
+automation:
+  - id: cosmos_security_module_task
+    alias: Security module task
+    description: >-
+      Intrusion response for any Cosmos security trip: door/window contact forced
+      open, intercom mount tamper, or door-sensor panic indicator. Strobes
+      security lights and turns on switch.security_system_sirens until that group
+      is Off (works across rooms and non-Cosmos switches in the group).
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id:
+          # Door / window reed (iotDoorSensor) — forced open = on
+          - binary_sensor.cosmos_door_sensor_contact # TODO
+          # Door sensor panic indicator (read-only) — on = intrusion confirmed
+          - binary_sensor.cosmos_door_sensor_panic # TODO
+          # Intercom mount tamper (iotDoorIntercom Boolean State) — open = on
+          - binary_sensor.cosmos_door_intercom_tamper # TODO
+        from: "off"
+        to: "on"
+    actions:
+      - repeat:
+          until:
+            - condition: state
+              entity_id: switch.security_system_sirens
+              state: "off"
+          sequence:
+            - parallel:
+                - action: script.security_lights_toggle
+                - action: switch.turn_on
+                  target:
+                    entity_id: switch.security_system_sirens
+      - action: switch.turn_off
+        target:
+          entity_id: switch.security_system_sirens
