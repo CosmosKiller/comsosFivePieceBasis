@@ -67,6 +67,11 @@ static void binary_sensor_handle_level(bool level)
     evt_service_post(&evt);
 }
 
+void binary_sensor_clear_intrusion_state(void)
+{
+    is_panic = false;
+}
+
 static void binary_sensor_worker(void *arg)
 {
     (void)arg;

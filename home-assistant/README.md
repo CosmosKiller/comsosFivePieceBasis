@@ -73,7 +73,7 @@ After commissioning, rename the Matter device to **Cosmos Door Sensor** (optiona
 | Role | Typical domain | Default Matter name | Notes |
 |------|----------------|---------------------|-------|
 | Contact (Boolean State) | `binary_sensor.*` | Door contact | Reed open = on |
-| Arm/disarm (OnOff) | `switch.*` | Arm / disarm | ON = arm; **OFF = disarm only** |
+| Arm/disarm (OnOff) | `switch.*` | Arm / disarm | ON = arm; **OFF = disarm + clear panic/siren + silence** |
 | Panic indicator (Boolean State) | `binary_sensor.*` | Panic alarm | Read-only; ON = intrusion; off when reed closes |
 | Siren (mounted OnOff) | `switch.*` | Siren | ON = buzzer (HA group, Alexa, any automation); **Off = silence** |
 | Battery (Power Source) | `sensor.*` | (varies) | Low-battery notify in package |

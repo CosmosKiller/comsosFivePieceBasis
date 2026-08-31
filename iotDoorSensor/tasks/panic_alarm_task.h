@@ -20,7 +20,7 @@
 /** Run exit-delay arming sequence, then armed standby heartbeat. */
 esp_err_t panic_alarm_task_start_arming(void);
 
-/** Cancel arming/standby; clears armed state only (siren may still run). */
+/** Cancel arming/standby, stop siren, confirm blink, clear armed state. */
 esp_err_t panic_alarm_task_disarm(void);
 
 /** Start siren countdown then latched buzzer (intrusion or remote OnOff). */

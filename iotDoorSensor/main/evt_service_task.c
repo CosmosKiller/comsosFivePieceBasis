@@ -51,7 +51,10 @@ static void evt_service_task_handler(void *pArg)
                     ESP_LOGW(TAG, "Arming sequence started.");
                     panic_alarm_task_start_arming();
                 } else if (evt.type == EVT_TYPE_CLEARED) {
-                    ESP_LOGW(TAG, "Disarmed (siren and panic indicator unchanged).");
+                    ESP_LOGW(TAG, "Alarm disarmed — clear panic/siren and stop outputs.");
+                    binary_sensor_clear_intrusion_state();
+                    door_sensor_matter_notify_panic(false);
+                    door_sensor_matter_notify_siren(false);
                     panic_alarm_task_disarm();
                 }
                 break;

@@ -11,7 +11,7 @@
 #   - switch.security_system_sirens — defined below; add every Matter/MQTT siren
 #     switch after commissioning (intercom, each door sensor, future SKUs).
 #   - Replace TODO entity ids in the group + triggers after commissioning.
-#   - Clear intrusion: turn Off switch.security_system_sirens (arm Off only disarms).
+#   - Clear intrusion: turn Off switch.security_system_sirens, or arm Off on each door sensor.
 
 switch:
   - platform: group

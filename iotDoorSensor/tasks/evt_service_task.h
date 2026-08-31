@@ -74,6 +74,9 @@ esp_err_t evt_service_post(evt_service_event_t *evt);
  */
 esp_err_t evt_service_post_from_isr(evt_service_event_t *evt, BaseType_t *woken);
 
+/** Reset local intrusion latch (implemented in binary_sensor_task.cpp). */
+void binary_sensor_clear_intrusion_state(void);
+
 #ifdef __cplusplus
 }
 #endif

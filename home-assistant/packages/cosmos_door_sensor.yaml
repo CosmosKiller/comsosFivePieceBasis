@@ -5,7 +5,7 @@
 #
 # Matter endpoints (after commissioning — Developer tools → States):
 #   - binary_sensor.* (contact) — reed open/closed
-#   - switch.* (arm) — OnOff ON = arm exit-delay; OFF = disarm only
+#   - switch.* (arm) — OnOff ON = arm exit-delay; OFF = disarm + clear panic/siren + confirm blink
 #   - binary_sensor.* (panic) — read-only intrusion indicator (clears when reed closes)
 #   - switch.* (siren) — OnOff ON = buzzer; OFF = silence (HA / Alexa / any automation)
 #   - sensor.* — battery %

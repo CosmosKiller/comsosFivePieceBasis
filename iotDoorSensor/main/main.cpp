@@ -160,11 +160,10 @@ uint16_t panic_indicator_endpoint_id = 0;
 static bool s_matter_started = false;
 
 // Function declarations
-static void binary_sensor_notification(uint16_t endpoint_id, bool triggered, void *user_data);
+static void binary_sensor_notification(uint16_t endpoint_id, bool contact_closed, void *user_data);
 
 extern "C" void app_main()
 {
-
     esp_err_t err = ESP_OK;
 
     // Robust NVS init
@@ -276,6 +275,9 @@ extern "C" void app_main()
     }
     s_matter_started = true;
 
+    /* Boolean State cluster boots as false; HA contact sensors show that as ON until we publish. */
+    door_sensor_matter_notify_panic(false);
+
     door_sensor_matter_apply_semantic_tags(contact_sensor_ep, alarm_ep, panic_indicator_ep, siren_ep);
 
     err = cosmos_matter_ota_configure();
@@ -300,29 +302,30 @@ extern "C" void app_main()
     factory_reset_task();
 }
 
-static void binary_sensor_notification(uint16_t endpoint_id, bool triggered, void *user_data)
+static void binary_sensor_notification(uint16_t endpoint_id, bool contact_closed, void *user_data)
 {
-    // schedule the attribute update so that we can report it from matter thread
-    chip::DeviceLayer::SystemLayer().ScheduleLambda([endpoint_id, triggered]() {
-        ESP_LOGI(TAG, "Contact sensor state changed: endpoint_id=%d, triggered=%d", endpoint_id, triggered);
-
+    (void)user_data;
+    chip::DeviceLayer::SystemLayer().ScheduleLambda([endpoint_id, contact_closed]() {
+        ESP_LOGI(TAG, "Contact ep=%u closed=%d", endpoint_id, contact_closed);
         auto booleanState = BooleanState::FindClusterOnEndpoint(endpoint_id);
         VerifyOrReturn(booleanState != nullptr);
-        booleanState->SetStateValue(triggered);
+        booleanState->SetStateValue(contact_closed);
     });
 }
 
-void door_sensor_matter_notify_panic(bool active)
+void door_sensor_matter_notify_panic(bool panic_active)
 {
     if (!s_matter_started || panic_indicator_endpoint_id == 0) {
         return;
     }
 
-    chip::DeviceLayer::SystemLayer().ScheduleLambda([active]() {
-        ESP_LOGI(TAG, "Panic indicator ep=%u active=%d", panic_indicator_endpoint_id, active);
+    /* Match intercom tamper: StateValue true = inactive/closed (HA off). */
+    const bool contact_closed = !panic_active;
+    chip::DeviceLayer::SystemLayer().ScheduleLambda([contact_closed]() {
+        ESP_LOGI(TAG, "Panic indicator ep=%u active=%d", panic_indicator_endpoint_id, !contact_closed);
         auto booleanState = BooleanState::FindClusterOnEndpoint(panic_indicator_endpoint_id);
         VerifyOrReturn(booleanState != nullptr);
-        booleanState->SetStateValue(!active);
+        booleanState->SetStateValue(contact_closed);
     });
 }
 

@@ -110,6 +110,18 @@ esp_err_t panic_alarm_task_start_arming(void)
     return ESP_OK;
 }
 
+static void panic_alarm_disarm_confirm_task(void *pParameters)
+{
+    (void)pParameters;
+    for (int i = 0; i < 4; i++) {
+        gpio_set_level(CONFIRM_LED_PIN, 1);
+        vTaskDelay(pdMS_TO_TICKS(250));
+        gpio_set_level(CONFIRM_LED_PIN, 0);
+        vTaskDelay(pdMS_TO_TICKS(250));
+    }
+    vTaskDelete(NULL);
+}
+
 esp_err_t panic_alarm_task_disarm(void)
 {
     if (s_arm_task != NULL) {
@@ -117,9 +129,21 @@ esp_err_t panic_alarm_task_disarm(void)
         s_arm_task = NULL;
     }
 
+    if (s_siren_task != NULL) {
+        vTaskDelete(s_siren_task);
+        s_siren_task = NULL;
+    }
+
     is_armed = false;
-    gpio_set_level(CONFIRM_LED_PIN, 0);
-    ESP_LOGI(TAG, "Disarmed (siren unchanged if active)");
+    gpio_set_level(ALARM_LED_PIN, 0);
+
+    BaseType_t ret = xTaskCreate(panic_alarm_disarm_confirm_task, "panic_disarm_confirm", 2048, NULL,
+                                 PANIC_ALARM_TASK_PRIORITY, NULL);
+    if (ret != pdPASS) {
+        ESP_LOGW(TAG, "Disarm confirm task not started");
+    }
+
+    ESP_LOGI(TAG, "Disarmed and siren stopped");
     return ESP_OK;
 }
 

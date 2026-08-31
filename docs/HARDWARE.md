@@ -395,12 +395,12 @@ Layout:
 
 ### Firmware modules
 
-Matter endpoints: contact Boolean State, arm/disarm OnOff, **read-only panic indicator** (second contact_sensor — clears when reed closes), **siren OnOff** (remote buzzer + silence), Power Source battery. **Disarm (arm Off)** cancels arming only; **siren Off** stops buzzer. Endpoints ship **Fixed Label** names (`Door contact`, `Arm / disarm`, `Panic alarm`, `Siren`) and **semantic tags** so commissioners can tell them apart before HA rename.
+Matter endpoints: contact Boolean State, arm/disarm OnOff, **read-only panic indicator** (second contact_sensor — clears when reed closes), **siren OnOff** (remote buzzer + silence), Power Source battery. **Disarm (arm Off)** stops arming/siren, clears panic + siren Matter state, confirm blink; **siren Off** stops buzzer only. Endpoints ship **Fixed Label** names (`Door contact`, `Arm / disarm`, `Panic alarm`, `Siren`) and **semantic tags** so commissioners can tell them apart before HA rename.
 
 | Matter role | HA typical entity | Notes |
 |-------------|-------------------|-------|
 | Contact | `binary_sensor.*` | Reed open = on (PIR analog on intercom) |
-| Arm/disarm | `switch.*` | ON = arm; **OFF = disarm only** |
+| Arm/disarm | `switch.*` | ON = arm; **OFF = disarm + clear panic/siren + silence** |
 | Panic indicator | `binary_sensor.*` | Read-only; ON = intrusion; **OFF when reed closes** (tamper analog) |
 | Siren | `switch.*` | ON = buzzer (any automation); **OFF = silence** |
 | Battery | `sensor.*` | Power Source % |
