@@ -1,9 +1,6 @@
-# I was planning on switching from XIOA ESP32-S3 to this board for SKU. what sounds intersting to me are two things:
+# Hardware — cosmosFivePieceBasis
 
-- LoRA (To use this as a gateway)
-- And the Hardware reference
-
-Per-device GPIO, carrier-board guidance, and ECAD prompts. Update this file when pinouts or the BOM change; keep app `To-Do.MD` notes in sync until retired (see [POLISH_PLAN.md](POLISH_PLAN.md)).
+Per-device GPIO, carrier-board guidance, and ECAD prompts. Update this file when pinouts or the BOM change; keep app `To-Do.MD` notes in sync until retired (see [POLISH_PLAN.md](POLISH_PLAN.md)). Platform choices for SKU **3 / 5** are recorded in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 Firmware is the source of truth for GPIO numbers — carrier boards must match the tables below.
 
@@ -11,7 +8,7 @@ Firmware is the source of truth for GPIO numbers — carrier boards must match t
 
 ## Cosmos carrier design rules
 
-Shared defaults for **low-voltage, sensor-class, 2-layer** carriers across all SKUs (XIAO module + passives + sensor/actuator + battery sense).
+Shared defaults for **low-voltage, sensor-class, 2-layer** carriers. SKU **1 / 2 / 4** use Seeed **XIAO** modules on the carrier. SKU **3 / 5** use a **Waveshare main board** as the product compute; Flux builds an **expansion carrier** only (see [ARCHITECTURE.md](ARCHITECTURE.md)).
 
 ### Electrical
 
@@ -42,9 +39,9 @@ Battery SKUs use a **single-cell (1S) Li-ion** pack (3.0–4.2 V). Do **not** pu
 | ------------------- | --------------------------------- | ------------------------------------------------- | ------------------- |
 | **1** Door sensor   | Fully portable                    | **Charge (+ flash) only**                         | Always runs from 1S |
 | **2** Dual-mode btn | Fully portable                    | **Charge (+ flash) only**                         | Always runs from 1S |
-| **3** Env sensor    | Mains / desk                      | **Only power source**                             | **None** (v1)       |
+| **3** Env sensor    | Desk / portable display           | Waveshare **USB-C** (charge + run)                | **ETA6098** + MX1.25 1S (Waveshare option) |
 | **4** Bedside lamp  | USB primary; portable when needed | Power + charge; normal use plugged                | 1S for cordless use |
-| **5** Door intercom | Fully portable                    | **Charge (+ flash) only**; may run while charging | Always runs from 1S |
+| **5** Door intercom | Fully portable                    | Waveshare / carrier **USB-C** charge (+ run OK)   | Always runs from 1S |
 
 
 
@@ -52,15 +49,15 @@ Battery SKUs use a **single-cell (1S) Li-ion** pack (3.0–4.2 V). Do **not** pu
 #### USB-C port strategy (locked)
 
 
-| SKU       | Product USB-C                       | Which connector             | Module USB-C                                                                 |
-| --------- | ----------------------------------- | --------------------------- | ---------------------------------------------------------------------------- |
-| **1 / 2** | Yes — charge + flash                | **XIAO on-module** only     | **Is** the product port (edge access in enclosure)                           |
-| **3**     | Yes — desk power only (no cell)     | **Carrier receptacle (J1)** | Flash / bring-up only; do **not** dual-feed with J1                          |
-| **4**     | Yes — power + charge + LED 5 V      | **Carrier receptacle (J1)** | Flash / bring-up only; do **not** dual-feed charge with J1                   |
-| **5**     | Yes — charge (+ run while charging) | **Carrier receptacle (J1)** | Open an interactive shell (IDF and ESP-Matter are already exported):``` ``` |
+| SKU       | Product USB-C                       | Which connector             | Module / main-board USB                                                                 |
+| --------- | ----------------------------------- | --------------------------- | --------------------------------------------------------------------------------------- |
+| **1 / 2** | Yes — charge + flash                | **XIAO on-module** only     | **Is** the product port (edge access in enclosure)                                      |
+| **3**     | Yes — charge + run (+ desk OK)      | **Waveshare USB-C**         | Product port on C5-Touch-LCD-2.8; carrier should **not** dual-feed VBUS                 |
+| **4**     | Yes — power + charge + LED 5 V      | **Carrier receptacle (J1)** | Flash / bring-up only; do **not** dual-feed charge with J1                              |
+| **5**     | Yes — charge (+ run while charging) | **P4-WIFI6 USB-C** and/or carrier J1 | Prefer single controlled charge path; no dual-feed into BAT without isolation |
 
 
-**Why carrier USB on 3 / 4 / 5?** Higher current (display / LEDs / camera), awkward module orientation, and a single controlled VBUS → system (and charger on 4/5) path. Product power/charge must go through **J1**, not a second live cable into the module jack.
+**Why carrier USB on 4?** Higher LED current and a single controlled VBUS → system/charge path on the lamp carrier. **SKU 3 / 5** use Waveshare onboard USB-C as the product port; Flux carriers expand I/O and must not dual-feed VBUS/BAT.
 
 #### Hard anti-leakage rules (all SKUs)
 
@@ -101,18 +98,18 @@ USB-C (module edge OK) ──► XIAO onboard charger ──► BAT pads ──�
 - Optional carrier USB-C only if it is **VBUS → same charger input** (not a second path to BAT).
 - ADC divider: ≥100 k / 100 k (or MOSFET-gated) so sense is not a constant drain.
 
-**SKU 3 — desk USB, no battery (display + BME680)**
+**SKU 3 — Waveshare C5-Touch-LCD-2.8 (ETA6098 + optional 1S)**
 
 ```text
-Carrier USB-C (J1) ──► VBUS 5V ──► XIAO `5V` ──► onboard LDO ──► 3V3 ──► MCU
-                              │
-                              ├──► BME680 VDD (3.3 V)
-                              └──► ST7789 VDD (3.3 V) + BL driver from GPIO12
+Waveshare USB-C ──► ETA6098 ──► MX1.25 1S cell
+                         │
+                    board 3V3 rails ──► ESP32-C5, ST7789, SHTC3, mic/spk, headers
+                                              │
+                         Flux carrier (I2C / SH1.0) ──► Sensirion **SGP41** (pressure deferred)
 ```
 
-- **No** charger IC, **no** JST, **no** battery divider on v1 (GPIO6 reserved for v2).
-- Module USB-C = flash / bring-up only — do not dual-feed with J1.
-- Place J1 by hand in Flux; size traces for display backlight peaks.
+- Prefer Waveshare **battery option** (or board + MX1.25 cell). Do **not** add a second charger on the carrier without isolation.
+- Carrier draws 3V3/GND (+ I2C) from main-board headers; no parallel USB-C into the same BAT net.
 
 **SKU 4 — USB primary + portable boost**
 
@@ -142,20 +139,19 @@ USB-C 5V ──► power-path / 1S charger + protect ──► BAT+ / cell
 
 **Why not 2S + buck?** Shared 1S line + firmware; revisit only if soak shows brownouts.
 
-**SKU 5 — portable camera, USB = charge (run-while-charge OK)**
+**SKU 5 — Waveshare ESP32-P4-WIFI6 + outdoor carrier**
 
 ```text
-USB-C ──► 1S charger + protect ──► BAT+ / cell ──► XIAO BAT (Sense 3V3 + camera)
-                                      │
-                                 sense divider (GPIO5)
-                                 piezo/siren from 3V3 or BAT+ via NPN
+P4-WIFI6 USB-C ──► board power / flash
+                         │
+              ESP32-P4 (MIPI-CSI cam, H.264, audio) + ESP32-C6 (Wi-Fi 6 / Matter)
+                         │
+              Flux carrier headers ──► doorbell / PIR / tamper / siren / 1S battery path
 ```
 
-- No 5 V boost required for v1 (camera / MCU on Sense 3.3 V rail).
-- Do **not** hang camera or siren on XIAO `5V` (dead on battery).
-- Prefer power-path charger so USB can run the system while charging without back-feeding the host.
-- Size traces / cell for ≥1 A Wi‑Fi + camera peaks.
-
+- Product compute is the **P4-WIFI6** kit; carrier expands security I/O and battery as needed.
+- Prefer power-path / single charge path for 1S; size for >=1 A Wi-Fi + camera peaks.
+- Do **not** dual-feed USB into BAT without isolation. Camera stays on P4 MIPI-CSI (not S3 DVP).
 
 
 #### XIAO `5V` pin vs USB-C
@@ -180,9 +176,10 @@ The cell stays **electrically attached** whenever it is installed (and charges w
 | ------------------------------------------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **XIAO MCU → 3V3**                         | **On-module** (e.g. C6: SGM40567 charger + diode/FET → LDO)    | USB plugged: VBUS feeds LDO + charges cell. USB unplugged: BAT feeds LDO. Do not also hard-feed XIAO `5V` from a second uncontrolled source.                            |
 | **SKU 4 LED 5 V**                          | **Carrier only** (ideal diode / load-switch OR + **boost EN**) | USB plugged: LEDs from **carrier USB VBUS**; **boost EN = off** → cell does **not** feed LEDs. Battery / lamp Off: boost EN off. XIAO does **not** switch the LED rail. |
-| **SKU 1 / 2 / 5 loads**                    | Run from **3V3 or BAT+** after XIAO / carrier protect          | No 5 V boost. Use module USB (or carrier USB → charger only) for charge; do not hang loads on XIAO `5V`.                                                                |
-| **SKU 3 loads**                            | Carrier **J1 VBUS** → XIAO `5V` / 3V3                          | No battery on v1; display + BME680 from 3V3; module USB flash-only.                                                                                                     |
-| **SKU 4 / 5 with carrier power-path PMIC** | **Carrier SYS** feeds system; XIAO may see only BAT+/SYS       | Prefer this when camera / LED current is high. Avoid stacking a second charger into XIAO BAT while a carrier charger already owns the cell.                             |
+| **SKU 1 / 2 loads**                        | Run from **3V3 or BAT+** after XIAO / protect                  | No 5 V boost. Module USB for charge; do not hang loads on XIAO `5V`.                                                                            |
+| **SKU 3 loads**                            | Waveshare **ETA6098** / USB-C → board 3V3                      | Main board owns power; Flux carrier takes 3V3/GND only (**SGP41**). No second charger.                                                              |
+| **SKU 5 loads**                            | P4-WIFI6 USB-C and/or carrier 1S path                          | Camera on P4; carrier I/O from 3V3/BAT+. Single charge path — no dual-feed.                                                                     |
+| **SKU 4 with carrier power-path PMIC**     | **Carrier SYS** feeds system; XIAO may see only BAT+/SYS       | Prefer when LED current is high. Avoid stacking a second charger into XIAO BAT while a carrier charger already owns the cell.                   |
 
 
 **SKU 4 mental model when USB-C is plugged:** battery is charging (and still connected); **MCU** may be on USB via XIAO or via carrier SYS; **LEDs** must be on **USB VBUS via OR**, not on the boost/cell path.
@@ -263,9 +260,9 @@ Firmware GPIO + Flux prompts in this file are the **source of truth** until Gerb
 | -------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | iotDoorSensor (1)          | **Fab-ready** — DRC clean; BOM + MPNs synced in Flux; Gerber/BOM/CPL exported; order / bring-up next | [cosmos-iotDoorSensor](https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o) |
 | iotDualModeBtn (2)         | Prompt + BOM ready — layout next                                                                     | *Add project URL when shared*                                                    |
-| iotEnvironmentalSensor (3) | Prompt + BOM ready (60×60 mm) — **design changes planned**                                           | *Add project URL when shared*                                                    |
+| iotEnvironmentalSensor (3) | **Platform agreed:** Waveshare C5-Touch-LCD-2.8 + Flux carrier (**SGP41**); see ARCHITECTURE.md           | *Add carrier Flux URL when shared*                                               |
 | iotBedsideLamp (4)         | Prompt + BOM ready (Ø50 mm)                                                                          | *Add project URL when shared*                                                    |
-| iotDoorIntercom (5)        | Prompt + BOM ready (outdoor 60×100) — **design changes planned**                                     | *Add project URL when shared*                                                    |
+| iotDoorIntercom (5)        | **Platform agreed:** Waveshare ESP32-P4-WIFI6 + Matter 1.5 cam + Flux outdoor carrier                | *Add carrier Flux URL when shared*                                               |
 
 
 When a Flux or KiCad project is public (or in a private hardware repo), paste the URL in the table above and optionally add a `hardware/` submodule or sibling repo note here.
@@ -689,311 +686,191 @@ Matter generic switch, `iot_button_task`, `cosmos_battery` (GPIO0), OTA via `cos
 
 ## iotEnvironmentalSensor (SKU 3)
 
-**Board:** [Seeed XIAO ESP32-C5](https://wiki.seeedstudio.com/xiao_esp32c5_getting_started/)  
-**Matter role:** Temperature / humidity / pressure (BME680); local UI later.  
+**Main board:** [Waveshare ESP32-C5-Touch-LCD-2.8](https://docs.waveshare.com/ESP32-C5-Touch-LCD-2.8) (ESP32-C5 + 2.8″ ST7789 + CST3530 touch)  
+**Matter role:** Temperature / humidity (SHTC3); gas via carrier **SGP41** (VOC + NOx); local touch UI.  
 **PID (test):** `0x8003` — see [MANUFACTURING.md](MANUFACTURING.md).  
-**GPIO source of truth:** this file (firmware must match; old bench pins were temporary).
+**Platform:** agreed 2026-09-20 — [ARCHITECTURE.md](ARCHITECTURE.md). Flux builds an **expansion carrier**, not a second MCU board.
 
-> **Note:** Target is **esp32c5** (`sdkconfig.defaults`, CMake); run `idf.py set-target esp32c5` locally to regenerate `sdkconfig`. C5 is still a preview IDF target.
+> **Supersedes** prior XIAO ESP32-C5 + bare BME680 + 1.3″ ST7789 + EC11 carrier plan. Interim `iotEnvironmentalSensor` firmware may still target old pins until the C5-Touch port lands.
 
-
-
-### Product decisions (locked for v1 carrier)
+### Product decisions (locked for v1)
 
 
-| Item                 | Choice                                                                                        |
-| -------------------- | --------------------------------------------------------------------------------------------- |
-| Form                 | **60 × 60 mm** square PCB                                                                     |
-| Environment          | Desk / indoor; enclosure + mounting holes + display orientation — **your choice in Flux**     |
-| Power                | **Carrier USB-C (J1)** only — no battery, no JST, no charger on v1                            |
-| Sensor               | **BME680 bare** on carrier (I2C)                                                              |
-| Display              | **1.3" 240×240 ST7789**, SPI, **no CS** (tie module CS to GND), **no touch**; soldered module |
-| Encoder              | **EC11** through-hole with integrated push                                                    |
-| Factory reset        | **Separate tact** on BOOT (not the encoder push)                                              |
-| RGB / addr LED       | **Not on v1** — optional upgrade later                                                        |
-| Battery              | **v2 only** — reserve **GPIO6** (ADC_BAT); no divider / cell on v1                            |
-| Firmware v1 bring-up | BME680 + Matter + OTA now; encoder / display / reset UI tasks when carrier arrives            |
+| Item | Choice |
+| ---- | ------ |
+| Main electronics | Waveshare **ESP32-C5-Touch-LCD-2.8** (docs + kit) |
+| Display / touch | Onboard **240×320 ST7789** + **CST3530** (SPI/I2C per Waveshare) |
+| Onboard env | **SHTC3** T/H @ I2C `0x70` (SDA GPIO0 / SCL GPIO1 shared bus) |
+| Carrier gas | Sensirion **SGP41** (VOC + NOx) — locked |
+| Pressure | **Deferred** — not on first carrier |
+| Audio | Onboard mic + speaker (Waveshare) |
+| Power | Onboard **ETA6098** + **MX1.25** 1S Li-ion option; Waveshare USB-C = product port |
+| Flux role | Carrier mating to I2C / SH1.0 / free pins: **SGP41**, mounts, optional extras |
+| Encoder | **Dropped** for this platform (touch UI replaces EC11) |
+| Factory reset | Use Waveshare BOOT / long-press policy — map in firmware when porting |
 
+### Onboard interfaces (Waveshare — do not reassign)
 
+Shared I2C (`GPIO0` SDA / `GPIO1` SCL): CH32V003 EXIO `0x24`, QMI8658 `0x6B`, PCF85063 `0x51`, SHTC3 `0x70`, CST3530 `0x58`.
 
+| Function | Notes |
+| -------- | ----- |
+| LCD | ST7789 SPI — SCLK GPIO6, MOSI GPIO7, DC GPIO9, CS GPIO10; RST/BL via CH32 EXIO |
+| Touch | CST3530; INT GPIO5; RST via CH32 EXIO0 |
+| Battery ADC | CH32 **EXIO_ADC** (BAT_ADC) — prefer Waveshare path over a second divider |
+| Expansion | I2C header + **SH1.0 12PIN** — primary Flux carrier attachment |
 
-### GPIO map (must match firmware)
-
-
-| XIAO pin | ESP GPIO | Function / wiring                                                                    |
-| -------- | -------- | ------------------------------------------------------------------------------------ |
-| D0       | GPIO1    | Encoder **A**                                                                        |
-| D1       | GPIO0    | Encoder **B**                                                                        |
-| D2       | GPIO25   | Encoder **push** to GND + **10 kΩ to 3V3**                                           |
-| BOOT     | GPIO28   | Factory-reset tact to GND + **10 kΩ to 3V3** (`CONFIG_FACTORY_RESET_BUTTON_GPIO=28`) |
-| D4       | GPIO23   | BME680 **SDA**                                                                       |
-| D5       | GPIO24   | BME680 **SCL**                                                                       |
-| D8       | GPIO8    | ST7789 **SCK**                                                                       |
-| D9       | GPIO9    | ST7789 **DC**                                                                        |
-| D10      | GPIO10   | ST7789 **MOSI**                                                                      |
-| D6       | GPIO11   | ST7789 **RST**                                                                       |
-| D7       | GPIO12   | ST7789 **BL** (PWM / GPIO → NPN or FET + resistor; active HIGH = on)                 |
-| ADC_BAT  | GPIO6    | **Reserved v2** battery sense — DNP divider on v1                                    |
-| —        | GPIO26   | XIAO **ADC_CRL** (on-module bat-sense enable) — leave for v2; do not load on v1      |
-
-
-**ST7789 CS:** hard-tie module **CS to GND** (no MCU CS pin).  
-**Unused v1:** D3/GPIO7; RGB / WS2812 footprints omitted.
+**Carrier GPIO map:** TBD after header pinout lock with firmware (do not invent production pins yet).
 
 ### Flux.ai project prompt
 
 ```text
-Design a square 2-layer carrier PCB for "Cosmos iotEnvironmentalSensor" — a desk Matter environmental display (BME680 + ST7789 + EC11).
+Design a 2-layer expansion carrier for "Cosmos iotEnvironmentalSensor" that mates to the Waveshare ESP32-C5-Touch-LCD-2.8 (main board). Do NOT place a second MCU or display.
 
-Form factor:
-- Square PCB, 60 × 60 mm. Mounting holes, enclosure, and exact placement of display / encoder / USB are designer choice.
-- Center or offset pocket for Seeed XIAO ESP32-C5 (castellated). Keep on-module / u.FL antenna clearances per Seeed (no copper under antenna region).
+Main board (already chosen — not on this PCB):
+- Waveshare ESP32-C5-Touch-LCD-2.8: ESP32-C5, 2.8" ST7789 + CST3530, SHTC3, mic/speaker, ETA6098 + MX1.25 1S, USB-C.
+- Docs: https://docs.waveshare.com/ESP32-C5-Touch-LCD-2.8
 
-Core module:
-- Seeed XIAO ESP32-C5.
-
-Power (v1 — no battery):
-- Carrier USB-C receptacle (J1) as the only product power input. Place J1 by hand.
-- VBUS 5 V → XIAO `5V` pin (MCU onboard LDO → 3V3). Feed BME680 and ST7789 from regulated 3.3 V (XIAO 3V3 or a small carrier LDO if current budget needs it).
-- No JST, no charger IC, no battery pouch on v1. Do not dual-feed module USB-C and J1 onto VBUS.
-- Module USB-C = flash / bring-up only.
-- Size power traces for ST7789 backlight peaks (~50–100 mA class) + Wi-Fi.
-
-BME680 (bare):
-- Place BME680 with recommended I2C pull-ups (4.7 kΩ to 3V3 on SDA/SCL), 100 nF local decoupling, and airflow / keep-out so the sensor is not heat-soaked by the MCU or backlight.
-- SDA = XIAO D4 (GPIO23), SCL = XIAO D5 (GPIO24). Tie SDO for I2C address 0x76 (ADDR_0) unless your BOM uses 0x77.
-- Do not reassign I2C pins.
-
-Display (soldered module):
-- 1.3" 240×240 ST7789 SPI module, no touch.
-- Tie module CS to GND (no CS GPIO).
-- Wiring: SCK=D8/GPIO8, MOSI=D10/GPIO10, DC=D9/GPIO9, RST=D6/GPIO11, BL=D7/GPIO12 via transistor/FET + series resistor (GPIO high = backlight on). VDD=3.3 V, common GND.
-- Orientation and connector style are designer choice.
-
-Encoder + reset:
-- Through-hole EC11: A→D0/GPIO1, B→D1/GPIO0, push→D2/GPIO25 to GND + **10 kΩ pull-up to 3V3 at GPIO25**. Debounce caps optional.
-- Separate factory-reset tact: BOOT/GPIO28 to GND + **10 kΩ pull-up to 3V3 at BOOT** (long press ≥ 5 s). Do not combine with encoder push.
-
-Reserved / DNP for v2:
-- Leave silkscreen / pads note for future 1S JST + 100 k / 100 k divider into GPIO6 (ADC_BAT). Do not populate on v1.
-- No RGB or addressable LED footprints on v1 (optional upgrade later).
-
-Layout:
+Carrier goals:
+- Host Sensirion **SGP41** (VOC + NOx) on the shared I2C bus brought out from the Waveshare I2C or SH1.0 header.
+- Pressure sensor: **deferred** — do not place on first carrier.
+- Mechanical: stand / wall mount / cable strain for desk use; keep airflow to SHTC3 and SGP41 away from heat sources.
+- Power: take 3V3 + GND from main board only. Do not add USB-C or a second charger. Do not dual-feed VBUS/BAT.
+- I2C: 4.7 kΩ pull-ups only if the main board does not already provide them on the expansion connector — verify Waveshare schematic before duplicating.
+- Silkscreen: 3V3, GND, SDA, SCL, SGP ADDR notes, REV, product name.
 - 2 layers, 1.6 mm FR4, 1 oz, JLCPCB-friendly, 0603 passives.
-- Solid GND pour; antenna keep-out on XIAO.
-- Silkscreen: 5V, 3V3, GND, SDA, SCL, ENC A/B/SW, RESET, TFT DC/RST/BL, REV, product name.
-- Test pads: 5V, 3V3, GND, SDA, SCL, GPIO6 (v2).
 
-GPIO lock (do not reassign):
-- Enc A=GPIO1, B=GPIO0, push=GPIO25, Reset=GPIO28, SDA=23, SCL=24, SCK=8, DC=9, MOSI=10, RST=11, BL=12. GPIO6 reserved v2 only.
+Do not reintroduce BME680, EC11, or a separate ST7789 module on this carrier.
 ```
 
+### Bill of materials (prototype)
 
+| Ref | Qty | Description | Notes |
+| --- | --- | ----------- | ----- |
+| U_MAIN | 1 | Waveshare **ESP32-C5-Touch-LCD-2.8** (+ batt option) | Main board — not Flux fab |
+| BAT1 | 0–1 | 1S Li-ion MX1.25 (Waveshare option) | ETA6098 on main board |
+| U_SGP | 1 | Sensirion **SGP41** | Carrier — VOC + NOx |
+| R_I2C | 0–2 | 4.7 kΩ, 0603 | Only if header lacks pulls |
+| C_SGP | 1–2 | 100 nF, 0603 | Local decoupling |
+| J_HDR | 1 | Mating connector for Waveshare I2C / SH1.0 | Per Waveshare pinout |
+| U_PRESS | 0 | Sensirion pressure | **Deferred** — omit first fab |
+| — | — | Enclosure / stand | Mechanical |
 
-### Bill of materials (prototype carrier)
+### Bring-up checklist
 
-
-| Ref         | Qty | Description                                                                       | Notes                              |
-| ----------- | --- | --------------------------------------------------------------------------------- | ---------------------------------- |
-| U1          | 1   | [Seeed XIAO ESP32-C5](https://wiki.seeedstudio.com/xiao_esp32c5_getting_started/) | Matter MCU                         |
-| U2          | 1   | BME680 (bare)                                                                     | I2C; addr 0x76 typical             |
-| R_I2C       | 2   | 4.7 kΩ, 0603                                                                      | SDA / SCL pull-up to 3V3           |
-| R_PU_ENC    | 1   | **10 kΩ**, 0603                                                                   | Encoder push pull-up (GPIO25)      |
-| R_PU_RST    | 1   | **10 kΩ**, 0603                                                                   | Factory-reset pull-up (GPIO28)     |
-| C_BME       | 1–2 | 100 nF, 0603                                                                      | Local BME680 decoupling            |
-| DISP1       | 1   | ST7789 1.3" 240×240 SPI module                                                    | No touch; CS→GND                   |
-| R_BL / Q_BL | 1   | BL series R + NPN/FET                                                             | Drive from GPIO12                  |
-| SW_ENC      | 1   | EC11 rotary encoder w/ push                                                       | Through-hole                       |
-| SW_RST      | 1   | Tact switch                                                                       | Factory reset — GPIO28             |
-| J1          | 1   | USB-C receptacle                                                                  | Product power only (place in Flux) |
-| C_USB       | 1–2 | 10 µF + 100 nF                                                                    | VBUS bulk / HF                     |
-| —           | —   | Enclosure / stand                                                                 | Mechanical — deferred              |
-
-
-**DNP v1 / v2 reserve:** JST-PH, battery divider R1/R2, BAT1 pouch, RGB / WS2812.
-
-### Bring-up checklist (carrier)
-
-- [ ] USB-C (J1) powers MCU + BME680; Matter temp/humidity/pressure update in HA
-- [ ] ST7789 lights (BL) and accepts SPI once UI firmware lands
-- [ ] EC11 A/B/push and separate reset tact wired to locked GPIOs
-- [ ] Module USB used for flash without fighting J1
-- [ ] No battery / no Power Source required for v1 field units
-- [ ] OTA image builds (`CHIP_OTA_IMAGE_BUILD`)
-
-
+- [ ] Devkit: SHTC3 reads T/H; ETA6098 battery path works
+- [ ] Matter temp/humidity (retire BME680 pressure until pressure MPN locked)
+- [ ] Carrier: **SGP41** on I2C; HA VOC + NOx / air-quality entities
+- [ ] Touch UI / LVGL path (later)
+- [ ] OTA image builds for `esp32c5`
 
 ### Firmware modules
 
-Matter temp/humidity/pressure, `bme680_task` (I2C GPIO23/24), OTA via `cosmos_matter_ota`, factory reset on GPIO28. **Display / encoder / LVGL / custom QR /** `cosmos_battery` **— later** (battery reserved GPIO6 for v2 carrier).
+Target: `esp32c5` on Waveshare BSP. Replace `bme680_task` with **SHTC3** (+ **SGP41** VOC/NOx). Display/touch via Waveshare ST7789 + CST3530 + CH32 EXIO. OTA via `cosmos_matter_ota`. Battery sense via Waveshare BAT_ADC path when enabled.
+
 
 ---
 
 
-
 ## iotDoorIntercom (SKU 5)
 
-**Board:** [Seeed XIAO ESP32-S3 Sense](https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/) (OV2640 camera on Sense expansion)  
-**Matter role:** Generic Switch doorbell + PIR + tamper + OnOff stream gate + OnOff siren clear.  
+**Main board:** [Waveshare ESP32-P4-WIFI6](https://docs.waveshare.com/ESP32-P4-WIFI6) (ESP32-P4NRW32 + **ESP32-C6-MINI-1** Wi-Fi 6/BLE)  
+**Matter role:** Matter **1.5 camera** (WebRTC) + doorbell / PIR / tamper / siren (carrier).  
 **PID (test):** `0x8005` — see [MANUFACTURING.md](MANUFACTURING.md).  
-**Stream:** HTTPS MJPEG `GET https://<device-ip>/stream` (port 443, Beta self-signed cert). Not Matter Camera / WebRTC yet.
+**Platform:** agreed 2026-09-20 — [ARCHITECTURE.md](ARCHITECTURE.md). Devkit on hand for bring-up. Flux builds an **outdoor expansion carrier**.
 
-### Product decisions (locked for v1 carrier)
+> **Supersedes** Seeed XIAO ESP32-S3 Sense + MJPEG `/stream` as the product target. Keep existing S3 firmware only as interim field bridge until P4 Matter camera works.
 
-
-| Item           | Choice                                                                                                                                                                          |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Board size     | **≈ 60 × 100 mm** (doorbell / wall-mount)                                                                                                                                       |
-| Environment    | **Outdoor** enclosure (gasketed camera window, conformal coat PCB)                                                                                                              |
-| Power          | **USB-C** + **JST-PH 2.0** 1S pouch; battery sense on carrier                                                                                                                   |
-| Front controls | Doorbell tact + **AM312** mini PIR (3.3 V) on carrier                                                                                                                           |
-| Tamper         | **Leaf spring → chassis GND** when seated; **two gold pads on PCB back** closed by **pogo pins** in the housing (series or parallel path — both must make contact when mounted) |
-| Siren          | Piezo + LED on **GPIO4**, NPN drive (same idea as door-sensor alarm)                                                                                                            |
-| Door lock      | **None** for v1 (GPIO5 used for battery ADC)                                                                                                                                    |
-| Camera         | Keep Sense camera FPC / expansion; do not reassign DVP pins                                                                                                                     |
+### Product decisions (locked for v1)
 
 
+| Item | Choice |
+| ---- | ------ |
+| Main electronics | Waveshare **ESP32-P4-WIFI6** (P4 + C6) |
+| Camera | **MIPI-CSI** on P4 (e.g. OV5647-class); H.264 @ 1080p class |
+| Matter / Wi-Fi | **ESP32-C6** companion on board — Matter signaling + Wi-Fi 6 |
+| Video goal | **Matter 1.5 camera soon** (esp-matter camera / WebRTC split) |
+| Audio | Onboard mic + speaker header (Waveshare) |
+| Flux carrier | Doorbell, AM312 PIR, tamper (leaf + pogo), siren LED/piezo, 1S battery path as needed |
+| Form | Outdoor doorbell / wall-mount; carrier ~60×100 mm class (Flux) |
+| Door lock | None for v1 |
 
+### SoC split (Espressif Matter camera)
 
-### GPIO map (must match firmware)
+| Chip | Role |
+| ---- | ---- |
+| **ESP32-P4** | MIPI-CSI capture, ISP, H.264, WebRTC media, audio |
+| **ESP32-C6** | Wi-Fi 6 + BLE, Matter stack / signaling |
 
+Expect **two firmware images** (media_adapter on P4, matter_camera on C6) per Espressif docs. Expansion I/O uses P4 **40-pin / remaining GPIOs** — exact doorbell/PIR/tamper/siren pins **TBD** when mapping the Waveshare header (do not reuse S3 Sense DVP pin table).
 
-| XIAO pin  | ESP GPIO | Firmware                         | Function / wiring                                                 |
-| --------- | -------- | -------------------------------- | ----------------------------------------------------------------- |
-| D0        | GPIO1    | `DOORBELL_PIN`                   | Tact to **3.3 V** + **10 kΩ to GND**; press = HIGH                |
-| D1        | GPIO2    | `PIR_PIN`                        | AM312 **OUT** + **10 kΩ to GND**; VCC=3.3 V, GND                  |
-| D2        | GPIO3    | `TAMPER_PIN`                     | Path to **GND when seated** + **10 kΩ to 3V3**; open = HIGH       |
-| D3        | GPIO4    | `ALARM_LED_PIN`                  | NPN → red LED + piezo (active HIGH blink)                         |
-| D4        | GPIO5    | `CONFIG_COSMOS_BATTERY_ADC_GPIO` | Mid-tap of 100 k / 100 k divider (`cosmos_battery` enabled)       |
-| BOOT      | GPIO0    | `FACTORY_RESET_BUTTON_PIN`       | Tact to **GND** + **10 kΩ to 3V3**; long ≥ 5 s (not the doorbell) |
-| —         | GPIO21   | `LED_PIN`                        | On-module user LED — stream status (no carrier LED required)      |
-| Sense DVP | (fixed)  | `cam_task.h`                     | Camera — do not steal these GPIOs                                 |
+### Tamper electromechanical detail (carrier — unchanged intent)
 
-
-**Unused for v1 (do not load door-lock features):** former door-lock plan on GPIO5 — superseded by battery ADC.
-
-### Tamper electromechanical detail
-
-GPIO: **external 10 kΩ pull-up to 3V3** on D2 (firmware internal pull-up secondary only); **LOW = seated (NC to GND)**, **HIGH = open/tampered**. Matter Boolean State uses contact-sensor convention (**true = closed/seated**); HA inverts so tamper is **off when grounded**, **on when open**.
-
-```text
-Seated (OK):   TAMPER_PIN ── leaf spring ── chassis GND
-                 also: back pad A ── pogo ── case jumper ── pogo ── back pad B
-                 (implement as one series path to GND so either leaf or pogo pair can be primary;
-                  recommended: leaf spring is the chassis NC; pogo pads are a second NC in series
-                  so opening the case OR lifting the board trips tamper)
-
-Open (alarm):  path broken → external pull-up → HIGH → latched panic_alarm + Matter contact open
-```
-
-Firmware **does not** clear the siren on remount — HA turns Off the Matter siren OnOff.
+Seated = path to GND; open = pull-up HIGH → latched panic + Matter contact open. Leaf spring + back pogo pads in series recommended. Firmware does **not** clear siren on remount — HA turns Off siren OnOff.
 
 ### Flux.ai project prompt
 
 ```text
-Design a 2-layer outdoor doorbell / door-station carrier PCB for "Cosmos iotDoorIntercom".
+Design a 2-layer outdoor expansion carrier for "Cosmos iotDoorIntercom" that mates to the Waveshare ESP32-P4-WIFI6 main board. Do NOT place a second Wi-Fi MCU or replace the P4 camera path.
 
-Form factor:
-- Board outline approximately 60 mm × 100 mm, vertical wall-mount (doorbell aspect).
-- 3–4× M2 or M3 mounting holes aligned with a gasketed outdoor enclosure.
-- Camera opening / keep-out matching Seeed XIAO ESP32-S3 Sense camera module (OV2640) so the lens looks through a clear / IR-capable window.
-- USB-C accessible from bottom or side without opening the weather seal if possible (or under a sealed plug).
+Main board (already chosen — not fabricated here):
+- Waveshare ESP32-P4-WIFI6: ESP32-P4 + ESP32-C6-MINI-1, MIPI-CSI camera, MIPI-DSI, mic/speaker, USB-C, TF, 40-pin GPIO expansion.
+- Docs: https://docs.waveshare.com/ESP32-P4-WIFI6
+- Product camera = MIPI-CSI on P4 (Matter 1.5 camera / WebRTC). Do not design for XIAO S3 Sense DVP.
 
-Core module:
-- Seeed XIAO ESP32-S3 Sense (castellated + camera expansion). Mount so the Sense camera faces outward.
-- Keep Wi-Fi / antenna clearances per Seeed (no copper under antenna region). Prefer external u.FL antenna option only if enclosure blocks the PCB antenna — default: module antenna with plastic RF window.
+Carrier goals:
+- Outdoor doorbell / wall-mount (~60×100 mm class). Gasketed enclosure, camera window aligned to the P4 CSI module / flex.
+- Doorbell tact to 3V3 with 10 kΩ pull-down at the MCU pin.
+- AM312 (3.3 V PIR) OUT with 10 kΩ pull-down; Fresnel window; keep siren/LED optical isolation from PIR.
+- Tamper: leaf spring to chassis GND when seated + two gold/pogo pads on PCB back; 10 kΩ pull-up to 3V3 at tamper GPIO (open = HIGH).
+- Siren: NPN (S8050) + 1 kΩ base → red LED 330 Ω + 3–5 V active piezo from 3V3/BAT+; flyback diode; vented grille.
+- Factory-reset tact recessed, pull-up to 3V3, separate from doorbell.
+- Power: prefer single USB-C charge path (main board and/or carrier J1) into 1S charger + protect → pouch on JST-PH 2.0. No dual-feed. Size for >=1 A camera + Wi-Fi peaks.
+- Mate mechanically/electrically to P4-WIFI6 expansion headers — document pin map; leave GPIO numbers as TBD until firmware lock.
+- 2 layers, 1.6 mm FR4, 1 oz, conformal-coat friendly, JLCPCB 0603 passives.
+- Silkscreen: BAT+, GND, 3V3, DOORBELL, PIR, TAMPER, SIREN, REV.
 
-Power (USB-C + pouch):
-- USB-C 5 V input on the carrier → 1S charger + protection (prefer power-path / SYS; else TP4056 + DW01/FS8205 class or better outdoor-rated).
-- 1S Li-ion pouch on JST-PH 2.0 (2-pin). Feed XIAO **BAT pads** from BAT+ (or SYS). Cell stays attached while charging; MCU 3V3 is on-module (Sense). Do **not** power camera/siren from XIAO `5V`.
-- Single charge path — do not stack carrier charger and Sense onboard charger on the same cell without isolation.
-- Battery monitor: 100 kΩ + 100 kΩ divider BAT+ to GND; mid tap to XIAO D4 (GPIO5). 100 nF at ADC pin.
-- Camera + Wi-Fi are power-hungry — size traces and charger for ≥ 1 A peaks.
-- Conformal-coating friendly: no flux traps; prefer taller connectors only where needed.
-
-Front / user I/O (external pulls mandatory — do not rely on MCU internals alone):
-- Large doorbell tact: between 3.3 V and XIAO D0 (GPIO1). **10 kΩ pull-down to GND at D0.**
-- AM312 (or equivalent 3.3 V mini PIR) OUT to XIAO D1 (GPIO2) + **10 kΩ pull-down to GND at D1**; VCC=3.3 V, GND. Place PIR behind a Fresnel window; keep LED/siren optical isolation from PIR.
-- Factory-reset tact to XIAO BOOT (GPIO0) to GND + **10 kΩ pull-up to 3V3 at BOOT**, recessed, separate from doorbell.
-
-Tamper (anti-theft / case open):
-- Leaf spring or spring finger that contacts chassis / backplate GND when the unit is screwed to the wall.
-- On the PCB BACK: two exposed gold pads (or pogo landing pads), spaced for pogo pins in the enclosure. When the housing is closed and mounted, pogos short those pads into the tamper-to-GND path.
-- Net TAMPER to XIAO D2 (GPIO3) + **10 kΩ pull-up to 3V3 at D2**: seated = LOW, open = HIGH.
-
-Siren (panic alarm):
-- XIAO D3 (GPIO4) → 1 kΩ → NPN base (S8050) → drive in parallel: (a) red LED + 330 Ω; (b) **3–5 V active piezo** (prefer not “5 V only”) with collector feed from **3V3 or BAT+**, flyback diode as needed. GPIO high = siren/LED on (firmware blinks).
-- Place piezo so it vents through a grille; keep water away (IP membrane or rear chamber).
-
-Status:
-- Rely on XIAO GPIO21 user LED for stream status; optional extra status LED not required.
-
-Outdoor / reliability:
-- Design for IP54+ enclosure (gaskets, camera window seal, drain path). Document conformal coat after bring-up.
-- Silkscreen: BAT+, GND, 3V3, DOORBELL, PIR, TAMPER, SIREN, ADC, REV.
-- Test pads: BAT+, 3V3, GND, GPIO1/2/3/4/5.
-- 2 layers, 1.6 mm FR4, 1 oz, JLCPCB-friendly, 0603 passives.
-
-GPIO lock (do not reassign):
-- Doorbell GPIO1, PIR GPIO2, Tamper GPIO3, Siren GPIO4, Battery ADC GPIO5, Reset GPIO0.
-- Do not use GPIO5 for door lock. Do not steal camera DVP pins.
+Do not keep OV2640/S3 Sense as the camera solution on this carrier.
 ```
 
+### Bill of materials (prototype)
 
-
-### Bill of materials (prototype carrier)
-
-
-| Ref        | Qty | Description                                                                             | Notes                          |
-| ---------- | --- | --------------------------------------------------------------------------------------- | ------------------------------ |
-| U1         | 1   | [Seeed XIAO ESP32-S3 Sense](https://www.seeedstudio.com/XIAO-ESP32S3-Sense-p-5639.html) | Camera + Wi‑Fi MCU             |
-| SW1        | 1   | Doorbell tact (large / weatherized)                                                     | To 3.3 V / GPIO1               |
-| SW2        | 1   | Tact switch, recessed                                                                   | Factory reset GPIO0            |
-| R_PD1      | 1   | **10 kΩ**, 0603                                                                         | Pull-down doorbell (GPIO1)     |
-| R_PD2      | 1   | **10 kΩ**, 0603                                                                         | Pull-down PIR OUT (GPIO2)      |
-| R_PU1      | 1   | **10 kΩ**, 0603                                                                         | Pull-up tamper (GPIO3)         |
-| R_PU2      | 1   | **10 kΩ**, 0603                                                                         | Pull-up factory reset (GPIO0)  |
-| U2         | 1   | AM312 (or 3.3 V mini PIR)                                                               | OUT → GPIO2                    |
-| SW3        | 1   | Leaf spring / chassis contact                                                           | Tamper to GND when seated      |
-| PAD1, PAD2 | 2   | Gold / pogo landing pads (back)                                                         | Case pogo short when closed    |
-| —          | 2   | Pogo pins (in enclosure)                                                                | Mechanical; not on PCB BOM     |
-| Q1         | 1   | NPN SOT-23 (S8050)                                                                      | Siren / LED drive              |
-| R_B        | 1   | 1 kΩ, 0603                                                                              | NPN base                       |
-| D_ALM      | 1   | Red LED, 0603                                                                           | Alarm visual                   |
-| R_LED      | 1   | 330 Ω, 0603                                                                             | LED limit                      |
-| BZ1        | 1   | 3–5 V active piezo (not 5 V-only)                                                       | Siren; NPN from 3V3/BAT+       |
-| J1         | 1   | USB-C receptacle                                                                        | Power + charge                 |
-| J2         | 1   | JST-PH 2.0, 2-pin                                                                       | 1S pouch                       |
-| U3         | 1   | 1S charger + protection                                                                 | TP4056-class or better         |
-| R1, R2     | 2   | 100 kΩ, 0603, 1%                                                                        | Battery divider → GPIO5        |
-| C1         | 1   | 100 nF, 0603                                                                            | ADC filter                     |
-| C2         | 1   | 100 nF–10 µF                                                                            | VIN / BAT decoupling as needed |
-| BAT1       | 1   | 1S Li-ion pouch                                                                         | Size for outdoor runtime; JST  |
-| —          | —   | Outdoor enclosure, gaskets, camera window, Fresnel for PIR                              | Mechanical                     |
-| —          | —   | Conformal coat                                                                          | After electrical bring-up      |
-
-
-
+| Ref | Qty | Description | Notes |
+| --- | --- | ----------- | ----- |
+| U_MAIN | 1 | Waveshare **ESP32-P4-WIFI6** (+ camera module) | Main board — kit |
+| CAM1 | 1 | MIPI-CSI camera (OV5647-class or Waveshare kit cam) | On P4 CSI |
+| SW1 | 1 | Doorbell tact (weatherized) | Carrier |
+| SW2 | 1 | Recessed tact | Factory reset |
+| U2 | 1 | AM312 (or 3.3 V mini PIR) | Carrier |
+| SW3 | 1 | Leaf spring / chassis contact | Tamper |
+| PAD1, PAD2 | 2 | Gold / pogo pads (back) | Case closed |
+| Q1 | 1 | S8050 SOT-23 | Siren / LED |
+| R_B | 1 | 1 kΩ, 0603 | Base |
+| D_ALM | 1 | Red LED, 0603 | |
+| R_LED | 1 | 330 Ω, 0603 | |
+| BZ1 | 1 | 3–5 V active piezo | + flyback |
+| D_FB | 1 | 1N4148W | Flyback |
+| R_PDx / R_PUx | 4 | 10 kΩ, 0603 | External pulls |
+| J1 | 0–1 | USB-C | Only if charge path is on carrier |
+| J2 | 1 | JST-PH 2.0 | 1S pouch |
+| U3 | 0–1 | 1S charger + protect | If not using main-board-only power |
+| R1, R2 | 2 | 100 kΩ 1% | Battery divider if ADC on carrier |
+| C1 | 1 | 100 nF | ADC filter |
+| BAT1 | 1 | 1S Li-ion pouch | Outdoor runtime |
+| — | — | Outdoor enclosure, gaskets, Fresnel, pogos | Mechanical |
 
 ### Bring-up checklist
 
-- [ ] Doorbell → Matter `event.*` + stream gate / HA notify
-- [ ] AM312 motion → occupancy + auto stream
-- [ ] Open case / lift board → tamper binary_sensor on + GPIO4 siren latches; remount does **not** silence; HA siren OnOff Off stops siren
-- [ ] Back pogo pads + leaf spring both exercise tamper path
-- [ ] USB-C charges pouch; divider on GPIO5 reads plausible % in Matter / HA
-- [ ] HTTPS MJPEG through camera window; Wi‑Fi RSSI acceptable in metal/plastic enclosure
-- [ ] Factory reset on BOOT only (not doorbell)
-- [ ] HA package + Lovelace — `[home-assistant/](../home-assistant/)`
-
-
+- [ ] P4-WIFI6 kit: Matter 1.5 camera example (P4 media + C6 Matter) streams
+- [ ] Carrier: doorbell / PIR / tamper / siren on locked GPIOs
+- [ ] Tamper leaf + pogo path; HA clears siren via OnOff
+- [ ] 1S charge path; battery % if enabled
+- [ ] Outdoor enclosure RF / camera window soak
+- [ ] HA package updated for Matter camera (retire MJPEG-only assumption)
 
 ### Firmware modules
 
-Matter (stream OnOff, PIR, doorbell `generic_switch`, tamper `contact_sensor`, siren OnOff, Power Source), `cam_task`, `http_stream_task`, `evt_service_task`, `door_intercom_task`, `security_module_task`, `panic_alarm_task`, `cosmos_battery` (GPIO5), OTA via `cosmos_matter_ota`, factory reset via `cosmos_matter_common`.
+**Target:** dual image — P4 `media_adapter` + C6 `matter_camera` (esp-matter camera). Port security tasks (`door_intercom_task`, `panic_alarm_task`, …) onto mapped P4 GPIOs. Retire product dependence on `http_stream_task` MJPEG when Matter camera ships.
 
-**HTTPS /stream (Beta):** certs in `iotDoorIntercom/main/certs/` (regen `tools/certs/gen_door_intercom_https.sh`). HA MJPEG: UI integration, verify SSL off on LAN.
+> **Interim:** existing `esp32s3` Sense app remains for field units until P4 path is validated.
 
-> **Target:** `esp32s3` — `idf.py set-target esp32s3`. Octal PSRAM required for camera framebuffers.
-
-*Matter Camera + WebRTC deferred (after toolchain bump).*
