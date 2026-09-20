@@ -259,9 +259,9 @@ Target fab: **JLCPCB standard 2-layer** (capability floor is 5 mil / 5 mil; we k
 Firmware GPIO + Flux prompts in this file are the **source of truth** until Gerbers land.
 
 
-| SKU                        | Flux / schematic status                                  | Link                                                                             |
-| -------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| iotDoorSensor (1)          | Placement done; JLCPCB 2L DRC locked; routing incomplete | [cosmos-iotDoorSensor](https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o) |
+| SKU                        | Flux / schematic status                                                                 | Link                                                                             |
+| -------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| iotDoorSensor (1)          | Schematic + layout + DRC clean; BOM locked below; Flux generic R/C MPNs sync when ACUs | [cosmos-iotDoorSensor](https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o) |
 | iotDualModeBtn (2)         | Prompt + BOM ready — layout next                         | *Add project URL when shared*                                                    |
 | iotEnvironmentalSensor (3) | Prompt + BOM ready (60×60 mm)                            | *Add project URL when shared*                                                    |
 | iotBedsideLamp (4)         | Prompt + BOM ready (Ø50 mm)                              | *Add project URL when shared*                                                    |
@@ -280,7 +280,7 @@ When a Flux or KiCad project is public (or in a private hardware repo), paste th
 **Module:** [Seeed XIAO ESP32-C6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/)  
 **Matter (test):** VID **65522** (`0xFFF2`), PID **32769** (`0x8001`)  
 **Role:** Matter door/window contact sensor, status LEDs, optional panic/alarm outputs, battery reporting.  
-**Flux:** [cosmos-iotDoorSensor](https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o) — schematic + placement complete; routing not finished.
+**Flux:** [cosmos-iotDoorSensor](https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o) — schematic + layout + DRC clean; BOM locked in this file; apply R/C MPNs in Flux when ACUs return.
 
 ### Product decisions (locked for v1 carrier)
 
@@ -324,7 +324,7 @@ Unused in current firmware (available for carrier features): D1, D2, D6–D8, D1
 
 Copy into Flux when iterating the carrier (board size / JST already locked in the live project):
 
-> **Status:** Flux schematic + placement done (Aug 2026); routing remaining. Project: [https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o](https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o)
+> **Status:** Flux schematic + layout + DRC clean (Sep 2026); BOM locked in HARDWARE.md — sync R1–R9 / C1–C2 MPNs into Flux when ACUs return. Project: [https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o](https://www.flux.ai/cosmoskiller/cosmos-iotdoorsensor~7o)
 
 ```text
 Design / finish a 2-layer carrier PCB for the "Cosmos iotDoorSensor" — compact Wi-Fi Matter door/window contact sensor.
@@ -349,36 +349,38 @@ Digital outputs (3.3 V, active high):
 - D5 GPIO23 → red LED (e.g. LTST-C190KRKT) + 330 Ω, and BZ1 AI-1223-TWT-3V-2-R (same MPN) via S8050 + 1 kΩ; flyback 1N4148 populated.
 
 Layout:
-- Placement complete in Flux; finish routing; solid GND pour; antenna keep-out; test pads BAT+/3V3/GND/ADC.
-- Do not reassign GPIOs. JLCPCB-friendly 0603 passives.
+- Schematic + layout + DRC clean in Flux. Solid GND pour; antenna keep-out; test pads BAT+/3V3/GND/ADC.
+- Do not reassign GPIOs. Passives: lock MPNs from HARDWARE.md BOM (replace Flux generics when ACUs return).
 ```
 
 
 
-### Bill of materials (prototype — matches Flux)
+### Bill of materials (prototype — locked)
+
+Passives below are **locked** for JLCPCB Basic-friendly order. Confirm LCSC stock codes at order time; **MPNs** are the stable identity. Sync these into Flux when ACUs return (R1–R9, C1–C2 still show as generics there).
 
 
-| Ref      | Qty | Description                         | Notes                                          |
-| -------- | --- | ----------------------------------- | ---------------------------------------------- |
-| U1       | 1   | Seeed XIAO ESP32-C6 (MPN 113991254) | Matter MCU module                              |
-| U2       | 1   | JST **S2B-PH-K-S(LF)(SN)**          | Right-angle PH 2.0, 1S pouch                   |
-| BAT1     | 1   | 1S Li-ion pouch                     | Off-board; 3.7 V nominal                       |
-| SW1      | 1   | Coto **CT10-1530-G1**               | Reed NO, SMD                                   |
-| SW2      | 1   | XUNPU **TS-1088-AR02016**           | Factory reset — GPIO9                          |
-| R8       | 1   | **10 kΩ**, 0603                     | **Pull-down** at D9 / GPIO20 (reed)            |
-| R9       | 1   | **10 kΩ**, 0603                     | **Pull-up** at BOOT / GPIO9                    |
-| R1, R2   | 2   | 100 kΩ, 0603, 1%                    | Battery divider                                |
-| R3–R5    | 3   | 330 Ω, 0603                         | LED series                                     |
-| R6, R7   | 2   | 1 kΩ, 0603                          | Q1 / Q2 base                                   |
-| C1, C2   | 2   | 100 nF, 0603                        | VBAT bypass + ADC filter                       |
-| LED1     | 1   | Würth **150060VS75000**             | Green status — GPIO21                          |
-| LED2     | 1   | Lite-On **LTST-C190KSKT**           | Yellow confirm — GPIO22                        |
-| LED3     | 1   | Lite-On **LTST-C190KRKT**           | Red alarm — GPIO23                             |
-| Q1, Q2   | 2   | **S8050** SOT-23                    | Alarm / arm buzzer low-side                    |
-| BZ1, BZ2 | 2   | PUI **AI-1223-TWT-3V-2-R**          | Same 2.3 kHz active; alarm / arm               |
-| D1       | 1   | **1N4148W**                         | Flyback on BZ1 (populated)                     |
-| D2       | 0–1 | **1N4148W**                         | Flyback on BZ2 — **DNP / exclude BOM** in Flux |
-| —        | —   | Enclosure, magnet                   | Mechanical                                     |
+| Ref      | Qty | Description / MPN                                      | Notes / LCSC (typical)                         |
+| -------- | --- | ------------------------------------------------------ | ---------------------------------------------- |
+| U1       | 1   | Seeed XIAO ESP32-C6 (**113991254**)                    | Matter MCU module                              |
+| U2       | 1   | JST **S2B-PH-K-S(LF)(SN)**                             | Right-angle PH 2.0, 1S pouch — C173752         |
+| BAT1     | 1   | 1S Li-ion pouch                                        | Off-board; 3.7 V nominal                       |
+| SW1      | 1   | Coto **CT10-1530-G1**                                  | Reed NO, SMD                                   |
+| SW2      | 1   | XUNPU **TS-1088-AR02016**                              | Factory reset — GPIO9 — C720477                |
+| R1, R2   | 2   | Yageo **RC0603FR-07100KL** (100 kΩ 1% 0603)            | Battery divider — C25803                       |
+| R3–R5    | 3   | Yageo **RC0603FR-07330RL** (330 Ω 1% 0603)             | LED series — C23148                            |
+| R6, R7   | 2   | Yageo **RC0603FR-071KL** (1 kΩ 1% 0603)                | Q1 / Q2 base — C21190                          |
+| R8       | 1   | Yageo **RC0603FR-0710KL** (10 kΩ 1% 0603)              | Pull-down at D9 / GPIO20 (reed) — C25804       |
+| R9       | 1   | Yageo **RC0603FR-0710KL** (10 kΩ 1% 0603)              | Pull-up at BOOT / GPIO9 — C25804               |
+| C1, C2   | 2   | Samsung **CL10B104KB8NNNC** (100 nF X7R 0603)          | VBAT bypass + ADC filter — C14663              |
+| LED1     | 1   | Würth **150060VS75000**                                | Green status — GPIO21                          |
+| LED2     | 1   | Lite-On **LTST-C190KSKT**                              | Yellow confirm — GPIO22                        |
+| LED3     | 1   | Lite-On **LTST-C190KRKT**                              | Red alarm — GPIO23                             |
+| Q1, Q2   | 2   | **S8050** SOT-23                                       | Alarm / arm buzzer low-side                    |
+| BZ1, BZ2 | 2   | PUI **AI-1223-TWT-3V-2-R**                             | Same 2.3 kHz active; alarm / arm               |
+| D1       | 1   | **1N4148W**                                            | Flyback on BZ1 (populated) — C129216           |
+| D2       | 0–1 | **1N4148W**                                            | Flyback on BZ2 — **DNP / exclude BOM** in Flux |
+| —        | —   | Enclosure, magnet                                      | Mechanical                                     |
 
 
 **Bring-up checklist** — prototype validated 2026-07 (XIAO ESP32-C6 bench carrier; contact input exercised with a **latching toggle** in place of reed for Boolean State testing).
@@ -389,7 +391,9 @@ Layout:
 - [x] Battery percent updates in Matter Power Source cluster (endpoint 3) and visible in Home Assistant
 - [x] LEDs match `evt_service` / panic tasks on GPIO21–23
 - [x] HA low-battery package — `[home-assistant/packages/cosmos_door_sensor.yaml](../home-assistant/packages/cosmos_door_sensor.yaml)` installed and notifying; fleet/OTA in [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field)
-- [ ] Flux carrier: finish routing → Gerbers → fab bring-up (reed + both buzzers)
+- [x] Flux carrier: layout + DRC clean; BOM locked in HARDWARE.md
+- [ ] Flux: apply R1–R9 / C1–C2 MPNs (replace generics) when ACUs return
+- [ ] Gerbers + fab bring-up (reed + both buzzers)
 
 
 
