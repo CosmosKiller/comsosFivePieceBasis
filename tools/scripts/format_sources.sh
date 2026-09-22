@@ -19,7 +19,7 @@ if [[ -z "$CLANG_FORMAT" ]]; then
     exit 1
 fi
 
-APPS=(iotDoorSensor iotDualModeBtn iotEnvironmentalSensor iotBedsideLamp iotDoorIntercom)
+APPS=(iotDoorSensor iotDualModeBtn iotEnvironmentalSensor iotBedsideLamp iotDoorIntercom iotSecurityCamera)
 COMPONENTS=(cosmos_battery cosmos_matter_common)
 shopt -s nullglob
 

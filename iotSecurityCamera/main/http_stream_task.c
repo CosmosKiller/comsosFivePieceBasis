@@ -9,7 +9,7 @@
 
 #include <http_stream_task.h>
 
-#if CONFIG_IOT_DOOR_INTERCOM_HTTPS_STREAM
+#if CONFIG_IOT_SECURITY_CAMERA_HTTPS_STREAM
 #include <esp_https_server.h>
 #else
 #include <esp_http_server.h>
@@ -121,7 +121,7 @@ httpd_handle_t http_server_task_start(httpd_handle_t server)
         .user_ctx = NULL,
     };
 
-#if CONFIG_IOT_DOOR_INTERCOM_HTTPS_STREAM
+#if CONFIG_IOT_SECURITY_CAMERA_HTTPS_STREAM
     extern const unsigned char servercert_pem_start[] asm("_binary_servercert_pem_start");
     extern const unsigned char servercert_pem_end[] asm("_binary_servercert_pem_end");
     extern const unsigned char prvtkey_pem_start[] asm("_binary_prvtkey_pem_start");

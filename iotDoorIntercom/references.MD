@@ -1,11 +1,6 @@
-* [Getting Started With ESP32-CAM](https://lastminuteengineers.com/getting-started-with-esp32-cam/)
+# iotDoorIntercom (SKU 5) — split mode
 
-<img src="https://lastminuteengineers.com/wp-content/uploads/iot/ESP32-CAM-Pinout.png">
+See [README.md](README.md) and [docs/BUILD.md](../docs/BUILD.md#sku-5--waveshare-esp32-p4-wifi6-matter-15-camera).
 
-* [Getting Started with Seeed Studio XIAO ESP32S3 Series](https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/)
-
-<img src="https://files.seeedstudio.com/wiki/SeeedStudio-XIAO-ESP32S3/img/2.jpg">
-
-* [esp-webrtc-solution](https://github.com/espressif/esp-webrtc-solution)
-
-* [DevCon24 - WebRTC Realization on ESP32 Series Platform](https://www.youtube.com/watch?v=A-g66Z2GJg4)|
+- C6 Matter: `$ESP_MATTER_PATH/examples/camera/split_mode` + `c6/security_endpoints.*`
+- P4 media/I/O: `$KVS_SDK_PATH/examples/streaming_only` + `p4/*`

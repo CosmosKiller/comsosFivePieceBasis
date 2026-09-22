@@ -25,7 +25,7 @@ bool http_stream_task_service_check(void);
 /**
  * @brief Start the MJPEG stream server (HTTPS by default)
  *
- * With CONFIG_IOT_DOOR_INTERCOM_HTTPS_STREAM (default): listens on port 443
+ * With CONFIG_IOT_SECURITY_CAMERA_HTTPS_STREAM (default): listens on port 443
  * using the embedded Beta self-signed cert. Otherwise plain HTTP on port 80.
  *
  * @param server Unused; pass NULL. Kept for call-site compatibility.

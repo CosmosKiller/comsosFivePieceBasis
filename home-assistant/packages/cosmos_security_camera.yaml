@@ -1,0 +1,118 @@
+# Cosmos iotSecurityCamera — HA stream wrapper (no Matter camera entity)
+#
+# Loaded as package "cosmos_security_camera" via !include_dir_named packages
+# (filename = package name — do not add an extra top-level wrapper key).
+#
+# SKU 6 has HTTPS MJPEG only — Home Assistant needs this package + UI MJPEG
+# IP Camera because there is no Matter native camera entity.
+#
+# Prerequisites
+#   1. Commission Matter (stream OnOff gate only on current firmware).
+#   2. Add MJPEG camera via UI:
+#        Settings → Devices & services → Add integration → MJPEG IP Camera
+#        MJPEG URL: https://<device-ip>/stream
+#        Verify SSL: off (self-signed Beta cert)
+#        Name: Cosmos Security Camera  → entity camera.cosmos_security_camera
+#   3. Replace TODO entity ids after commissioning.
+#   4. Add lovelace/cosmos_security_camera.yaml as a dashboard view.
+#
+# Package surfaces: stream gate (+ optional presence auto-off helpers for later CSI).
+# Out of scope: doorbell / PIR / tamper / siren (SKU 5). Snapshot = later.
+# This package does not create the camera entity (UI only).
+
+input_number:
+  cosmos_security_camera_stream_timeout_min:
+    name: Cosmos security camera — auto stream off (minutes)
+    min: 1
+    max: 60
+    step: 1
+    mode: box
+    unit_of_measurement: min
+    icon: mdi:timer-outline
+    initial: 5
+
+input_boolean:
+  cosmos_security_camera_auto_stream:
+    name: Cosmos security camera — auto-enable stream on presence
+    icon: mdi:cctv
+    initial: true
+
+automation:
+  - id: cosmos_security_camera_presence_stream
+    alias: "Cosmos security camera — presence enables stream"
+    description: >-
+      When presence goes on, enable the Matter stream gate (CSI presence /
+      espectre later — wire binary_sensor after firmware ships).
+    mode: restart
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.cosmos_security_camera_presence # TODO
+        to: "on"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.cosmos_security_camera_auto_stream
+        state: "on"
+    actions:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.cosmos_security_camera # TODO: Matter OnOff stream gate
+      - action: notify.mobile_app_my_phone # TODO: your Companion notify service
+        data:
+          title: "Cámara — presencia"
+          message: Se detectó presencia. La cámara en vivo está encendida.
+          data:
+            channel: alarm_stream
+            importance: high
+            ttl: 0
+            priority: high
+
+  - id: cosmos_security_camera_presence_stream_off
+    alias: "Cosmos security camera — presence clears stream"
+    description: When presence clears, turn Off the Matter stream gate.
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.cosmos_security_camera_presence # TODO
+        to: "off"
+    actions:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.cosmos_security_camera # TODO
+
+  - id: cosmos_security_camera_stream_auto_off
+    alias: "Cosmos security camera — stream auto off"
+    description: Turn Off the Matter stream gate after N minutes (restartable).
+    mode: restart
+    triggers:
+      - trigger: state
+        entity_id: switch.cosmos_security_camera # TODO: Matter OnOff stream gate
+        to: "on"
+    actions:
+      - delay:
+          minutes: "{{ states('input_number.cosmos_security_camera_stream_timeout_min') | int(5) }}"
+      - condition: state
+        entity_id: switch.cosmos_security_camera # TODO
+        state: "on"
+      - action: switch.turn_off
+        target:
+          entity_id: switch.cosmos_security_camera # TODO
+
+  - id: cosmos_security_camera_siren
+    alias: "Cosmos security camera — siren / alarm"
+    description: >-
+      Notify when siren OnOff turns On (firmware later). Off = silence.
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: switch.cosmos_security_camera_siren # TODO
+        to: "on"
+    actions:
+      - action: notify.mobile_app_my_phone # TODO
+        data:
+          title: "Cámara — alarma"
+          message: Sirena de la cámara activada.
+          data:
+            channel: alarm_stream
+            importance: high
+            ttl: 0
+            priority: high

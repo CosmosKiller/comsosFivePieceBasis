@@ -3,13 +3,14 @@
 # Loaded as package "cosmos_security" via !include_dir_named packages
 # (filename = package name — do not add an extra top-level wrapper key).
 #
-# Use for any intrusion-class event: door/window forced open, intercom mount
-# tamper, or other binary_sensor that means "someone is breaking in".
+# Use for any intrusion-class event: door/window forced open, SKU 5 intercom
+# mount tamper, or other binary_sensor that means "someone is breaking in".
+# SKU 5 has no dedicated HA package — wire Matter entities here directly.
 #
 # Prerequisites
 #   - light.security_system_lights — light group (UI or YAML); strobes during alarm.
 #   - switch.security_system_sirens — defined below; add every Matter/MQTT siren
-#     switch after commissioning (intercom, each door sensor, future SKUs).
+#     switch after commissioning (SKU 5 intercom, each door sensor, future SKUs).
 #   - Replace TODO entity ids in the group + triggers after commissioning.
 #   - Clear intrusion: turn Off switch.security_system_sirens, or arm Off on each door sensor.
 

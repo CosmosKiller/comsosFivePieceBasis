@@ -17,7 +17,8 @@ cosmosFivePieceBasis/
 │   └── (same pattern; sdkconfig.defaults* for C6)
 ├── iotEnvironmentalSensor/
 ├── iotBedsideLamp/
-└── iotDoorIntercom/               # XIAO ESP32-S3 Sense, MJPEG + Matter
+├── iotDoorIntercom/               # SKU5 split: c6/ + p4/ + shared/ (path-deps to esp-matter/KVS)
+└── iotSecurityCamera/             # SKU6 XIAO S3 Sense — HTTPS MJPEG + stream-gate OnOff
 ```
 
 **Layout (Option B — consistent across all apps)**
@@ -60,6 +61,7 @@ cosmosFivePieceBasis/
 ├── iotEnvironmentalSensor/
 ├── iotBedsideLamp/
 ├── iotDoorIntercom/
+├── iotSecurityCamera/
 ├── tools/
 │   ├── mfg/               # esp-matter-mfg-tool wrappers (see docs/MANUFACTURING.md)
 │   └── scripts/

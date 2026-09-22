@@ -1,4 +1,4 @@
-# Cosmos Five-Piece Basis
+# Cosmos Six-Piece Basis
 
 Monorepo of ESP-IDF firmware applications for a small Matter device family. Each subdirectory is an independent project (own `sdkconfig`, partition table, and flash image).
 
@@ -7,12 +7,13 @@ Monorepo of ESP-IDF firmware applications for a small Matter device family. Each
 | --------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------- |
 | [iotDoorSensor](iotDoorSensor/)     | Door / contact sensor        | Seeed XIAO ESP32-C6                                     |
 | [iotDualModeBtn](iotDualModeBtn/)                | Switch / button (press, multi-press, long-press) | Seeed XIAO ESP32-C6                                     |
-| [iotEnvironmentalSensor](iotEnvironmentalSensor/)| Environmental sensing (BME680)                   | Seeed XIAO ESP32-C5 (planned)                           |
+| [iotEnvironmentalSensor](iotEnvironmentalSensor/)| Environmental sensing (BME680 → SHTC3+SGP41)     | Waveshare ESP32-C5-Touch-LCD-2.8 (target)               |
 | [iotBedsideLamp](iotBedsideLamp/)                | Extended color light (WS2812)                    | ESP32-C6-DevKitC-1 MVP → XIAO ESP32-C6 carrier          |
-| [iotDoorIntercom](iotDoorIntercom/)              | Doorbell + PIR + HTTPS MJPEG stream              | Seeed XIAO ESP32-S3 Sense                               |
+| [iotDoorIntercom](iotDoorIntercom/)              | Matter camera + doorbell/PIR/tamper/siren (video now, 2-way later) | Waveshare ESP32-P4-WIFI6 |
+| [iotSecurityCamera](iotSecurityCamera/)          | HTTPS MJPEG (+ snapshot later); HA stream wrapper                  | Seeed XIAO ESP32-S3 Sense |
 
 
-The repo name reflects a **five-device product line**; all five firmware apps exist today (SKU 5 MVP: Matter + MJPEG; WebRTC later).
+The repo name is historical (`cosmosFivePieceBasis`); the product line is now **six SKUs**.
 
 ## Prerequisites
 
@@ -34,8 +35,8 @@ export IDF_PATH=/path/to/esp-idf
 From any project directory:
 
 ```bash
-cd iotDualModeBtn   # or iotDoorSensor / iotEnvironmentalSensor / iotBedsideLamp / iotDoorIntercom
-idf.py set-target esp32c6   # esp32c5 for env sensor; esp32s3 for door intercom
+cd iotDualModeBtn   # or iotDoorSensor / iotEnvironmentalSensor / iotBedsideLamp / iotDoorIntercom / iotSecurityCamera
+idf.py set-target esp32c6   # esp32c5 for env sensor; esp32p4 for door intercom; esp32s3 for security camera
 idf.py build flash monitor
 ```
 
@@ -80,7 +81,8 @@ cosmosFivePieceBasis/
 ├── iotDualModeBtn/
 ├── iotEnvironmentalSensor/
 ├── iotBedsideLamp/
-└── iotDoorIntercom/
+├── iotDoorIntercom/
+└── iotSecurityCamera/
 ```
 
 Long-term target layout (shared Matter glue, CI): [docs/REPO_LAYOUT.md](docs/REPO_LAYOUT.md).

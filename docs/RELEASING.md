@@ -18,6 +18,7 @@ Always keep three numeric components. Do **not** use `1.0` or `1.1`; use `1.0.0`
 | iotEnvironmentalSensor | `1.0.0` | 1 |
 | iotBedsideLamp | `0.1.0` | 1 |
 | iotDoorIntercom | `0.1.0` | 1 |
+| iotSecurityCamera | `0.1.0` | 1 |
 
 ## When to bump what
 
@@ -81,6 +82,7 @@ iotDoorSensor-v1.1.0
 iotDualModeBtn-v1.0.0
 iotBedsideLamp-v0.1.0
 iotDoorIntercom-v0.1.0
+iotSecurityCamera-v0.1.0
 iotEnvironmentalSensor-v1.0.0
 ```
 
@@ -98,6 +100,7 @@ Pattern: `<app-dir>-v<PROJECT_VER>` with full `x.y.z`.
 ```bash
 git tag -a iotDoorIntercom-v0.1.0 -m "iotDoorIntercom PROJECT_VER 0.1.0"
 git push origin iotDoorIntercom-v0.1.0
+# likewise: iotSecurityCamera-v0.1.0
 ```
 
 7. Field OTA rollout: [cosmos-ha-field](https://github.com/CosmosKiller/cosmos-ha-field).

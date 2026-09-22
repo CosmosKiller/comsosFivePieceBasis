@@ -26,6 +26,7 @@ jobs:
             iotEnvironmentalSensor/main iotEnvironmentalSensor/tasks
             iotBedsideLamp/main iotBedsideLamp/tasks
             iotDoorIntercom/main iotDoorIntercom/tasks
+            iotSecurityCamera/main iotSecurityCamera/tasks
             components/cosmos_battery components/cosmos_matter_common
           )
           while IFS= read -r -d '' f; do

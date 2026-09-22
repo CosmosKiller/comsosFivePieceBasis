@@ -25,6 +25,9 @@ jobs:
           - app: iotBedsideLamp
             target: esp32c6
           - app: iotDoorIntercom
+            target: esp32p4
+            preview: true
+          - app: iotSecurityCamera
             target: esp32s3
     steps:
       - name: Checkout

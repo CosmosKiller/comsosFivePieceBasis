@@ -6,21 +6,22 @@ Record the combo you build with locally. CI uses the `espressif/esp-matter:lates
 
 | Component | Version |
 |-----------|---------|
-| ESP-IDF | [v5.4.1](https://github.com/espressif/esp-idf/releases/tag/v5.4.1) |
-| esp-matter | commit [`2cb668c`](https://github.com/espressif/esp-matter) (Jan 2026 local build) |
+| ESP-IDF | [v5.5.5](https://github.com/espressif/esp-idf/releases/tag/v5.5.5) |
+| esp-matter | commit [`ff9f07ec`](https://github.com/espressif/esp-matter/commit/ff9f07ec) (main @ full upgrade 2026-09-20) |
 
 Clone and align locally:
 
 ```bash
-git clone -b v5.4.1 --recursive https://github.com/espressif/esp-idf.git ~/esp/esp-idf
-git clone https://github.com/espressif/esp-matter.git ~/esp/esp-matter
-cd ~/esp/esp-matter && git checkout 2cb668c && git submodule update --init --recursive
-cd ~/esp/esp-matter && ./install.sh
+git clone -b v5.5.5 --recursive https://github.com/espressif/esp-idf.git ~/esp/esp-idf
+# or: cd ~/esp/esp-idf && git fetch --tags && git checkout v5.5.5 && git submodule update --init --recursive && ./install.sh
+git clone --recursive https://github.com/espressif/esp-matter.git ~/esp/esp-matter
+cd ~/esp/esp-matter && git checkout main && git pull --ff-only && git submodule update --init --recursive
 . ~/esp/esp-idf/export.sh
+cd ~/esp/esp-matter && ./install.sh
 export ESP_MATTER_PATH=~/esp/esp-matter
 ```
 
-Update this table when you bump toolchains.
+Update this table when you bump toolchains. **SKU 5 Matter 1.5 camera (ESP32-P4)** requires this IDF 5.5.x line.
 
 ## Environment
 
@@ -39,7 +40,10 @@ Each app ships **`sdkconfig.defaults`** in its project folder (loaded automatica
 |-----|-------|------------------------|
 | `iotDoorSensor` | XIAO ESP32-C6 | `esp32c6` |
 | `iotDualModeBtn` | XIAO ESP32-C6 | `esp32c6` |
-| `iotEnvironmentalSensor` | XIAO ESP32-C5 | `esp32c5` |
+| `iotEnvironmentalSensor` | Waveshare ESP32-C5-Touch-LCD-2.8 (target) | `esp32c5` |
+| `iotBedsideLamp` | XIAO / DevKit ESP32-C6 | `esp32c6` |
+| `iotDoorIntercom` | Waveshare ESP32-P4-WIFI6 (P4 + C6) | `esp32p4` + `esp32c6` (Matter camera split) |
+| `iotSecurityCamera` | XIAO ESP32-S3 Sense (HTTPS MJPEG) | `esp32s3` |
 
 Standard workflow inside a project directory:
 
@@ -102,13 +106,65 @@ Retarget from the legacy `esp32` config when setting up a fresh tree:
 ```bash
 cd iotEnvironmentalSensor
 rm -f sdkconfig sdkconfig.old
-idf.py --preview set-target esp32c5
-idf.py --preview build
+idf.py set-target esp32c5
+idf.py build
 ```
 
-ESP32-C5 is still a **preview** target in ESP-IDF 5.4 — append `--preview` to `idf.py` (CI does this automatically for the environmental sensor job).
+`sdkconfig.defaults` already sets `CONFIG_IDF_TARGET_ESP32C5=y` and Wi-Fi Matter options. CMake resolves `ESP_MATTER_DEVICE_PATH` to `esp32c5_devkit_c` under esp-matter. Explicitly:
 
-`sdkconfig.defaults` already sets `CONFIG_IDF_TARGET_ESP32C5=y` and Wi-Fi Matter options. CMake resolves `ESP_MATTER_DEVICE_PATH` to `esp32c5_devkit_c` under esp-matter.
+```bash
+export ESP_MATTER_DEVICE_PATH=$ESP_MATTER_PATH/device_hal/device/esp32c5_devkit_c
+```
+
+## SKU 5 — Waveshare ESP32-P4-WIFI6 (Matter 1.5 camera)
+
+**Product path (locked):** esp-matter **split mode** camera — same P4+C6 / SDIO layout as Espressif’s Function EV Board class.
+
+| Image | SoC | Role | Source |
+|-------|-----|------|--------|
+| `matter_camera` | ESP32-C6 | Matter + WebRTC **signaling** + security endpoints | `$ESP_MATTER_PATH/examples/camera/split_mode` + monorepo `iotDoorIntercom/c6/` |
+| `media_adapter` | ESP32-P4 | Capture / H.264 / WebRTC **media** + GPIO I/O | `$KVS_SDK_PATH/examples/streaming_only` + monorepo `iotDoorIntercom/p4/` |
+
+**CosmOS glue (in-repo):** `iotDoorIntercom/{c6,p4,shared}` — Matter security endpoints on C6; doorbell/PIR/tamper/siren tasks on P4 via `BRIDGE_EVT_SECURITY_IO` / `BRIDGE_CMD_SET_SIREN`. Upstream camera/WebRTC stay path-deps (layout A+C).
+
+```bash
+export COSMOS_FIVE_PIECE_PATH=/path/to/cosmosFivePieceBasis
+./iotDoorIntercom/scripts/build_c6.sh
+./iotDoorIntercom/scripts/build_p4.sh
+```
+
+**Ownership:** Matter / OTA requestor / factory-reset **policy** on **C6**; P4 **senses/actuates** (GPIO22 reset button, battery ADC later) and reports over the Hosted bridge.
+
+**Extra dependency** (not in esp-matter alone):
+
+```bash
+git clone --recursive https://github.com/espressif/esp-port-for-amazon-kvs-sdk.git ~/esp/esp-port-for-amazon-kvs-sdk
+export KVS_SDK_PATH=~/esp/esp-port-for-amazon-kvs-sdk
+```
+
+Pinned to **IDF v5.5.5** (required by `esp_lvgl_port` DPI callbacks used by KVS `streaming_only`). Waveshare bring-up uses Function EV v1.6 defaults + UART0 console overlay (`sdkconfig.defaults.waveshare_p4_wifi6.esp32p4` under `$KVS_SDK_PATH/examples/streaming_only`).
+
+**Bring-up order (kit on hand):**
+
+1. C6 signaling (`split_mode`, `idf.py set-target esp32c6`) — Waveshare **C6 UART pads** + USB–TTL; short **IO9→GND** only while downloading, then **remove the strap** before normal boot (C6 must leave `waiting for download` or P4 Hosted/SDIO will never come up).
+2. P4 media (`streaming_only`, `idf.py set-target esp32p4`) — board **USB-C** (QinHeng CH343, UART0). Overlay chain used on this kit:
+
+   ```bash
+   cd $KVS_SDK_PATH/examples/streaming_only
+   idf.py -D 'SDKCONFIG_DEFAULTS=sdkconfig.defaults;sdkconfig.defaults.esp32p4;sdkconfig.defaults.p4_function_ev_board_v16.esp32p4;sdkconfig.defaults.waveshare_p4_wifi6.esp32p4' set-target esp32p4
+   idf.py -p /dev/ttyACM1 build flash   # QinHeng = P4; Arduino TTL is usually the other ACM*
+   ```
+
+   Waveshare P4 samples are often **rev v1.x** (`CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y`). SDIO Hosted pins match Function EV (CLK18/CMD19/D0–D3=14–17, C6 reset GPIO54).
+
+   **Wi-Fi ownership (product path):** keep `CONFIG_STREAMING_WIFI_CREDENTIALS_FROM_KCONFIG` **off** so the P4 does **not** store SSID/password — C6 `matter_camera` owns Wi-Fi via Matter commissioning; P4 still calls `esp_wifi_connect()` (no `set_config`) and waits for `IP_EVENT_STA_GOT_IP` over ESP-Hosted. Do **not** push AP credentials from the P4 onto a Matter C6 (Hosted returns `ESP_ERR_WIFI_SSID`); commission the camera from Home Assistant / a Matter commissioner instead. Lab-only Hosted STA bring-up is for a non-Matter Hosted slave image — never commit secrets (use gitignored local `sdkconfig` only).
+
+   **Live View = noise / stuck:** confirm `got ip:` first. Kit cam = **Waveshare RPi Camera (B) / OV5647**. Use **RAW8 800×800** on this board — `VIDIOC_S_FMT` otherwise picks **1920×1080** first (still enabled formats), which overflows the ISP and yields garbage H.264 that looks like noise. Function EV defaults alone prefer SC2336.
+3. Power-cycle both chips with **IO9 free** (P4 Hosted resets the C6 on host boot — wait for Matter Wi-Fi to return); confirm P4 log shows ESP-Hosted slave ready + `got ip:`, then retry Live View. Wire doorbell / PIR / tamper / siren on the locked P4 GPIOs in [HARDWARE.md](HARDWARE.md#iotdoorintercom-sku-5) — CosmOS P4 I/O SoT is `iotDoorIntercom/p4/` + `shared/include/` (tact→3V3 + PD on GPIO27).
+
+**SKU 5 product firmware:** Waveshare **ESP32-P4-WIFI6** only — dual image (`esp32p4` media/I/O + `esp32c6` Matter camera). Dual-image **CI later**; use `iotDoorIntercom/scripts/build_*.sh` locally. **SKU 6** field firmware: `iotSecurityCamera` as `esp32s3` (HTTPS MJPEG + stream-gate OnOff only).
+
+Reference: [esp-matter camera](https://github.com/espressif/esp-matter/tree/main/examples/camera), [Waveshare ESP32-P4-WIFI6](https://docs.waveshare.com/ESP32-P4-WIFI6).
 
 ## Matter certificates
 

@@ -1,6 +1,6 @@
-menu "iotDoorIntercom"
+menu "iotSecurityCamera"
 
-    config IOT_DOOR_INTERCOM_HTTPS_STREAM
+    config IOT_SECURITY_CAMERA_HTTPS_STREAM
         bool "Serve MJPEG /stream over HTTPS (esp_https_server)"
         default y
         help

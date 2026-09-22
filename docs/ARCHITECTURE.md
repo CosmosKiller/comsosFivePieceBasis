@@ -10,7 +10,7 @@ Human ↔ Architect agreement. Platform choices, HW/SW partition, and phased pla
 
 | Field | Value |
 |-------|--------|
-| Status | `agreed` (SKU 3 / 5 platform upgrade Sep 2026); SKU 1 / 2 / 4 unchanged |
+| Status | `agreed` (SKU 5 / 6 product wrap-up Sep 2026); SKU 1 / 2 / 4 unchanged |
 | Last updated | 2026-09-20 |
 | Architect | Cosmos Architect |
 | Human owner | cosmoskiller |
@@ -21,19 +21,22 @@ Human ↔ Architect agreement. Platform choices, HW/SW partition, and phased pla
 
 ### One-sentence product
 
-A five-SKU Matter / Home Assistant device family: door contact + alarm, dual-mode button, environmental desk display, bedside lamp, and outdoor door intercom with camera.
+A **six-SKU** Matter / Home Assistant device family: door contact + alarm, dual-mode button, environmental desk display, bedside lamp, outdoor **Matter camera intercom** (video now, 2-way later), and **HTTPS MJPEG security camera** (HA `camera.*` wrapper; snapshot / presence / siren later).
 
 ### Success criteria
 
 - [x] SKU 1 carrier fab-ready (Gerber/BOM/CPL)
 - [ ] SKU 3 on Waveshare C5 touch LCD + Flux expansion carrier (SHTC3 + SGP41)
 - [ ] SKU 5 on Waveshare ESP32-P4-WIFI6 + Matter 1.5 camera + Flux outdoor carrier
-- [ ] HA packages commission and operate each SKU
+- [x] SKU 6 = `iotSecurityCamera` on XIAO ESP32-S3 Sense (HTTPS MJPEG migrated from former SKU 5 interim)
+- [ ] HA packages where needed (SKU 6 MJPEG wrapper; SKU 5 uses Matter Live View — **no HA package for now**)
 
 ### Explicit non-goals
 
 - Do not change SKU **1 / 2 / 4** platform or carriers in this upgrade.
-- Do not keep BME680 or XIAO ESP32-C5 / XIAO ESP32-S3 Sense as the long-term SKU 3 / 5 targets.
+- Do not keep BME680 or XIAO ESP32-C5 as the long-term SKU 3 target.
+- Do not treat S3 Sense MJPEG as the SKU 5 intercom product camera — that path is SKU 6.
+- Do not ship an HA package for SKU 5 until Matter Live View / intercom UX needs helpers.
 - Do not invent production GPIO for free header pins until carrier pin map is locked with firmware.
 
 ---
@@ -44,8 +47,8 @@ A five-SKU Matter / Home Assistant device family: door contact + alarm, dual-mod
 |------|------------|-------|
 | Cost | Prefer Waveshare main boards + small Flux carriers | Avoid full custom MCU PCBs for 3 / 5 v1 |
 | Power / battery | SKU 3: Waveshare **ETA6098** + MX1.25 1S; SKU 5: portable 1S + USB charge | Anti-leakage rules in HARDWARE.md |
-| Size / enclosure | SKU 3 desk; SKU 5 outdoor doorbell | Carrier form TBD in Flux |
-| Connectivity | Matter over Wi-Fi; SKU 5 Matter **1.5 camera** | P4 + C6 split is Espressif reference |
+| Size / enclosure | SKU 3 desk; SKU 5 outdoor doorbell; SKU 6 compact cam | Carrier form TBD in Flux |
+| Connectivity | Matter over Wi-Fi; SKU 5 Matter **1.5 camera**; SKU 6 MJPEG + HA `camera.*` | P4 + C6 split is Espressif reference |
 | Certifications / protocol | Test VID/PID family; production cert later | |
 | Schedule | Devkits on hand for bring-up | Firmware port after docs lock |
 | Supply chain | Waveshare + Sensirion + JLCPCB | |
@@ -64,8 +67,14 @@ A five-SKU Matter / Home Assistant device family: door contact + alarm, dual-mod
 | SKU 3 Flux role | **Expansion carrier only** | Gas (**SGP41**), mounts, extra I/O — not a second MCU; pressure deferred |
 | SKU 5 main board | [Waveshare ESP32-P4-WIFI6](https://docs.waveshare.com/ESP32-P4-WIFI6) (P4 + ESP32-C6-MINI-1) | Espressif Matter camera class; kit on hand |
 | SKU 5 MCU split | **P4** = media / H.264 / camera; **C6** = Wi-Fi 6 + Matter signaling | Matches esp-matter camera example |
-| SKU 5 camera goal | **Matter 1.5 camera soon** (WebRTC) | Supersedes S3 Sense MJPEG as product target |
+| SKU 5 camera goal | **Matter 1.5 camera** — **video only now**; **2-way A/V later** | Intercom Live View via Matter; not MJPEG |
+| SKU 5 Matter entities | **Doorbell + PIR + tamper + siren** (carrier) + Matter camera | Native Matter; **no HA package for now** |
 | SKU 5 Flux role | **Outdoor expansion carrier** | Doorbell, PIR, tamper, siren, battery/power as needed |
+| SKU 6 main board | **Seeed XIAO ESP32-S3 Sense** (OV2640 DVP) | HTTPS MJPEG; HA `camera.*` via MJPEG IP Camera |
+| SKU 6 product role | **MJPEG security camera** | Video now; **snapshot later**; **no doorbell / PIR / tamper** |
+| SKU 6 deferred | **Siren** + **presence** ([espectre](https://github.com/francescopace/espectre) CSI) | Not in v1 feature set |
+| SKU 6 HA | **Package = stream wrapper** (OnOff gate + MJPEG UI camera) | No Matter native camera entity |
+| SKU 6 firmware app | **`iotSecurityCamera/`** | Migrated from former S3 intercom MJPEG stack |
 | Framework / SDK | **ESP-IDF** + **esp-matter** | P4: prefer IDF (Arduino limited); C5: IDF |
 | Language | C / C++ | |
 
@@ -73,10 +82,11 @@ A five-SKU Matter / Home Assistant device family: door contact + alarm, dual-mod
 
 - [x] Human and Architect agree on SKU 3 / 5 main boards
 - [x] Flux = carrier / expand capabilities (not replace main board)
-- [x] SKU 5 → Matter 1.5 camera path
+- [x] SKU 5 → Matter camera (video now, 2-way later) + doorbell/PIR/tamper/siren; **no HA package**
+- [x] SKU 6 → MJPEG cam + HA stream wrapper; no doorbell/PIR/tamper; siren/presence later
 - [x] SKU 3 → ETA6098 battery option + **SGP41** on carrier
 - [x] Do not touch SKU 1 / 2 / 4
-- [ ] Pin maps for carrier headers locked with firmware (next)
+- [ ] Pin maps for carrier headers locked with firmware (SKU 5 done; SKU 3 next)
 - [ ] BUILD.md / MANUFACTURING.md updated for new targets after first bring-up
 
 Once carrier GPIOs are locked, keep [HARDWARE.md](HARDWARE.md) as GPIO source of truth and align firmware.
@@ -91,8 +101,9 @@ Once carrier GPIOs are locked, keep [HARDWARE.md](HARDWARE.md) as GPIO source of
 |----------------|-----------|-----------|-------|
 | Home Assistant | Matter / Wi-Fi | ↔ | Commission + entities |
 | User (SKU 3) | Touch LCD + optional carrier sensors | → | Local UI + env data |
-| User (SKU 5) | Doorbell / PIR / camera / siren | → | Security + video |
-| Waveshare main PCB | USB-C, battery, radios, onboard sensors | — | Product compute |
+| User (SKU 5) | Doorbell / PIR / tamper / siren + Matter Live View | → | Video now; 2-way later; no HA package |
+| User (SKU 6) | HTTPS MJPEG (+ snapshot later) | → | HA package wraps stream; presence/siren later |
+| Waveshare main PCB | USB-C, battery, radios, onboard sensors | — | Product compute (3 / 5) |
 | Flux carrier | Headers / sensors / outdoor I/O | — | Expansion only |
 
 ### High-level block diagrams
@@ -116,6 +127,17 @@ Once carrier GPIOs are locked, keep [HARDWARE.md](HARDWARE.md) as GPIO source of
                               C6: Wi-Fi 6 + Matter 1.5 camera signaling
 ```
 
+**SKU 6**
+
+```text
+[ XIAO ESP32-S3 Sense + OV2640 ]
+              │
+   Matter OnOff stream gate + HTTPS MJPEG /stream
+   HA: MJPEG IP Camera entity (no Matter camera cluster)
+   Later: snapshot; siren; CSI presence (espectre)
+   Out of scope: doorbell / PIR / tamper
+```
+
 ### HW / SW partition
 
 | Responsibility | Hardware | Firmware | Notes |
@@ -125,7 +147,11 @@ Once carrier GPIOs are locked, keep [HARDWARE.md](HARDWARE.md) as GPIO source of
 | Gas | **SGP41** on carrier | New task (VOC + NOx indices) | Shared I2C bus careful |
 | Camera / encode (SKU 5) | P4 + MIPI-CSI | media_adapter path | Matter 1.5 |
 | Matter / Wi-Fi (SKU 5) | C6 on WIFI6 board | matter_camera path | Dual image flash |
-| Security I/O (SKU 5) | Carrier | Port from S3 Sense app | New pin map TBD |
+| Security I/O (SKU 5) | Carrier → P4 GPIO27/32/33/46/21/22 | `iotDoorIntercom/` tasks | Locked map in HARDWARE.md |
+| MJPEG camera (SKU 6) | S3 Sense OV2640 | `cam_task` + `http_stream_task` | HA MJPEG IP Camera + OnOff gate |
+| Snapshot (SKU 6, later) | same | Still JPEG / HTTP path TBD | After live stream stable |
+| Presence / siren (SKU 6, later) | CSI / GPIO | espectre + siren task | Not v1 |
+| Doorbell/PIR/tamper (SKU 6) | — | **Out of scope** | Belong to SKU 5 only |
 
 ---
 
@@ -134,9 +160,11 @@ Once carrier GPIOs are locked, keep [HARDWARE.md](HARDWARE.md) as GPIO source of
 | ID | Decision | Status | Consequences |
 |----|----------|--------|--------------|
 | ADR-010 | SKU 3/5 use Waveshare **main boards**; Flux builds **carriers** | accepted | Smaller ECAD scope; depend on Waveshare pinouts/docs |
-| ADR-011 | SKU 5 targets **Matter 1.5 camera** (P4+C6), not MJPEG-only | accepted | Dual firmware; retire S3 Sense as product MCU |
+| ADR-011 | SKU 5 targets **Matter 1.5 camera** (P4+C6), not MJPEG-only | accepted | Dual firmware; intercom Live View via Matter |
 | ADR-012 | SKU 3 env sensing = **SHTC3 + SGP41**; BME680 retired; **pressure deferred** | accepted | VOC + NOx on carrier; no Matter pressure until later |
 | ADR-013 | SKU 3 power = Waveshare **ETA6098** + MX1.25 1S | accepted | Carrier need not duplicate charger unless extra loads require it |
+| ADR-014 | SKU 6 = MJPEG security cam + HA stream wrapper; no doorbell/PIR/tamper; siren/presence later | accepted | Six-SKU; HA `camera.*` only path without Matter camera entity |
+| ADR-015 | SKU 5 = Matter camera (video now, 2-way later) + doorbell/PIR/tamper/siren; **no HA package** | accepted | Controllers use Matter Live View + native entities |
 | ADR-001… | Prior XIAO-centric SKU 3/5 decisions | superseded | See HARDWARE history / git |
 
 ---
@@ -145,11 +173,12 @@ Once carrier GPIOs are locked, keep [HARDWARE.md](HARDWARE.md) as GPIO source of
 
 | Risk / question | Impact | Mitigation / owner | Status |
 |-----------------|--------|--------------------|--------|
-| Pressure on SKU 3 | Matter P entity | **Deferred** — no pressure on first carrier | closed |
+| Pressure on SKU 3 | Missing P entity | **Deferred** — no pressure on first carrier | closed |
 | SGP40 vs SGP41 | BOM / NOx | **SGP41 locked** (VOC + NOx) | closed |
 | P4 dual-image flash / OTA complexity | Manufacturing | Follow esp-matter camera docs; kit bring-up first | open |
-| Free GPIO / SH1.0 pin assign for carriers | Firmware lock | Map after header pinout read; update HARDWARE | open |
-| Interim S3 Sense firmware vs P4 target | Dual maintenance | Keep S3 for field until P4 Matter camera works | open |
+| Free GPIO / SH1.0 pin assign for carriers | Firmware lock | **SKU 5 locked** (HARDWARE.md); SKU 3 still open | open (SKU 3) |
+| Google Home / HA Matter camera entity gaps | SKU 5 Live View UX | HA Live View works; Google may lack Matter cam; SKU 6 covers HA `camera.*` | open |
+| espectre CSI presence maturity | SKU 6 roadmap | Track upstream; keep PIR until CSI presence ships | open |
 
 ---
 
@@ -158,25 +187,32 @@ Once carrier GPIOs are locked, keep [HARDWARE.md](HARDWARE.md) as GPIO source of
 ### Phase 0 — Align
 
 - [x] Agree SKU 3 / 5 platforms with human
-- [x] Record agreement in this file + HARDWARE.md
-- [x] Gas = **SGP41**; pressure deferred
+- [x] Lock SKU 5 / 6 product wrap-up (Matter cam + entities vs MJPEG + HA wrapper)
+- [x] Migrate MJPEG firmware to `iotSecurityCamera/`; strip cam from `iotDoorIntercom`
 
 ### Phase 1 — Devkit bring-up
 
 - [ ] SKU 3: ESP-IDF on C5-Touch-LCD-2.8 — SHTC3, display, ETA6098 battery sense
-- [ ] SKU 5: ESP32-P4-WIFI6 kit — Matter camera example (P4 + C6)
+- [x] SKU 5: ESP32-P4-WIFI6 kit — Matter camera **split mode** (C6 `matter_camera` + P4 `streaming_only` / KVS) — CosmOS glue in `iotDoorIntercom/{c6,p4}`; see [BUILD.md](BUILD.md#sku-5--waveshare-esp32-p4-wifi6-matter-15-camera)
+  - [ ] Clone `esp-port-for-amazon-kvs-sdk` → `KVS_SDK_PATH`
+  - [ ] Build/flash C6 signaling; build/flash P4 media
+  - [ ] WebRTC stream verified on kit (before Flux carrier / security I/O port)
+- [x] SKU 6: S3 Sense HTTPS MJPEG field path (app = `iotSecurityCamera`)
 
 ### Phase 2 — Firmware port
 
 - [ ] Port `iotEnvironmentalSensor` off BME680 → SHTC3 (+ SGP later)
-- [ ] Port / replace `iotDoorIntercom` camera path toward Matter 1.5
+- [x] Port SKU 5 security I/O onto P4 GPIOs; wire Matter 1.5 camera to intercom UX (bridge EVT/CMD; C6 policy + P4 sense/actuate)
+- [ ] SKU 6: evaluate espectre CSI presence (optional occupancy path)
 
 ### Phase 3 — Flux carriers
 
 - [ ] SKU 3 carrier: **SGP41**, header mating, mounts
 - [ ] SKU 5 carrier: doorbell, PIR, tamper, siren, power as needed
+- [ ] SKU 6 carrier (optional): mount / tamper / power for Sense module
 
 ### Phase 4 — HA / manufacturing
 
-- [ ] Update HA packages for new entities
-- [ ] Update BUILD.md / MANUFACTURING.md targets when builds exist
+- [x] HA: SKU 6 stream-wrapper package; SKU 5 **no package** (Matter Live View)
+- [ ] Slim SKU 6 firmware to video/stream-gate only (drop inherited doorbell/PIR/tamper code)
+- [ ] Update BUILD.md / MANUFACTURING.md targets when P4 builds land in-tree

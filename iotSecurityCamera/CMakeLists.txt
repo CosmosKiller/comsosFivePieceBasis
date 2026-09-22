@@ -42,7 +42,7 @@ set(EXTRA_COMPONENT_DIRS
     ${extra_components_dirs_append}
 )
 
-project(iotDoorIntercom)
+project(iotSecurityCamera)
 
 if(CONFIG_ENABLE_ENCRYPTED_OTA)
     target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "esp_image_encryption_key.pem" TEXT)

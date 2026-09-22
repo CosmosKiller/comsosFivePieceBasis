@@ -1,6 +1,6 @@
 /**
  * @file matter_task.h
- * @brief Matter callback declarations for the door intercom.
+ * @brief Matter callback declarations for the SKU6 MJPEG camera.
  */
 
 #ifndef MATTER_TASK_H_

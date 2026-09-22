@@ -32,12 +32,15 @@ export IDF_PATH=/path/to/esp-idf
 | Dual-mode button     | `iotDualModeBtn`         | Switch (press / multi / long) | `0x8002` | esp32c6    | `gen_dual_mode_btn.sh`        |
 | Environmental sensor | `iotEnvironmentalSensor` | BME680 environmental          | `0x8003` | esp32c5    | `gen_environmental_sensor.sh` |
 | Bedside lamp         | `iotBedsideLamp`         | Extended color light          | `0x8004` | esp32c6    | `gen_bedside_lamp.sh`         |
-| Door intercom        | `iotDoorIntercom`        | Doorbell + PIR + MJPEG        | `0x8005` | esp32s3    | `gen_door_intercom.sh`        |
+| Door intercom        | `iotDoorIntercom`        | Matter cam + doorbell/PIR/tamper/siren | `0x8005` | esp32p4*   | `gen_door_intercom.sh`        |
+| Security camera      | `iotSecurityCamera`      | HTTPS MJPEG (+ snapshot later)         | `0x8006` | esp32s3    | `gen_security_camera.sh`      |
 
+
+\*SKU 5 is Waveshare P4+C6 dual-image; mfg script targets the P4-side app (`esp32p4`) until C6 Matter factory flow is added.
 
 **Vendor ID:** `0xFFF2` (Espressif **Chip-Test-** credentials — closed beta / lab only).
 
-**Serial / label codes:** `DOOR`, `BTN`, `ENV`, `LAMP`, `INTR` (e.g. `BETA007-INTR-001`).
+**Serial / label codes:** `DOOR`, `BTN`, `ENV`, `LAMP`, `INTR`, `CAM` (e.g. `BETA007-CAM-001`).
 
 ---
 

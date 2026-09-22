@@ -1,6 +1,6 @@
 /**
  * @file panic_alarm_task.h
- * @brief Panic alarm LED‖buzzer sequence (GPIO4); latched until HA clears Matter OnOff.
+ * @brief Panic alarm LED‖buzzer sequence (P4 GPIO46); latched until C6 clears siren OnOff.
  */
 
 #ifndef PANIC_ALARM_TASK_H_
@@ -15,15 +15,13 @@
 extern "C" {
 #endif
 
-#define ALARM_LED_PIN GPIO_NUM_4 /*!< XIAO D3 — LED + buzzer (active-high) */
+#define ALARM_LED_PIN GPIO_NUM_46 /*!< P4 GPIO46 — siren LED + buzzer via NPN (active-high) */
 
 #define PANIC_ALARM_STACK_SIZE    3072
 #define PANIC_ALARM_TASK_PRIORITY 4
 
 /**
  * @brief Start the panic-alarm blink task (idempotent if already running).
- *
- * Short accelerating warning, then continuous 250/250 ms blink.
  */
 esp_err_t panic_alarm_task_init(void);
 

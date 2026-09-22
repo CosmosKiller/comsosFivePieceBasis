@@ -1,8 +1,8 @@
-# iotDoorIntercom — ESP32-S3 (XIAO Sense), Wi-Fi Matter doorbell + PIR + HTTPS MJPEG stream.
+# iotSecurityCamera — ESP32-S3 (XIAO Sense), Wi-Fi Matter + HTTPS MJPEG security camera.
 # Fresh setup: idf.py set-target esp32s3 && idf.py build
 
 # HTTPS /stream (embedded Beta self-signed cert). Disable only for lab HTTP bring-up.
-CONFIG_IOT_DOOR_INTERCOM_HTTPS_STREAM=y
+CONFIG_IOT_SECURITY_CAMERA_HTTPS_STREAM=y
 
 # XIAO ESP32-S3 Sense BOOT button is GPIO0 (C6 SKUs keep default GPIO9).
 CONFIG_FACTORY_RESET_BUTTON_GPIO=0
@@ -48,7 +48,7 @@ CONFIG_BUTTON_PERIOD_TIME_MS=20
 CONFIG_BUTTON_LONG_PRESS_TIME_MS=5000
 
 
-# Door intercom: OnOff gate, PIR, doorbell, tamper contact, siren OnOff (GPIO4)
+# SKU6: OnOff stream gate only (doorbell/PIR/tamper/siren = SKU5)
 CONFIG_SUPPORT_BOOLEAN_STATE_CLUSTER=y
 CONFIG_SUPPORT_ON_OFF_CLUSTER=y
 CONFIG_SUPPORT_OCCUPANCY_SENSING_CLUSTER=y

@@ -10,7 +10,7 @@ APPS=(
     "iotDualModeBtn:esp32c6"
     "iotEnvironmentalSensor:esp32c5"
     "iotBedsideLamp:esp32c6"
-    "iotDoorIntercom:esp32s3"
+    "iotSecurityCamera:esp32s3"
 )
 
 if [[ -z "${ESP_MATTER_PATH:-}" ]]; then
@@ -36,10 +36,21 @@ for entry in "${APPS[@]}"; do
     fi
 
     if [[ ! -f sdkconfig ]] || ! grep -q "CONFIG_IDF_TARGET=\"${target}\"" sdkconfig 2>/dev/null; then
-        idf.py set-target "$target"
+        PREVIEW=()
+        if [[ "$target" == "esp32p4" || "$target" == "esp32c5" ]]; then
+            PREVIEW=(--preview)
+        fi
+        idf.py "${PREVIEW[@]}" set-target "$target"
     fi
 
-    idf.py build
+    PREVIEW=()
+    if [[ "$target" == "esp32p4" || "$target" == "esp32c5" ]]; then
+        PREVIEW=(--preview)
+    fi
+    idf.py "${PREVIEW[@]}" build
 done
 
-echo "All apps built successfully."
+echo "Note: SKU5 (iotDoorIntercom) is dual-image — build with:"
+echo "  COSMOS_FIVE_PIECE_PATH=$ROOT iotDoorIntercom/scripts/build_c6.sh"
+echo "  COSMOS_FIVE_PIECE_PATH=$ROOT iotDoorIntercom/scripts/build_p4.sh"
+echo "All listed apps built successfully."

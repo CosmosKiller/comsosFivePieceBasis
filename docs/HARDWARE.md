@@ -205,7 +205,7 @@ Drive with **NPN** (e.g. S8050) + ~1 kΩ base from GPIO: collector to buzzer ←
 
 Firmware stays on/off (same blink as the LED). Do **not** put both buzzers on one GPIO. Status LED (GPIO21) stays silent.
 
-**SKU 5** keeps a single alarm/siren active piezo on GPIO4.
+**SKU 5** keeps a single alarm/siren active piezo on **GPIO46** (P4 carrier — see SKU 5 GPIO map).
 
 ### RF / layout (Wi‑Fi SKUs: C6, C5)
 
@@ -263,6 +263,7 @@ Firmware GPIO + Flux prompts in this file are the **source of truth** until Gerb
 | iotEnvironmentalSensor (3) | **Platform agreed:** Waveshare C5-Touch-LCD-2.8 + Flux carrier (**SGP41**); see ARCHITECTURE.md           | *Add carrier Flux URL when shared*                                               |
 | iotBedsideLamp (4)         | Prompt + BOM ready (Ø50 mm)                                                                          | *Add project URL when shared*                                                    |
 | iotDoorIntercom (5)        | **Platform agreed:** Waveshare ESP32-P4-WIFI6 + Matter 1.5 cam + Flux outdoor carrier                | *Add carrier Flux URL when shared*                                               |
+| iotSecurityCamera (6)      | **Locked:** XIAO ESP32-S3 Sense HTTPS MJPEG; CSI presence (espectre) later                           | *Add carrier Flux URL when shared*                                               |
 
 
 When a Flux or KiCad project is public (or in a private hardware repo), paste the URL in the table above and optionally add a `hardware/` submodule or sibling repo note here.
@@ -775,11 +776,12 @@ Target: `esp32c5` on Waveshare BSP. Replace `bme680_task` with **SHTC3** (+ **SG
 ## iotDoorIntercom (SKU 5)
 
 **Main board:** [Waveshare ESP32-P4-WIFI6](https://docs.waveshare.com/ESP32-P4-WIFI6) (ESP32-P4NRW32 + **ESP32-C6-MINI-1** Wi-Fi 6/BLE)  
-**Matter role:** Matter **1.5 camera** (WebRTC) + doorbell / PIR / tamper / siren (carrier).  
+**Matter role:** Matter **1.5 camera** (**video only now**; **2-way A/V later**) + doorbell / PIR / tamper / siren (carrier).  
 **PID (test):** `0x8005` — see [MANUFACTURING.md](MANUFACTURING.md).  
-**Platform:** agreed 2026-09-20 — [ARCHITECTURE.md](ARCHITECTURE.md). Devkit on hand for bring-up. Flux builds an **outdoor expansion carrier**.
+**HA:** **No package for now** — use Matter Live View + native doorbell / PIR / tamper / siren entities.  
+**Platform:** agreed 2026-09-20 — [ARCHITECTURE.md](ARCHITECTURE.md) ADR-015.
 
-> **Supersedes** Seeed XIAO ESP32-S3 Sense + MJPEG `/stream` as the product target. Keep existing S3 firmware only as interim field bridge until P4 Matter camera works.
+> **HTTPS MJPEG** is **SKU 6** only. SKU 5 product video is Matter 1.5 on P4+C6.
 
 ### Product decisions (locked for v1)
 
@@ -787,12 +789,14 @@ Target: `esp32c5` on Waveshare BSP. Replace `bme680_task` with **SHTC3** (+ **SG
 | Item | Choice |
 | ---- | ------ |
 | Main electronics | Waveshare **ESP32-P4-WIFI6** (P4 + C6) |
-| Camera | **MIPI-CSI** on P4 (e.g. OV5647-class); H.264 @ 1080p class |
-| Matter / Wi-Fi | **ESP32-C6** companion on board — Matter signaling + Wi-Fi 6 |
-| Video goal | **Matter 1.5 camera soon** (esp-matter camera / WebRTC split) |
-| Audio | Onboard mic + speaker header (Waveshare) |
-| Flux carrier | Doorbell, AM312 PIR, tamper (leaf + pogo), siren LED/piezo, 1S battery path as needed |
-| Form | Outdoor doorbell / wall-mount; carrier ~60×100 mm class (Flux) |
+| Camera | **MIPI-CSI** on P4 — kit: **Waveshare RPi Camera (B) Rev 2.0 (OV5647)** |
+| Matter / Wi-Fi | **ESP32-C6** companion — Matter signaling + Wi-Fi 6 |
+| Video (now) | Matter Live View (WebRTC) — **one-way video** |
+| Audio / 2-way (later) | Onboard mic + speaker → full intercom |
+| Matter entities | Doorbell, PIR occupancy, tamper contact, siren OnOff (+ camera) |
+| HA package | **None for now** |
+| Flux carrier | Doorbell, AM312 PIR, tamper (leaf + pogo), siren LED/piezo, 1S battery as needed |
+| Form | Outdoor doorbell / wall-mount |
 | Door lock | None for v1 |
 
 ### SoC split (Espressif Matter camera)
@@ -802,7 +806,33 @@ Target: `esp32c5` on Waveshare BSP. Replace `bme680_task` with **SHTC3** (+ **SG
 | **ESP32-P4** | MIPI-CSI capture, ISP, H.264, WebRTC media, audio |
 | **ESP32-C6** | Wi-Fi 6 + BLE, Matter stack / signaling |
 
-Expect **two firmware images** (media_adapter on P4, matter_camera on C6) per Espressif docs. Expansion I/O uses P4 **40-pin / remaining GPIOs** — exact doorbell/PIR/tamper/siren pins **TBD** when mapping the Waveshare header (do not reuse S3 Sense DVP pin table).
+Expect **two firmware images** (media_adapter on P4, matter_camera on C6) per Espressif docs. Security I/O lives on the **P4 40-pin header** — GPIO map below is firmware source of truth (do not reuse XIAO S3 Sense pins).
+
+### GPIO map (must match firmware)
+
+P4 expansion header (Pico-compatible). Pulls at the MCU pin on the carrier.
+
+| Function | P4 GPIO | Pull / drive | Firmware |
+| -------- | ------- | ------------ | -------- |
+| Doorbell | **GPIO27** | Tact to **GND**; internal/external pull-up (pressed = LOW). Also accepts tact→3V3 + PD. | `DOORBELL_PIN` |
+| PIR | **GPIO32** | External 10 kΩ to GND; AM312 OUT | `PIR_PIN` |
+| Tamper | **GPIO33** | External 10 kΩ to 3V3; NC to GND when seated (open = HIGH) | `TAMPER_PIN` |
+| Siren | **GPIO46** | Active-high via NPN + piezo / LED | `ALARM_LED_PIN` |
+| Status LED | **GPIO21** | Active-high LED | `LED_PIN` |
+| Factory reset | **GPIO22** | External 10 kΩ to 3V3; tact to GND (carrier recessed — not board BOOT) | `CONFIG_FACTORY_RESET_BUTTON_GPIO` |
+| Battery ADC (later) | **GPIO20** | 2:1 divider → ADC1_CH4 | `CONFIG_COSMOS_BATTERY_ADC_GPIO` |
+
+### Reserved pins (do not use for carrier I/O)
+
+| Pins | Why |
+| ---- | --- |
+| GPIO14–19 | ESP-Hosted SDIO to C6 |
+| GPIO54 | C6 reset (Hosted) |
+| GPIO37 / 38 | UART0 console (USB-UART) |
+| GPIO7 / 8 | Board I2C0 (codec / mic path) |
+| GPIO35 | On-board BOOT |
+| GPIO39–45 | MicroSD (+ SD power GPIO45) |
+| GPIO24 / 25 | USB |
 
 ### Tamper electromechanical detail (carrier — unchanged intent)
 
@@ -818,17 +848,25 @@ Main board (already chosen — not fabricated here):
 - Docs: https://docs.waveshare.com/ESP32-P4-WIFI6
 - Product camera = MIPI-CSI on P4 (Matter 1.5 camera / WebRTC). Do not design for XIAO S3 Sense DVP.
 
+Locked P4 GPIO map (must match firmware — HARDWARE.md):
+- GPIO27 DOORBELL — tact to 3V3, 10 kΩ pull-down at pin
+- GPIO32 PIR — AM312 OUT, 10 kΩ pull-down at pin
+- GPIO33 TAMPER — NC to GND when seated, 10 kΩ pull-up to 3V3 (open = HIGH)
+- GPIO46 SIREN — NPN (S8050) + 1 kΩ base → red LED 330 Ω + 3–5 V active piezo from 3V3/BAT+; flyback diode
+- GPIO21 STATUS LED — active-high
+- GPIO22 FACTORY RESET — recessed tact to GND, 10 kΩ pull-up to 3V3 (not board BOOT GPIO35)
+- GPIO20 BATTERY ADC (optional) — 2:1 divider mid-tap
+
+Do NOT use: GPIO14–19 (Hosted SDIO), GPIO54 (C6 reset), GPIO37/38 (UART0), GPIO7/8 (board I2C), GPIO35 (BOOT), GPIO39–45 (TF), GPIO24/25 (USB).
+
 Carrier goals:
 - Outdoor doorbell / wall-mount (~60×100 mm class). Gasketed enclosure, camera window aligned to the P4 CSI module / flex.
-- Doorbell tact to 3V3 with 10 kΩ pull-down at the MCU pin.
-- AM312 (3.3 V PIR) OUT with 10 kΩ pull-down; Fresnel window; keep siren/LED optical isolation from PIR.
-- Tamper: leaf spring to chassis GND when seated + two gold/pogo pads on PCB back; 10 kΩ pull-up to 3V3 at tamper GPIO (open = HIGH).
-- Siren: NPN (S8050) + 1 kΩ base → red LED 330 Ω + 3–5 V active piezo from 3V3/BAT+; flyback diode; vented grille.
-- Factory-reset tact recessed, pull-up to 3V3, separate from doorbell.
+- Fresnel window for PIR; keep siren/LED optical isolation from PIR.
+- Tamper: leaf spring to chassis GND when seated + two gold/pogo pads on PCB back.
 - Power: prefer single USB-C charge path (main board and/or carrier J1) into 1S charger + protect → pouch on JST-PH 2.0. No dual-feed. Size for >=1 A camera + Wi-Fi peaks.
-- Mate mechanically/electrically to P4-WIFI6 expansion headers — document pin map; leave GPIO numbers as TBD until firmware lock.
+- Mate to P4-WIFI6 40-pin header; silkscreen GPIO numbers above.
 - 2 layers, 1.6 mm FR4, 1 oz, conformal-coat friendly, JLCPCB 0603 passives.
-- Silkscreen: BAT+, GND, 3V3, DOORBELL, PIR, TAMPER, SIREN, REV.
+- Silkscreen: BAT+, GND, 3V3, DOORBELL, PIR, TAMPER, SIREN, STATUS, RESET, REV.
 
 Do not keep OV2640/S3 Sense as the camera solution on this carrier.
 ```
@@ -866,11 +904,55 @@ Do not keep OV2640/S3 Sense as the camera solution on this carrier.
 - [ ] Tamper leaf + pogo path; HA clears siren via OnOff
 - [ ] 1S charge path; battery % if enabled
 - [ ] Outdoor enclosure RF / camera window soak
-- [ ] HA package updated for Matter camera (retire MJPEG-only assumption)
+- [ ] HA package updated for Matter camera (not MJPEG)
 
 ### Firmware modules
 
-**Target:** dual image — P4 `media_adapter` + C6 `matter_camera` (esp-matter camera). Port security tasks (`door_intercom_task`, `panic_alarm_task`, …) onto mapped P4 GPIOs. Retire product dependence on `http_stream_task` MJPEG when Matter camera ships.
+**Target:** dual image — P4 `media_adapter` + C6 `matter_camera` (esp-matter camera). Security tasks use the locked P4 GPIO map above.
 
-> **Interim:** existing `esp32s3` Sense app remains for field units until P4 path is validated.
+**App today:** `iotDoorIntercom/` — P4-side I/O source of truth (**Doorbell / PIR / Tamper / Siren** Fixed Labels + legacy OnOff call/media gate). No MJPEG (`iotSecurityCamera` / SKU 6). Dual-image Matter camera merge is separate.
+
+---
+
+## iotSecurityCamera (SKU 6)
+
+**Module:** [Seeed XIAO ESP32-S3 Sense](https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/) (OV2640 DVP)  
+**Matter role:** OnOff **stream gate** only (no Matter camera cluster).  
+**Video:** HTTPS MJPEG `GET /stream` now; **snapshot later**.  
+**PID (test):** `0x8006` — see [MANUFACTURING.md](MANUFACTURING.md).  
+**HA:** Package wraps the MJPEG stream (UI MJPEG IP Camera + OnOff gate helpers).  
+**Platform:** locked 2026-09-20 — [ARCHITECTURE.md](ARCHITECTURE.md) ADR-014.
+
+### Product decisions (locked for v1)
+
+| Item | Choice |
+| ---- | ------ |
+| Main electronics | Seeed **XIAO ESP32-S3 Sense** |
+| Camera (now) | Onboard **OV2640** → HTTPS MJPEG `/stream` |
+| Snapshot | **Later** |
+| Matter | Stream-gate OnOff (+ battery if kept); **no** doorbell / PIR / tamper |
+| Siren | **Later** |
+| Presence | **Later** — [espectre](https://github.com/francescopace/espectre) CSI |
+| Form | Compact wall / shelf security cam |
+| Out of scope | Doorbell, PIR, tamper (SKU 5 only) |
+
+### Controls (v1)
+
+| Signal | Function |
+|--------|----------|
+| Stream gate | Matter OnOff — enables / disables MJPEG clients |
+| Factory reset | GPIO0 (BOOT) long-press |
+| HTTPS cert | Embedded Beta self-signed (`main/certs/`) |
+
+### Bring-up checklist
+
+- [x] HTTPS MJPEG streams; HA MJPEG IP Camera entity
+- [x] Matter stream gate
+- [ ] Slim firmware: remove inherited doorbell / PIR / tamper / siren tasks
+- [ ] Snapshot endpoint
+- [ ] Presence (espectre) + siren (later)
+
+### Firmware modules
+
+**App:** `iotSecurityCamera/` — `cam_task` + `http_stream_task` (+ Matter OnOff gate). Inherited intercom I/O tasks are **legacy** until slimmed.
 

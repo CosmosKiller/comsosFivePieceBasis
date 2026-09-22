@@ -1,3 +1,8 @@
+/**
+ * @file panic_alarm_task.c
+ * @brief P4 siren GPIO46 — latched until C6 clears Matter OnOff via SET_SIREN.
+ */
+
 #include <esp_log.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -38,7 +43,7 @@ static void panic_alarm_task_active(void *pParameters)
         }
     }
 
-    ESP_LOGE(TAG, "Panic alarm active (latched until HA clears alarm OnOff)");
+    ESP_LOGE(TAG, "Panic alarm active (latched until HA clears siren OnOff)");
     while (1) {
         gpio_set_level(ALARM_LED_PIN, 1);
         vTaskDelay(pdMS_TO_TICKS(250));
