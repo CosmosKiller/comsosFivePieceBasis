@@ -1,6 +1,8 @@
 /**
  * @file panic_alarm_task.c
- * @brief P4 siren GPIO46 — latched until C6 clears Matter OnOff via SET_SIREN.
+ * @brief P4 siren GPIO21 — latched until C6 clears Matter OnOff via SET_SIREN.
+ *
+ * Do not use GPIO39–48: ESP32-P4 SDMMC/TF defaults (conflicts with streaming_only).
  */
 
 #include <esp_log.h>
@@ -27,6 +29,7 @@ static void panic_alarm_gpio_init(void)
     gpio_config(&conf);
     gpio_set_level(ALARM_LED_PIN, 0);
     s_gpio_ready = true;
+    ESP_LOGI(TAG, "Siren GPIO%d ready", (int)ALARM_LED_PIN);
 }
 
 static void panic_alarm_task_active(void *pParameters)

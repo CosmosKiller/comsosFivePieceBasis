@@ -10,6 +10,7 @@ export COSMOS_FIVE_PIECE_PATH="${COSMOS_FIVE_PIECE_PATH:-$REPO_ROOT}"
 export ESP_MATTER_DEVICE_PATH="${ESP_MATTER_DEVICE_PATH:-$ESP_MATTER_PATH/device_hal/device/esp32c6_devkit_c}"
 # Required for CHIP gn / pigweed when cmake reconfigures
 export _PW_ACTUAL_ENVIRONMENT_ROOT="${_PW_ACTUAL_ENVIRONMENT_ROOT:-$ESP_MATTER_PATH/connectedhomeip/connectedhomeip/.environment}"
+export PATH="${_PW_ACTUAL_ENVIRONMENT_ROOT}/cipd/packages/pigweed:${PATH}"
 
 cd "$ESP_MATTER_PATH/examples/camera/split_mode"
 idf.py set-target esp32c6

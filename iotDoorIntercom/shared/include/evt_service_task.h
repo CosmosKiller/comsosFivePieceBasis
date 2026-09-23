@@ -14,7 +14,7 @@ extern "C" {
 #include <esp_err.h>
 #include <freertos/FreeRTOS.h>
 
-#define LED_PIN          GPIO_NUM_21 /*!< P4 GPIO21 — status LED (event aggregator) */
+#define LED_PIN          GPIO_NUM_22 /*!< P4 GPIO22 — status LED (event aggregator) */
 #define DEBOUNCE_TIME_MS 200
 
 #define EVT_SERVICE_TASK_STACK_SIZE 3072

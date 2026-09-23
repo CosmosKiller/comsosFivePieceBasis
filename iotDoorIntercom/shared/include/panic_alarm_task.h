@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#define ALARM_LED_PIN GPIO_NUM_46 /*!< P4 GPIO46 — siren LED + buzzer via NPN (active-high) */
+#define ALARM_LED_PIN GPIO_NUM_21 /*!< P4 GPIO21 — siren (header pin 15); avoid GPIO39–48 SDMMC */
 
 #define PANIC_ALARM_STACK_SIZE    3072
 #define PANIC_ALARM_TASK_PRIORITY 4

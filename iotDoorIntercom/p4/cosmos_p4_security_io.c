@@ -9,6 +9,7 @@
 #include <bridge_cmd_defs.h>
 #include <webrtc_bridge.h>
 
+#include <cosmos_p4_audio.h>
 #include <cosmos_p4_security_io.h>
 #include <door_intercom_task.h>
 #include <evt_service_task.h>
@@ -81,7 +82,12 @@ esp_err_t cosmos_p4_security_io_init(void)
         return err;
     }
 
-    ESP_LOGI(TAG, "P4 security I/O ready (EVT→C6, SET_SIREN←C6)");
+    err = cosmos_p4_audio_init();
+    if (err != ESP_OK) {
+        return err;
+    }
+
+    ESP_LOGI(TAG, "P4 security I/O ready (EVT→C6, SET_SIREN/SET_AUDIO←C6)");
     return ESP_OK;
 }
 
