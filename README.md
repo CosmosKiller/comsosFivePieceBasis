@@ -10,7 +10,7 @@ Monorepo of ESP-IDF firmware applications for a small Matter device family. Each
 | [iotEnvironmentalSensor](iotEnvironmentalSensor/)| Environmental sensing (BME680 → SHTC3+SGP41)     | Waveshare ESP32-C5-Touch-LCD-2.8 (target)               |
 | [iotBedsideLamp](iotBedsideLamp/)                | Extended color light (WS2812)                    | ESP32-C6-DevKitC-1 MVP → XIAO ESP32-C6 carrier          |
 | [iotDoorIntercom](iotDoorIntercom/)              | Matter camera + doorbell/PIR/tamper/siren (video now, 2-way later) | Waveshare ESP32-P4-WIFI6 |
-| [iotSecurityCamera](iotSecurityCamera/)          | HTTPS MJPEG (+ snapshot later); HA stream wrapper                  | Seeed XIAO ESP32-S3 Sense |
+| [iotSecurityCamera](iotSecurityCamera/)          | HTTPS MJPEG + still JPEG; HA stream wrapper                        | Seeed XIAO ESP32-S3 Sense |
 
 
 The repo name is historical (`cosmosFivePieceBasis`); the product line is now **six SKUs**.

@@ -15,3 +15,8 @@ dependencies:
   #   # All dependencies of `main` are public by default.
   #   public: true
   espressif/esp32-camera: '2.1.3'
+  # GPL-3.0-only. A distributed image that links this SDK is a GPLv3 combined
+  # work. Cosmos-authored files stay MIT. Staging: no stable registry release yet.
+  francescopace/espectre:
+    version: "3.0.0-rc2-14-g4ef3782.main"
+    registry_url: "https://components-staging.espressif.com"

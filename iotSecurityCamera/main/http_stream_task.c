@@ -27,9 +27,66 @@ static const char *_STREAM_PART = "Content-Type: image/jpeg\r\nContent-Length: %
 
 static bool stream_enabled = false;
 
+/*
+ * Copy one JPEG out of the camera ring and return the frame buffer before the
+ * caller does any TLS send. Holding the FB across httpd_resp_send* causes FB-OVF.
+ * Caller frees *jpg_copy.
+ */
+static esp_err_t camera_copy_jpeg(uint8_t **jpg_copy, size_t *jpg_len)
+{
+    camera_fb_t *fb = esp_camera_fb_get();
+    if (!fb) {
+        ESP_LOGE(TAG, "Camera capture failed");
+        return ESP_FAIL;
+    }
+
+    if (fb->format != PIXFORMAT_JPEG) {
+        if (!frame2jpg(fb, 80, jpg_copy, jpg_len)) {
+            ESP_LOGE(TAG, "JPEG compression failed");
+            esp_camera_fb_return(fb);
+            return ESP_FAIL;
+        }
+        esp_camera_fb_return(fb);
+        return ESP_OK;
+    }
+
+    *jpg_len = fb->len;
+    *jpg_copy = (uint8_t *)malloc(*jpg_len);
+    if (!*jpg_copy) {
+        ESP_LOGE(TAG, "JPEG copy alloc failed (%zu)", *jpg_len);
+        esp_camera_fb_return(fb);
+        return ESP_ERR_NO_MEM;
+    }
+    memcpy(*jpg_copy, fb->buf, *jpg_len);
+    esp_camera_fb_return(fb);
+    return ESP_OK;
+}
+
+static esp_err_t http_capture_handler(httpd_req_t *pReq)
+{
+    uint8_t *jpg_copy = NULL;
+    size_t jpg_len = 0;
+    esp_err_t res;
+
+    if (!stream_enabled) {
+        return httpd_resp_send_404(pReq);
+    }
+
+    res = camera_copy_jpeg(&jpg_copy, &jpg_len);
+    if (res != ESP_OK) {
+        return res;
+    }
+
+    httpd_resp_set_type(pReq, "image/jpeg");
+    httpd_resp_set_hdr(pReq, "Cache-Control", "no-store");
+    httpd_resp_set_hdr(pReq, "Pragma", "no-cache");
+    res = httpd_resp_send(pReq, (const char *)jpg_copy, jpg_len);
+    free(jpg_copy);
+    return res;
+}
+
 static esp_err_t http_stream_task_handler(httpd_req_t *pReq)
 {
-    camera_fb_t *fb = NULL;
     esp_err_t res = ESP_OK;
     char part_buf[64];
 
@@ -49,38 +106,9 @@ static esp_err_t http_stream_task_handler(httpd_req_t *pReq)
         uint8_t *jpg_copy = NULL;
         size_t jpg_len = 0;
 
-        fb = esp_camera_fb_get();
-        if (!fb) {
-            ESP_LOGE(TAG, "Camera capture failed");
-            res = ESP_FAIL;
+        res = camera_copy_jpeg(&jpg_copy, &jpg_len);
+        if (res != ESP_OK) {
             break;
-        }
-
-        /*
-         * Copy JPEG out of the camera ring and return the FB before any TLS
-         * send — holding the FB across httpd_resp_send_chunk causes FB-OVF.
-         */
-        if (fb->format != PIXFORMAT_JPEG) {
-            if (!frame2jpg(fb, 80, &jpg_copy, &jpg_len)) {
-                ESP_LOGE(TAG, "JPEG compression failed");
-                esp_camera_fb_return(fb);
-                res = ESP_FAIL;
-                break;
-            }
-            esp_camera_fb_return(fb);
-            fb = NULL;
-        } else {
-            jpg_len = fb->len;
-            jpg_copy = (uint8_t *)malloc(jpg_len);
-            if (!jpg_copy) {
-                ESP_LOGE(TAG, "JPEG copy alloc failed (%zu)", jpg_len);
-                esp_camera_fb_return(fb);
-                res = ESP_ERR_NO_MEM;
-                break;
-            }
-            memcpy(jpg_copy, fb->buf, jpg_len);
-            esp_camera_fb_return(fb);
-            fb = NULL;
         }
 
         res = httpd_resp_send_chunk(pReq, _STREAM_BOUNDARY, strlen(_STREAM_BOUNDARY));
@@ -120,6 +148,12 @@ httpd_handle_t http_server_task_start(httpd_handle_t server)
         .handler = http_stream_task_handler,
         .user_ctx = NULL,
     };
+    httpd_uri_t capture_uri = {
+        .uri = "/capture",
+        .method = HTTP_GET,
+        .handler = http_capture_handler,
+        .user_ctx = NULL,
+    };
 
 #if CONFIG_IOT_SECURITY_CAMERA_HTTPS_STREAM
     extern const unsigned char servercert_pem_start[] asm("_binary_servercert_pem_start");
@@ -144,8 +178,10 @@ httpd_handle_t http_server_task_start(httpd_handle_t server)
         return NULL;
     }
     httpd_register_uri_handler(server, &stream_uri);
+    httpd_register_uri_handler(server, &capture_uri);
     ESP_LOGI(TAG, "HTTPS MJPEG ready at https://<device-ip>:%u/stream (self-signed Beta cert)",
              conf.port_secure);
+    ESP_LOGI(TAG, "HTTPS still JPEG ready at https://<device-ip>:%u/capture", conf.port_secure);
 #else
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.stack_size = 8192;
@@ -157,7 +193,9 @@ httpd_handle_t http_server_task_start(httpd_handle_t server)
         return NULL;
     }
     httpd_register_uri_handler(server, &stream_uri);
+    httpd_register_uri_handler(server, &capture_uri);
     ESP_LOGW(TAG, "HTTP (insecure) MJPEG ready at http://<device-ip>:%u/stream", config.server_port);
+    ESP_LOGW(TAG, "HTTP still JPEG ready at http://<device-ip>:%u/capture", config.server_port);
 #endif
 
     return server;

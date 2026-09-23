@@ -1,8 +1,9 @@
 /**
  * @file main.cpp
- * @brief SKU6 Matter security camera: HTTPS MJPEG + OnOff stream gate + OTA.
+ * @brief SKU6 Matter security camera: HTTPS MJPEG, stream gate, CSI occupancy, siren.
  *
- * Doorbell / PIR / tamper / siren belong to SKU5 (iotDoorIntercom split mode).
+ * Doorbell / PIR / tamper belong to SKU5 (iotDoorIntercom). The siren blink
+ * matches that app; HA OnOff is the only start/stop on this board.
  */
 
 #include <esp_err.h>
@@ -15,9 +16,11 @@
 #include <cosmos_battery.h>
 #include <cosmos_battery_matter.h>
 #include <cosmos_matter_ota.h>
+#include <csi_presence_task.h>
 #include <factory_reset_task.h>
 #include <http_stream_task.h>
 #include <matter_task.h>
+#include <panic_alarm_task.h>
 
 static const char *TAG = "app_main";
 
@@ -25,6 +28,7 @@ using namespace esp_matter;
 using namespace esp_matter::endpoint;
 
 uint16_t stream_gate_endpoint_id = 0;
+uint16_t siren_endpoint_id = 0;
 httpd_handle_t cam_server;
 
 extern "C" void app_main(void)
@@ -37,6 +41,12 @@ extern "C" void app_main(void)
     }
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "nvs_flash_init failed: %d", err);
+        return;
+    }
+
+    err = panic_alarm_task_prepare();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "panic_alarm_task_prepare failed: %d", err);
         return;
     }
 
@@ -62,6 +72,22 @@ extern "C" void app_main(void)
     }
     stream_gate_endpoint_id = endpoint::get_id(stream_ep);
     ESP_LOGI(TAG, "MJPEG stream-gate OnOff endpoint ID: %d", stream_gate_endpoint_id);
+
+    mounted_on_off_control::config_t siren_cfg;
+    siren_cfg.on_off.on_off = false;
+    endpoint_t *siren_ep = mounted_on_off_control::create(node, &siren_cfg, ENDPOINT_FLAG_NONE, NULL);
+    if (!siren_ep) {
+        ESP_LOGE(TAG, "Failed to create siren endpoint");
+        return;
+    }
+    siren_endpoint_id = endpoint::get_id(siren_ep);
+    ESP_LOGI(TAG, "Siren OnOff endpoint ID: %d", siren_endpoint_id);
+
+    err = csi_presence_endpoint_create(node);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "csi_presence_endpoint_create failed: %d", err);
+        return;
+    }
 
     cosmos_battery_config_t battery_config;
     cosmos_battery_config_set_defaults(&battery_config);
@@ -91,6 +117,12 @@ extern "C" void app_main(void)
     cam_server = http_server_task_start(NULL);
     if (!cam_server) {
         ESP_LOGE(TAG, "Failed to start MJPEG stream server");
+        return;
+    }
+
+    err = csi_presence_task_start();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "csi_presence_task_start failed: %d", err);
         return;
     }
 

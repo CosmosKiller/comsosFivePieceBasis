@@ -16,8 +16,9 @@
 #   3. Replace TODO entity ids after commissioning.
 #   4. Add lovelace/cosmos_security_camera.yaml as a dashboard view.
 #
-# Package surfaces: stream gate (+ optional presence auto-off helpers for later CSI).
-# Out of scope: doorbell / PIR / tamper / siren (SKU 5). Snapshot = later.
+# Package surfaces: stream gate and presence auto-off.
+# Still JPEG is the MJPEG integration's Still image URL: https://<device-ip>/capture
+# (same stream gate as /stream). Out of scope: doorbell / PIR / tamper / siren (SKU 5).
 # This package does not create the camera entity (UI only).
 
 input_number:
@@ -41,8 +42,8 @@ automation:
   - id: cosmos_security_camera_presence_stream
     alias: "Cosmos security camera — presence enables stream"
     description: >-
-      When presence goes on, enable the Matter stream gate (CSI presence /
-      espectre later — wire binary_sensor after firmware ships).
+      When the Matter occupancy binary sensor goes on, enable the stream gate.
+      Replace the TODO entity id after commissioning.
     mode: restart
     triggers:
       - trigger: state
@@ -100,7 +101,7 @@ automation:
   - id: cosmos_security_camera_siren
     alias: "Cosmos security camera — siren / alarm"
     description: >-
-      Notify when siren OnOff turns On (firmware later). Off = silence.
+      Notify when the Matter siren OnOff turns On. Off silences GPIO1.
     mode: single
     triggers:
       - trigger: state

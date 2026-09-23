@@ -1,6 +1,6 @@
 /**
  * @file matter_task.cpp
- * @brief Matter callbacks for SKU6 MJPEG camera (stream-gate OnOff).
+ * @brief Matter callbacks for SKU6 MJPEG camera (stream-gate and siren OnOff).
  */
 
 #include <esp_log.h>
@@ -8,6 +8,7 @@
 #include <cosmos_matter_events.h>
 #include <http_stream_task.h>
 #include <matter_task.h>
+#include <panic_alarm_task.h>
 
 static const char *TAG = "matter_task";
 
@@ -16,6 +17,7 @@ using namespace esp_matter::attribute;
 using namespace chip::app::Clusters;
 
 extern uint16_t stream_gate_endpoint_id;
+extern uint16_t siren_endpoint_id;
 
 void app_event_cb(const ChipDeviceEvent *event, intptr_t arg)
 {
@@ -37,6 +39,16 @@ esp_err_t app_attribute_update_cb(attribute::callback_type_t type, uint16_t endp
         attribute_id == OnOff::Attributes::OnOff::Id && val != nullptr) {
         ESP_LOGI(TAG, "Stream gate %s", val->val.b ? "ON" : "OFF");
         http_stream_task_service_enabled(val->val.b);
+    }
+
+    if (type == PRE_UPDATE && endpoint_id == siren_endpoint_id && cluster_id == OnOff::Id &&
+        attribute_id == OnOff::Attributes::OnOff::Id && val != nullptr) {
+        ESP_LOGI(TAG, "Siren %s", val->val.b ? "ON" : "OFF");
+        if (val->val.b) {
+            panic_alarm_task_init();
+        } else {
+            panic_alarm_task_deinit();
+        }
     }
 
     return ESP_OK;

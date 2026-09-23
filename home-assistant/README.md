@@ -30,8 +30,10 @@ SKU 6 has **no Matter camera entity**. YAML `camera: platform: mjpeg` is **not**
 1. Enable the Matter **stream gate** switch (so `/stream` answers).
 2. **Settings → Devices & services → Add integration → MJPEG IP Camera**
 3. MJPEG URL: `https://<device-ip>/stream`  
+   Still image URL: `https://<device-ip>/capture`  
    Verify SSL: **off** (self-signed Beta cert)  
-   Name: **Cosmos Security Camera** (entity becomes `camera.cosmos_security_camera`)
+   Name: **Cosmos Security Camera** (entity becomes `camera.cosmos_security_camera`)  
+   On an existing integration: **Configure** and add the still image URL. Both URLs answer only while the stream gate is On.
 4. If the entity id differs, rename it or update Lovelace to match.
 
 ## Install security-cam Lovelace view
@@ -48,7 +50,7 @@ SKU 6 has **no Matter camera entity**. YAML `camera: platform: mjpeg` is **not**
 | Security lights | `light.security_system_lights` | Red strobe during intrusion (create in UI or YAML — not in package) |
 | Security sirens | `switch.security_system_sirens` | **Switch group** in [packages/cosmos_security.yaml](packages/cosmos_security.yaml) — Matter siren switches |
 
-After commissioning each unit, add its `switch.*_siren` to the **Security System Sirens** group. SKU 5 siren belongs here when present; SKU 6 siren is **later**.
+After commissioning each unit, add its `switch.*_siren` to the **Security System Sirens** group. SKU 6 siren is the Matter OnOff on GPIO1 (D0). Off silences the blink.
 
 ## Entity checklist (SKU 6 security camera)
 
@@ -56,10 +58,10 @@ After commissioning each unit, add its `switch.*_siren` to the **Security System
 |------|----------------|---------|
 | Stream gate (OnOff) | `switch.*` | Enable / disable HTTPS `/stream` |
 | MJPEG camera | `camera.cosmos_security_camera` | Created via UI (MJPEG IP Camera) |
-| Presence | `binary_sensor.*` | Auto stream (CSI / espectre later) |
-| Siren clear | `switch.*` | Off = silence (later) |
+| Presence | `binary_sensor.*` | Matter occupancy (CSI / RF sensing). Wire the package TODO after commissioning |
+| Siren | `switch.*` | Matter OnOff. On = blink GPIO1; Off = silence |
 | Auto-off helper | `input_number.*` | Minutes until stream gate Off |
-| Snapshot | — | **Later** |
+| Snapshot | `camera.cosmos_security_camera` | Still image URL `https://<device-ip>/capture` (same gate as `/stream`) |
 
 ## Entity checklist (SKU 5 door intercom)
 
